@@ -1,0 +1,17 @@
+*.DS_Store
+*.dSYM
+*.vscode
+*.png
+*.gif
+*.jpg
+*.jpeg
+*.svg
+*.pdf
+*.swp
+*.d
+*.so
+*.pcm
+*.o
+*.idea
+test
+test.cpp
