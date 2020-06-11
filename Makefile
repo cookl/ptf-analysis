@@ -11,7 +11,7 @@ BINDIR= $(shell pwd)/bin
 VPATH = $(SRCDIR)
 
 CFLAGS=-c -g -Wall `root-config --cflags` -I${INCDIR}
-LDFLAGS=`root-config --glibs` -lHistPainter -lMinuit -L${ROOTSYS}/lib
+LDFLAGS=`root-config --glibs` -lHistPainter
 
 TARGET1=field_to_csv.cpp
 TARGET2=ptf_analysis.cpp

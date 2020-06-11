@@ -21,7 +21,6 @@
 #include "TPad.h"
 #include "TGraph.h"
 #include "TGraphErrors.h"
-#include "TMultiGraph.h"
 #include "TVector2.h"
 #include "TAxis.h"
 
@@ -150,11 +149,11 @@ TStyle* SetPTFStyle(Int_t WhichStyle = 1, TString styleName = "PTF") {
   // - inbuilt color schemes -
   // ptfStyle->SetPalette(1); // use the rainbow color set
   //ptfStyle->SetPalette(kViridis); // use the viridis color set
-  ptfStyle->SetPalette(kSunset); // use the sunset color set
+  //ptfStyle->SetPalette(kSunset); // use the sunset color set
   //ptfStyle->SetPalette(kColorPrintableOnGrey); // use the colorPrintableOnGrey color set
   //ptfStyle->SetPalette(kCubehelix); // use the cubehelix color set
-  //ptfStyle->SetPalette(kLightTemperature);
-  TColor::InvertPalette(); // invert color palette
+  ptfStyle->SetPalette(kLightTemperature);
+  //TColor::InvertPalette(); // invert color palette
 
   return ptfStyle;
 }
@@ -269,20 +268,14 @@ void collect_qe_plots(){
 
   //KEY: TH2D pmt0_qe_corr;  Detection efficiency (corrected)
   std::vector< TH1D* > vec_pmt0_qe_corr;
-  std::vector< TH1D* > vec_pmt1_qe;
   for ( unsigned i=0 ; i < bscan2_files.size() ; ++i ){
     TH2D* pmt0_qe_corr_2d = (TH2D*)bscan2_files[i]->Get("pmt0_qe_corr");
-    TH2D* pmt1_qe_2d = (TH2D*)bscan2_files[i]->Get("pmt1_qe");
 
-    TH1D* pmt0_qe_corr = make_1d_from_2d( pmt0_qe_corr_2d, " ; QE ; scan points / bin", 100, 0.00, 0.4 );
-    TH1D* pmt1_qe = make_1d_from_2d( pmt1_qe_2d, " ; QE ; scan points / bin", 30, 0.3, 0.7 );
+    TH1D* pmt0_qe_corr = make_1d_from_2d( pmt0_qe_corr_2d, " ; QE ; scan points / bin", 100, 0.02, 0.4 );
     double scale = pmt0_qe_corr->GetMaximum();
-    double scale_pmt1 = pmt1_qe->GetMaximum();
     pmt0_qe_corr->Scale( 1.0/scale );
-    pmt1_qe->Scale( 1.0/scale_pmt1 );
 
     vec_pmt0_qe_corr.push_back( pmt0_qe_corr );
-    vec_pmt1_qe.push_back( pmt1_qe );
 
     ostringstream os;
     os << "tc_" << i;
@@ -296,21 +289,6 @@ void collect_qe_plots(){
     tc->Print( os2.str().c_str() );
   }
 
-  // Plot to compare the 1D plots for 0mG
-  TCanvas * tc_comp = new TCanvas( "tc_comp", "tc_comp" );
-  vec_pmt0_qe_corr[14]->Draw("e1");
-  vec_pmt0_qe_corr[15]->SetMarkerColor(kMagenta+3);
-  vec_pmt0_qe_corr[15]->SetLineColor(kMagenta+3);
-  vec_pmt0_qe_corr[15]->Draw("e1 same");
-  string plotname_comp = string("ptf_qe_analysis_0mg_1d_comparison_pmt0.pdf");
-  tc_comp->SaveAs(plotname_comp.c_str(),"pdf");
-  TCanvas * tc_comp_pmt1 = new TCanvas( "tc_comp_pmt1", "tc_comp_pmt1" );
-  vec_pmt1_qe[14]->Draw("le1");
-  vec_pmt1_qe[15]->SetMarkerColor(kMagenta+3);
-  vec_pmt1_qe[15]->SetLineColor(kMagenta+3);
-  vec_pmt1_qe[15]->Draw("le1 same");
-  string plotname_comp_pmt1 = string("ptf_qe_analysis_0mg_1d_comparison_pmt1.pdf");
-  tc_comp_pmt1->SaveAs(plotname_comp_pmt1.c_str(),"pdf");
 
   // print table of results from the TH1D's
   cout<< "\\begin{center}" << endl;
@@ -330,160 +308,117 @@ void collect_qe_plots(){
   // x-direction, air, cover off
   TCanvas * tc = new TCanvas( "av_qe_vs_bfield", "av_qe_vs_bfield" );
   //tc->SetGrid();
-  const int n = 6;
-  double x_xa0[n] = { -100., -50., 0., 0., 50., 100. };
+  const int n = 5;
+  double x_xa0[n] = { -100., -50., 0., 50., 100. };
   double y_xa0[n] = { vec_pmt0_qe_corr[2]->GetMean(),
                   vec_pmt0_qe_corr[3]->GetMean(),
                   vec_pmt0_qe_corr[0]->GetMean(),
-                  vec_pmt0_qe_corr[1]->GetMean(),
                   vec_pmt0_qe_corr[4]->GetMean(),
                   vec_pmt0_qe_corr[5]->GetMean() };
-  double ex_xa0[n] = { 10., 10., 10., 10., 10., 10. };
+  double ex_xa0[n] = { 10., 10., 10., 10., 10. };
   double ey_xa0[n] = { vec_pmt0_qe_corr[2]->GetMeanError(),
                    vec_pmt0_qe_corr[3]->GetMeanError(),
                    vec_pmt0_qe_corr[0]->GetMeanError(),
-                   vec_pmt0_qe_corr[1]->GetMeanError(),
                    vec_pmt0_qe_corr[4]->GetMeanError(),
                    vec_pmt0_qe_corr[5]->GetMeanError() };
-  TGraphErrors* gr_xa0 = new TGraphErrors(n,x_xa0,y_xa0,ex_xa0,ey_xa0);
-  gr_xa0->SetTitle( "Air | Cover off; Bx [mG]; Mean QE" );
-  gr_xa0->SetMarkerColor(kMagenta+3);
-  gr_xa0->SetMarkerStyle(21);
-  gr_xa0->Draw("AP");
+  TGraphErrors* gr = new TGraphErrors(n,x_xa0,y_xa0,ex_xa0,ey_xa0);
+  gr->SetTitle( "Air | Cover off; Bx [mG]; Mean QE" );
+  gr->SetMarkerColor(kMagenta+3);
+  gr->SetMarkerStyle(21);
+  gr->Draw("AP");
   string plotname = string("ptf_qe_analysis_vs_bfield_air_coveroff_x.pdf");
   tc->SaveAs(plotname.c_str(),"pdf");
 
   // y-direction, air, cover off
-  double x_ya0[n] = { -100., -50., 0., 0., 50., 100. };
+  double x_ya0[n] = { -100., -50., 0., 50., 100. };
   double y_ya0[n] = { vec_pmt0_qe_corr[6]->GetMean(),
                   vec_pmt0_qe_corr[7]->GetMean(),
                   vec_pmt0_qe_corr[0]->GetMean(),
-                  vec_pmt0_qe_corr[1]->GetMean(),
                   vec_pmt0_qe_corr[8]->GetMean(),
                   vec_pmt0_qe_corr[9]->GetMean() };
-  double ex_ya0[n] = { 10., 10., 10., 10., 10., 10. };
+  double ex_ya0[n] = { 10., 10., 10., 10., 10. };
   double ey_ya0[n] = { vec_pmt0_qe_corr[6]->GetMeanError(),
                    vec_pmt0_qe_corr[7]->GetMeanError(),
                    vec_pmt0_qe_corr[0]->GetMeanError(),
-                   vec_pmt0_qe_corr[1]->GetMeanError(),
                    vec_pmt0_qe_corr[8]->GetMeanError(),
                    vec_pmt0_qe_corr[9]->GetMeanError() };
-  TGraphErrors* gr_ya0 = new TGraphErrors(n,x_ya0,y_ya0,ex_ya0,ey_ya0);
-  gr_ya0->SetTitle( "Air | Cover off; By [mG]; Mean QE" );
-  gr_ya0->SetMarkerColor(kMagenta+3);
-  gr_ya0->SetMarkerStyle(21);
-  gr_ya0->Draw("AP");
+  gr = new TGraphErrors(n,x_ya0,y_ya0,ex_ya0,ey_ya0);
+  gr->SetTitle( "Air | Cover off; By [mG]; Mean QE" );
+  gr->SetMarkerColor(kMagenta+3);
+  gr->SetMarkerStyle(21);
+  gr->Draw("AP");
   gPad->Modified();
   gPad->Update();
   plotname = string("ptf_qe_analysis_vs_bfield_air_coveroff_y.pdf");
   tc->SaveAs(plotname.c_str(),"pdf");
 
   // z-direction, air, cover off
-  double x_za0[n] = { -100., -50., 0., 0., 50., 100. };
+  double x_za0[n] = { -100., -50., 0., 50., 100. };
   double y_za0[n] = { vec_pmt0_qe_corr[10]->GetMean(),
                   vec_pmt0_qe_corr[11]->GetMean(),
                   vec_pmt0_qe_corr[0]->GetMean(),
-                  vec_pmt0_qe_corr[1]->GetMean(),
                   vec_pmt0_qe_corr[12]->GetMean(),
                   vec_pmt0_qe_corr[13]->GetMean() };
-  double ex_za0[n] = { 40., 40., 40., 40., 40., 40. };
+  double ex_za0[n] = { 40., 40., 40., 40., 40. };
   double ey_za0[n] = { vec_pmt0_qe_corr[10]->GetMeanError(),
                    vec_pmt0_qe_corr[11]->GetMeanError(),
                    vec_pmt0_qe_corr[0]->GetMeanError(),
-                   vec_pmt0_qe_corr[1]->GetMeanError(),
                    vec_pmt0_qe_corr[12]->GetMeanError(),
                    vec_pmt0_qe_corr[13]->GetMeanError() };
-  TGraphErrors* gr_za0 = new TGraphErrors(n,x_za0,y_za0,ex_za0,ey_za0);
-  gr_za0->SetTitle( "Air | Cover off; Bz [mG]; Mean QE" );
-  gr_za0->SetMarkerColor(kMagenta+3);
-  gr_za0->SetMarkerStyle(21);
-  gr_za0->Draw("AP");
+  gr = new TGraphErrors(n,x_za0,y_za0,ex_za0,ey_za0);
+  gr->SetTitle( "Air | Cover off; Bz [mG]; Mean QE" );
+  gr->SetMarkerColor(kMagenta+3);
+  gr->SetMarkerStyle(21);
+  gr->Draw("AP");
   gPad->Modified();
   gPad->Update();
   plotname = string("ptf_qe_analysis_vs_bfield_air_coveroff_z.pdf");
   tc->SaveAs(plotname.c_str(),"pdf");
 
   // x-direction, water, cover off
-  const int nwx = 5;
-  double x_xw0[nwx] = { -100., -50., 0., 0., 50. };
-  double y_xw0[nwx] = { vec_pmt0_qe_corr[16]->GetMean(),
+  double x_xw0[n] = { -100., -50., 0., 50., 100. };
+  double y_xw0[n] = { vec_pmt0_qe_corr[16]->GetMean(),
                   vec_pmt0_qe_corr[17]->GetMean(),
-                  vec_pmt0_qe_corr[14]->GetMean(),
                   vec_pmt0_qe_corr[15]->GetMean(),
-                  vec_pmt0_qe_corr[18]->GetMean() };
-  double ex_xw0[nwx] = { 10., 10., 10., 10., 10. };
-  double ey_xw0[nwx] = { vec_pmt0_qe_corr[16]->GetMeanError(),
+                  vec_pmt0_qe_corr[18]->GetMean(),
+                  vec_pmt0_qe_corr[19]->GetMean() };
+  double ex_xw0[n] = { 10., 10., 10., 10., 10. };
+  double ey_xw0[n] = { vec_pmt0_qe_corr[16]->GetMeanError(),
                    vec_pmt0_qe_corr[17]->GetMeanError(),
-                   vec_pmt0_qe_corr[14]->GetMeanError(),
                    vec_pmt0_qe_corr[15]->GetMeanError(),
-                   vec_pmt0_qe_corr[18]->GetMeanError() };
-  TGraphErrors* gr_xw0 = new TGraphErrors(nwx,x_xw0,y_xw0,ex_xw0,ey_xw0);
-  gr_xw0->SetTitle( "Water | Cover off; Bx [mG]; Mean QE" );
-  gr_xw0->SetMarkerColor(kOrange-3);
-  gr_xw0->SetMarkerStyle(21);
-  gr_xw0->Draw("AP");
+                   vec_pmt0_qe_corr[18]->GetMeanError(),
+                   vec_pmt0_qe_corr[19]->GetMeanError() };
+  gr = new TGraphErrors(n,x_xw0,y_xw0,ex_xw0,ey_xw0);
+  gr->SetTitle( "Water | Cover off; Bx [mG]; Mean QE" );
+  gr->SetMarkerColor(kMagenta+3);
+  gr->SetMarkerStyle(21);
+  gr->Draw("AP");
   gPad->Modified();
   gPad->Update();
   plotname = string("ptf_qe_analysis_vs_bfield_water_coveroff_x.pdf");
   tc->SaveAs(plotname.c_str(),"pdf");
 
   // y-direction, water, cover off
-  double x_yw0[n] = { -100., -50., 0., 0., 50., 100. };
+  double x_yw0[n] = { -100., -50., 0., 50., 100. };
   double y_yw0[n] = { vec_pmt0_qe_corr[20]->GetMean(),
                   vec_pmt0_qe_corr[21]->GetMean(),
-                  vec_pmt0_qe_corr[14]->GetMean(),
                   vec_pmt0_qe_corr[15]->GetMean(),
                   vec_pmt0_qe_corr[22]->GetMean(),
                   vec_pmt0_qe_corr[23]->GetMean() };
-  double ex_yw0[n] = { 10., 10., 10., 10., 10., 10. };
+  double ex_yw0[n] = { 10., 10., 10., 10., 10. };
   double ey_yw0[n] = { vec_pmt0_qe_corr[20]->GetMeanError(),
                    vec_pmt0_qe_corr[21]->GetMeanError(),
-                   vec_pmt0_qe_corr[14]->GetMeanError(),
                    vec_pmt0_qe_corr[15]->GetMeanError(),
                    vec_pmt0_qe_corr[22]->GetMeanError(),
                    vec_pmt0_qe_corr[23]->GetMeanError() };
-  TGraphErrors* gr_yw0 = new TGraphErrors(n,x_yw0,y_yw0,ex_yw0,ey_yw0);
-  gr_yw0->SetTitle( "Water | Cover off; By [mG]; Mean QE" );
-  gr_yw0->SetMarkerColor(kOrange-3);
-  gr_yw0->SetMarkerStyle(21);
-  gr_yw0->Draw("AP");
+  gr = new TGraphErrors(n,x_yw0,y_yw0,ex_yw0,ey_yw0);
+  gr->SetTitle( "Water | Cover off; By [mG]; Mean QE" );
+  gr->SetMarkerColor(kMagenta+3);
+  gr->SetMarkerStyle(21);
+  gr->Draw("AP");
   gPad->Modified();
   gPad->Update();
   plotname = string("ptf_qe_analysis_vs_bfield_water_coveroff_y.pdf");
-  tc->SaveAs(plotname.c_str(),"pdf");
-
-  // TMultiGraph
-  // RTT:
-  // Air X vs Water X
-  // Air Y vs Water Y
-  // TTS:
-  // Air X vs Water X
-  // Air Y vs Water Y
-
-  TMultiGraph *mg_x = new TMultiGraph();
-  gr_xa0->SetTitle( "Air | Cover off" );
-  gr_xw0->SetTitle( "Water | Cover off" );
-  mg_x->Add(gr_xa0);
-  mg_x->Add(gr_xw0);
-  mg_x->SetTitle( "; Bx [mG]; Mean QE" );
-  mg_x->Draw("AP");
-  tc->BuildLegend(0.2, 0.5, 0.45, 0.65);
-  gPad->Modified();
-  gPad->Update();
-  plotname = string("ptf_qe_analysis_vs_bfield_coveroff_x.pdf");
-  tc->SaveAs(plotname.c_str(),"pdf");
-
-  TMultiGraph *mg_y = new TMultiGraph();
-  gr_ya0->SetTitle( "Air | Cover off" );
-  gr_yw0->SetTitle( "Water | Cover off" );
-  mg_y->Add(gr_ya0);
-  mg_y->Add(gr_yw0);
-  mg_y->SetTitle( "; By [mG]; Mean QE" );
-  mg_y->Draw("AP");
-  tc->BuildLegend(0.2, 0.5, 0.45, 0.65);
-  gPad->Modified();
-  gPad->Update();
-  plotname = string("ptf_qe_analysis_vs_bfield_coveroff_y.pdf");
   tc->SaveAs(plotname.c_str(),"pdf");
 
 }

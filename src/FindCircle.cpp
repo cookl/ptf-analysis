@@ -59,76 +59,45 @@ Circle_st find_circle_max_grad( const TH2D* in, TH2D*& grad, double cut_below ){
   unsigned nbinsx = xax->GetNbins();
   const TAxis* yax = in->GetYaxis();
   unsigned nbinsy = yax->GetNbins();
-
+  
   // compute the gradient for each bin
   for (unsigned ix=1; ix<nbinsx; ++ix){
     for (unsigned iy=1; iy<nbinsy; ++iy){
       double curval = in->GetBinContent( ix, iy );
       double maxgrad = 0.0;
       for ( int dx = -1; dx <= 1 ; ++dx ){
-        for ( int dy = -1; dy <= 1 ; ++dy ){
-          if (dx ==0 && dy == 0 ) continue;
-          double val = in->GetBinContent( ix+dx, iy+dy );
-          double diff = fabs( val - curval );
-          if ( diff > maxgrad ) {
-            maxgrad = diff;
-          }
-        }
+	for ( int dy = -1; dy <= 1 ; ++dy ){
+	  if (dx ==0 && dy == 0 ) continue;
+	  double val = in->GetBinContent( ix+dx, iy+dy );
+	  double diff = fabs( val - curval );
+	  if ( diff > maxgrad ) {
+	    maxgrad = diff;
+	  }
+	}
       }
       grad->SetBinContent( ix, iy, maxgrad );
     }
   }
-
-  // build graph, ignoring values below cutval
-  //std::vector<double> xx;
-  //std::vector<double> yy;
-  //double maxval = grad->GetMaximum();
-  //for (unsigned ix=1; ix<nbinsx; ++ix ){
-  //  double x = xax->GetBinCenter( ix );
-  //  for (unsigned iy=1; iy<nbinsy; ++iy ){
-  //    double y = yax->GetBinCenter( iy );
-  //    double curval = grad->GetBinContent( ix, iy );
-  //    if ( curval > cut_below * maxval ){
-  //      xx.push_back( x );
-  //      yy.push_back( y );
-  //      //grad->SetBinContent( ix, iy, 1.0 );
-  //    } else {
-  //      grad->SetBinContent( ix, iy, 0.0 );
-  //    }
-  //  }
-  //}
   
-  // Rank bins by bin content
-  ostringstream gradrank_name;
-  gradrank_name << in->GetName() <<"_gradrank";
-  TH2D* gradrank = (TH2D*)in->Clone( gradrank_name.str().c_str() );
-  gradrank->SetName( gradrank_name.str().c_str() );
-  gradrank->Reset();
-  gradrank->SetTitle( "Gradient bin rank; x (m); y(m) ");
+  grad->Write();
+  // build graph, ignoring values below cutval
+  std::vector<double> xx;
+  std::vector<double> yy;
+  double maxval = grad->GetMaximum();
   for (unsigned ix=1; ix<nbinsx; ++ix ){
+    double x = xax->GetBinCenter( ix );
     for (unsigned iy=1; iy<nbinsy; ++iy ){
-      double icurval = grad->GetBinContent( ix, iy );
-      int rank = 0;
-      for (unsigned jx=1; jx<nbinsx; ++jx ){
-        for (unsigned jy=1; jy<nbinsy; ++jy ){
-          double jcurval = grad->GetBinContent( jx, jy );
-          if ( icurval > jcurval ) rank++;
-        }
-      }
-      gradrank->SetBinContent( ix, iy, (double)rank );
-    }
-  }
-
-  // Ignore bins below cutval
-  for (unsigned ix=1; ix<nbinsx; ++ix ){
-    for (unsigned iy=1; iy<nbinsy; ++iy ){
-      double currank = gradrank->GetBinContent( ix, iy );
-      if ( currank < cut_below * (double)nbinsx * (double)nbinsy ){
-        grad->SetBinContent( ix, iy, 0.0 );
+      double y = yax->GetBinCenter( iy );
+      double curval = grad->GetBinContent( ix, iy );
+      if ( curval > cut_below * maxval ){
+	xx.push_back( x );
+	yy.push_back( y );
+	//grad->SetBinContent( ix, iy, 1.0 );
+      } else {
+	grad->SetBinContent( ix, iy, 0.0 );
       }
     }
   }
-
   grad->Write();
 
   // copy grad into vector of xypoints
@@ -172,7 +141,7 @@ void zero_outside_circle( TH2D* in, const Circle_st& c ){
       double y = yax->GetBinCenter( iy );
 
       if ( ! c.is_inside( x, y ) ){
-        in->SetBinContent( ix, iy, 0.0 );
+	in->SetBinContent( ix, iy, 0.0 );
       }
     }
   }

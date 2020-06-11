@@ -1,98 +1,67 @@
 # PTF Analysis
 
-This is the codebase for analysing the ROOT files produced from the (PMT test facility) PTF. It handles the loading of files, accessing the data (e.g. PMT waveform samples and Phidget readings), fitting of waveforms to produce a tree of fitted parameters, and analyses of the waveform fits (including charge, timing, and efficiency measurements).
+This is a simple C++ library for reading the ROOT files produced from the PTF. It handles loading the files and provides a simple way to access the data.
 
-## Table of Contents
+It can be build with `make wrapper.o` for a debug build (uses `-g3 -Og`), or with `make wrapper.o RELEASE=TRUE` for an optimized build (uses `-g -O2`). You can then link your program with `g++ -o myprog myprog.cpp wrapper.o {flags here} -I$(ROOTSYS)/include/root -L$(ROOTSYS)/lib/root -lCore -lHist -lRIO -lTree -lGpad`. `clang++` works as well, but make sure that ROOT, `wrapper.o` and your program are all compiled with the same compiler.
 
-### 1. [Directory Layout](#directory_layout)
-### 2. [Installation](#installation)
-### 3. [Getting the PTF data](#data)
-### 4. [Usage](#usage)
+Here's a simple example of how you might use it:
 
-## Directory Layout <a id="directory_layout"></a>
+```c++
+#include <vector>
 
-```bash
-.
-+-- bin/                                # Location of compiled executables
-+-- include/                            # Header files
-+-- macros/                             # ROOT macros to produce plots from the output of the analysis executables
-+-- magnetic-field/                     # Python scripts to process the output of field_to_csv
-+-- obj/                                # Location for compiled .o files
-+-- ptf_bfield/                         # Standalone analysis of the predicted PTF magnetic field
-+-- src/                                # Source files
-+-- Makefile                            # Makefile to build executables
-+-- field_to_csv.cpp
-+-- ptf.config.dat                      # A configuration file that sets analysis options
-+-- ptf_analysis.cpp
-+-- ptf_charge_analysis.cpp
-+-- ptf_field_analysis.cpp
-+-- ptf_qe_analysis.cpp
-+-- ptf_timing_analysis.cpp
-+-- ptf_ttree_analysis.cpp
+#include "wrapper.hpp"
+
+
+using namespace std;
+
+
+int main(void) {
+  // decide which channels we'd like
+  vector<PTF::PMTChannel> channels = {
+    {1, 3} // this is saying we want pmt #1, which is on channel 3.
+  };
+
+  // decide which phidgets we'd like to read
+  vector<int> phidgets = {1, 3, 4};
+
+  // initialize the wrapper
+  auto wrapper = PTF::Wrapper(
+    16384, // the maximum number of samples
+    34, // the size of one sample
+    channels,
+    phidgets
+  );
+
+  // now we can open our file
+  wrapper.openFile("/path/to/file.root");
+
+  cout << "There are " << wrapper.getNumEntries() << " entries." << endl;
+
+  // we can iterate over all the entries
+
+  for (size_t i = 0; i < wrapper.getNumEntries(); i++) {
+    wrapper.setCurrentEntry(i);
+
+    // get data from phidget 3
+    PhidgetReading phidgetReading = wrapper.getReadingForPhidget(3);
+
+    // get data from gantry 1
+    GantryPos gantryData = wrapper.getDataForCurrentEntry(PTF::Gantry1);
+
+    // see how many samples there are for the current entry
+    auto numSamples = wrapper.getNumSamples();
+
+    for (size_t sample = 0; sample < numSamples; sample++) {
+      // Gets a pointer to the data for PMT 1 for this sample
+      // It's an array with the length of one sample, set above, in this case 34.
+      double* data = getPmtSample(1, sample);
+      // do something with data
+    }
+  }
+
+  // wrapper is automatically deallocated when it goes out of scope here, and its destructor cleans up memory
+}
 ```
-
-## Installation <a id="installation"></a>
-
-To download the repository use:
-
-`git clone https://<username>@bitbucket.org/ttriumfdaq/ptf-analysis-2.git`
-
-## Getting the PTF data <a id="data"></a>
-
-The PTF MIDAS DAQ produces output files. These can be converted to a ROOT TTree with the `rootana/libAnalyzer/analyzer_convert_ptf_scan_to_rootTree.cxx` script in the `ptf-online-converter` repository. This step it typically completed automatically on the PTF machine when a scan completes. 
-
-The MIDAS files are located here on the PTF machine:  
-`~/online/data/`
-
-The ROOT trees are located here on the PTF machine:  
-`~/online/rootfiles/`
-
-## Usage <a id="usage"></a>
-
-To compile the code run `make`. To build new analyses add them to the `Makefile` following the example of the existing analyses.
-
-The `ptf_analysis` executable fits the PMT waveforms and produces a ROOT file that contains a TTree with the fitted parameter values. The fitted parameter values can then be analysed by the `ptf_charge_analysis`, `ptf_qe_analysis` and `ptf_timing_analysis` executables. The command to run the code from the root directory is:  
-`./bin/ptf_analysis.dat filename.root run_number config_file`  
-The `run_number` argument is to produce an output file with a name specific to the run.  
-
-The `ptf_ttree_analysis` executable is a demonstration of how the TTree produced by `ptf_analysis` could be accessed. The command to run the code from the root directory is:  
-`./bin/ptf_ttree_analysis.app ptf_analysis.root`
-
-The `ptf_charge_analysis` executable reads the fitted waveforms from `ptf_analysis` and computes the charge of the events. The command to run the code from the root directory is:  
-`./bin/ptf_charge_analysis.app ptf_analysis.root run_number [T/F/I]`  
-Where the T/F/I is for True to do/not do circle fit to find PMT, I to cut inside circle (default T).  
-The `run_number` argument is to produce an output file with a name specific to the run.  
-
-The `ptf_qe_analysis` executable reads the fitted waveforms from `ptf_analysis` and calculates the detection efficiency for the PMT. The command to run the code from the root directory is:  
-`./bin/ptf_qe_analysis.app ptf_analysis.root run_number`  
-The `run_number` argument is to produce an output file with a name specific to the run.  
-
-The `ptf_timing_analysis` executable reads the fitted waveforms from `ptf_analysis` and calculates the timing response for the PMT. The command to run the code from the root directory is:  
-`./bin/ptf_timing_analysis.app ptf_analysis.root run_number`  
-The `run_number` argument is to produce an output file with a name specific to the run.  
-
-The `ptf_field_analysis` executable reads the data from Phidget04 which is fixed inside the Helmholtz coils and plots its magnetic field values as the scan progresses. This provides an indication of the field stability over the course of a run. The command to run the script from the root directory is:  
-`./bin/ptf_field_analysis.app /data/directory run_number`  
-The `run_number` argument is to produce an output file with a name specific to the run.  
-
-The `field_to_csv` analysis reads the magnetic field values from the Phidgets and outputs them to a csv file for analysis by the python scripts in the `magnetic-field` directory.  
-
-## The different classes
-
-These are the classes that are most important to understand.
-
-```bash
-+-- wrapper               Handles the loading of files and accessing the data
-+-- Configuration         Loads options from configuration file
-+-- PTFErrorBarAnalysis   For calculating the error bar size to use on the waveforms
-+-- PTFAnalysis           For doing analysis of all of the waveforms, and keep track of scan points, stores results in TTree
-+-- WaveformFitResult     Structure to hold one waveform fit result
-+-- ScanPoint             Holds location of scan point, first entry number in TTree of scan point, and number of waveforms
-```
-
-## The wrapper class
-
-It handles loading the files and provides a simple way to access the data. A simple example of how you might use it can be found in `wrapper_demo.cpp`.
 
 ## Data Types
 
