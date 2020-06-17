@@ -1,0 +1,16 @@
+# ===========================================================
+# General parameters
+# ===========================================================
+
+# Turn on if running ptf_analysis with output to a terminal
+# Output formatting does not work if piped to a text file
+terminal_output = true
+
+# ===========================================================
+# PTFAnalysis parameters
+# ===========================================================
+
+# Turn on to pre-select waveforms to be fitted
+# Considerably speeds up analysis
+pulse_location_cut = true
+fft_cut = false
