@@ -82,7 +82,7 @@ int main(int argc, char** argv) {
 
   // Set up PTF Wrapper
   vector<int> phidgets = {0, 1, 3};
-  PTF::PMTChannel Channel0 = {0,0}; // only looking at one channel at a time
+  PTF::PMTChannel Channel0 = {2,0}; // only looking at one channel at a time
   PTF::PMTChannel Channel1 = {1,1}; // only looking at one channel at a time
   vector<PTF::PMTChannel> activeChannels = { Channel0, Channel1 }; // must be ordered {main,monitor}
   PTF::Wrapper wrapper = PTF::Wrapper(1, 1024, activeChannels, phidgets);
