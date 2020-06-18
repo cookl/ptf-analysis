@@ -89,6 +89,7 @@ bool Wrapper::setDataPointers() {
   // Set phidget branches
   for (auto phidget : phidgetData) {
     snprintf(branchName, 64, PHIDGET_FORMAT_X, phidget.first);
+    phidget.second->branchX = nullptr;//.second ?, number of branch to write somewhere ? name of the branch ?, what is the purpose of this line
     phidget.second->branchX = tree->GetBranch(branchName);
     phidget.second->branchX->SetAddress(&phidget.second->data.Bx);
 
@@ -119,6 +120,7 @@ bool Wrapper::setDataPointers() {
 
     *brNumSamples = tree->GetBranch("num_points");
 
+  g0X->SetAddress(&g0.x); //Set address to the branch
   g0Y->SetAddress(&g0.y);
   g0Z->SetAddress(&g0.z);
   g0Theta->SetAddress(&g0.theta);
@@ -299,6 +301,7 @@ int Wrapper::getSampleLength() const {
 }
 
 
+GantryPos Wrapper::getDataForCurrentEntry(Gantry whichGantry ) const {
   if (!isFileOpen()) {
     throw new Exceptions::NoFileIsOpen();
   }
