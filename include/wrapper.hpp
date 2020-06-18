@@ -44,14 +44,15 @@
 
 namespace PTF {
 
-
 enum Gantry {
   Gantry0,
   Gantry1
 };
 
-
-struct PMTChannel {
+enum Temperature{	
+	T
+};
+struct PMTChannel { // We can acess the structure class with a . after
   int pmt;
   int channel;
 };
@@ -89,6 +90,11 @@ struct GantryPos {
   double phi;
 };
 
+struct Temperature_r {
+  double int_1;
+  double ext_1;
+  double ext_2;
+};
 
 struct Wrapper {
   Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, const std::vector<PMTChannel>& activeChannels, const std::vector<int>& phidgets);
@@ -133,6 +139,8 @@ public:
   GantryPos getDataForCurrentEntry(Gantry whichGantry) const;
 
   PhidgetReading getReadingForPhidget(int phidget) const;
+  
+  Temperature_r getReadingTemperature(Temperature whichtemperature) const;
 
 private:
   TFile* file{0};
@@ -147,6 +155,10 @@ private:
   
   GantryPos g0;
   GantryPos g1;
+  Temperature_r T_int;
+  Temperature_r T_ext1;
+  Temperature_r T_ext2;
+  
   unsigned long long    numEntries;
   unsigned long long    numSamples;
 

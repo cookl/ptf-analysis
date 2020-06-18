@@ -5,7 +5,7 @@ using namespace std;
 using namespace PTF;
 using namespace Private;
 
-
+//constructor of the class
 Wrapper::Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, const vector<PMTChannel>& activeChannels, const vector<int>& phidgets)
   : maxSamples(maxSamples), sampleSize(sampleSize)
 {
@@ -89,7 +89,6 @@ bool Wrapper::setDataPointers() {
   // Set phidget branches
   for (auto phidget : phidgetData) {
     snprintf(branchName, 64, PHIDGET_FORMAT_X, phidget.first);
-    phidget.second->branchX = nullptr;
     phidget.second->branchX = tree->GetBranch(branchName);
     phidget.second->branchX->SetAddress(&phidget.second->data.Bx);
 
@@ -107,6 +106,8 @@ bool Wrapper::setDataPointers() {
         || phidget.second->branchY == nullptr
         || phidget.second->branchZ == nullptr) {
       return false;
+  // Set temperature branch
+	  char branchName[]
     }
   }
 
@@ -118,7 +119,6 @@ bool Wrapper::setDataPointers() {
 
     *brNumSamples = tree->GetBranch("num_points");
 
-  g0X->SetAddress(&g0.x);
   g0Y->SetAddress(&g0.y);
   g0Z->SetAddress(&g0.z);
   g0Theta->SetAddress(&g0.theta);
@@ -131,7 +131,13 @@ bool Wrapper::setDataPointers() {
   g1Phi->SetAddress(&g1.phi);
 
   brNumSamples->SetAddress(&numSamples);
-
+  TBranch
+  *T_int = tree->GetBranch("int_temp"), *T_ext1 = tree->GetBranch("ext1_temp"), *T_ext2 = tree->GetBranch("ext2_temp"),
+  *braNumSamples = tree->GetBranch("num_points");
+  T_int->SetAddress(&T_int.int_1);
+  T_ext1->SetAddress(&T_ext1.ext_1);
+  T_ext2->SetAddress(&T_ext2.ext_2);
+  braNumSamples->SetAddress(&numSamples);
   return true;
 }
 
@@ -293,7 +299,6 @@ int Wrapper::getSampleLength() const {
 }
 
 
-GantryPos Wrapper::getDataForCurrentEntry(Gantry whichGantry) const {
   if (!isFileOpen()) {
     throw new Exceptions::NoFileIsOpen();
   }
@@ -314,3 +319,9 @@ PhidgetReading Wrapper::getReadingForPhidget(int phidget) const {
     return res->second->data;
   }
 }
+
+Temperature_r Wrapper::getReadingTemperature(Temperature) const {
+  if (!isFileOpen()) {
+    throw new Exceptions::NoFileIsOpen();
+  }
+  return whichtemperature == T ? T_int : T_ext1: T_ext2 ;
