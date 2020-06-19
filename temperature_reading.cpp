@@ -58,7 +58,7 @@ int main(int argc, char** argv) {
 
   unordered_set<int> skipLines = {};// {962,1923,2884,5240,6201,9611,10572,11533,12494,13455,15811,16771};
 
-  wrapper.openFile(root_f, "scan_tree");
+  wrapper.openFile(argv[1], "scan_tree");
 
   cerr << "Num entries: " << wrapper.getNumEntries() << endl << endl;
   
@@ -66,7 +66,7 @@ int main(int argc, char** argv) {
 
       auto reading  = wrapper.getReadingTemperature(PTF::T);
 
-      cerr << reading.int_1<<reading.ext_1<<reading,ext_2<<endl;
+      cerr << reading.int_1 << reading.ext_1 << reading.ext_2<<endl;
       
   }
 }

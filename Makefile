@@ -15,7 +15,7 @@ LDFLAGS=`root-config --glibs` -lHistPainter
 
 TARGET1=field_to_csv.cpp
 TARGET2=ptf_analysis.cpp
-TARGET3=ptf_ttree_analysis.cpp
+TARGET3=temperature_reading.cpp
 TARGET4=ptf_qe_analysis.cpp
 TARGET5=ptf_field_analysis.cpp
 TARGET6=ptf_charge_analysis.cpp

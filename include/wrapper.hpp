@@ -49,9 +49,9 @@ enum Gantry {
   Gantry1
 };
 
-enum Temperature{	
-	T
-};
+//enum Temperature{	
+//	T
+//};
 struct PMTChannel { // We can acess the structure class with a . after
   int pmt;
   int channel;
@@ -155,9 +155,7 @@ private:
   
   GantryPos g0;
   GantryPos g1;
-  Temperature_r T_int;
-  Temperature_r T_ext1;
-  Temperature_r T_ext2;
+  Temperature_r Temp;
   
   unsigned long long    numEntries;
   unsigned long long    numSamples;

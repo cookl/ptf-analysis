@@ -107,8 +107,7 @@ bool Wrapper::setDataPointers() {
         || phidget.second->branchY == nullptr
         || phidget.second->branchZ == nullptr) {
       return false;
-  // Set temperature branch
-	  char branchName[]
+	  
     }
   }
 
@@ -134,11 +133,12 @@ bool Wrapper::setDataPointers() {
 
   brNumSamples->SetAddress(&numSamples);
   TBranch
-  *T_int = tree->GetBranch("int_temp"), *T_ext1 = tree->GetBranch("ext1_temp"), *T_ext2 = tree->GetBranch("ext2_temp"),
-  *braNumSamples = tree->GetBranch("num_points");
-  T_int->SetAddress(&T_int.int_1);
-  T_ext1->SetAddress(&T_ext1.ext_1);
-  T_ext2->SetAddress(&T_ext2.ext_2);
+  	*T_int = tree->GetBranch("int_temp"), *T_ext1 = tree->GetBranch("ext1_temp"), *T_ext2 = tree->GetBranch("ext2_temp"),
+  	
+	*braNumSamples = tree->GetBranch("num_points");
+  T_int->SetAddress(&Temp.int_1);
+  T_ext1->SetAddress(&Temp.ext_1);
+  T_ext2->SetAddress(&Temp.ext_2);
   braNumSamples->SetAddress(&numSamples);
   return true;
 }
@@ -323,8 +323,9 @@ PhidgetReading Wrapper::getReadingForPhidget(int phidget) const {
   }
 }
 
-Temperature_r Wrapper::getReadingTemperature(Temperature) const {
+Temperature_r Wrapper::getReadingTemperature(double Temperature) const {
   if (!isFileOpen()) {
     throw new Exceptions::NoFileIsOpen();
   }
-  return whichtemperature == T ? T_int : T_ext1: T_ext2 ;
+  return Temp;
+}
