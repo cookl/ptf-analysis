@@ -13,6 +13,13 @@ void WaveformFitResult::Init(){
   fitstat=-1;
   fftmaxbin=-1; fftmaxval=0.;
   haswf=0; qped=0.; qsum=-999.;
+  numPulses = 0;
+  for(int i = 0; i < MAX_PULSES; i++){
+    pulseTimes[i] = 0.0;
+    pulseTimeErr[i] = 0.0;
+    pulseCharges[i] = 0.0;
+    pulseChargeErr[i] = 0.0;
+  }
 }
 
 const char * WaveformFitResult::GetRootString(){
@@ -46,6 +53,11 @@ const char * WaveformFitResult::GetRootString(){
   rootstring+=":haswf/I";
   rootstring+=":qped/F";
   rootstring+=":qsum/F";
+  rootstring+=":numPulses/I";
+  rootstring+=":pulseTimes[numPulses]/F";
+  rootstring+=":pulseTimeErr[numPulses]/F";
+  rootstring+=":pulseCharge[numPulses]/F";
+  rootstring+=":pulseChargeErr[numPulses]/F";
   return rootstring.c_str(); 
 }
 
@@ -79,6 +91,12 @@ void WaveformFitResult::MakeTTreeBranches(TTree * t){
   t->Branch( "haswf",     &haswf,     "haswf/I" );
   t->Branch( "qped",      &qped,      "qped/F" );
   t->Branch( "qsum",      &qsum,      "qsum/F" );
+  t->Branch( "numPulses", &numPulses, "numPulses/I" );
+  t->Branch( "pulseTimes",pulseTimes,"pulseTimes[numPulses]/F" );
+  t->Branch( "pulseTimeErr",pulseTimeErr,"pulseTimeErr[numPulses]/F" );
+  t->Branch( "pulseCharges",pulseCharges,"pulseCharges[numPulses]/F" );
+  t->Branch( "pulseChargeErr",pulseChargeErr,"pulseChargeErr[numPulses]/F" );
+  
   return;
 }
 
@@ -112,5 +130,10 @@ void WaveformFitResult::SetBranchAddresses(TTree * t){
   t->SetBranchAddress( "haswf",     &haswf );
   t->SetBranchAddress( "qped",      &qped );
   t->SetBranchAddress( "qsum",      &qsum );
+  t->SetBranchAddress( "numPulses", &numPulses );
+  t->SetBranchAddress( "pulseTimes", pulseTimes );
+  t->SetBranchAddress( "pulseTimeErr", pulseTimeErr );
+  t->SetBranchAddress( "pulseCharges", pulseCharges );
+  t->SetBranchAddress( "pulseChargeErr", pulseChargeErr );
   return;
 }
