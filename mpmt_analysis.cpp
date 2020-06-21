@@ -26,7 +26,8 @@
 ///    has one entry per scan-point
 /// 3. The now filled TTree of fitted waveform parameters is analyzed to make histograms
 ///     
-/// Author: Blair Jamieson (Sep. 2019) 
+/// Author: Blair Jamieson (Sep. 2019)
+/// Update by T. Lindner (June 2020) for mPMT analysis
 
 
 #include "wrapper.hpp"

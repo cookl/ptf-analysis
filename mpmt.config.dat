@@ -12,5 +12,5 @@ terminal_output = true
 
 # Turn on to pre-select waveforms to be fitted
 # Considerably speeds up analysis
-pulse_location_cut = true
+pulse_location_cut = false
 fft_cut = false
