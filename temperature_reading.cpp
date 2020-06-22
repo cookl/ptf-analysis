@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
     // Set style
   utils.set_style();
    
-  TFile * fin = new TFile( argv[1], "read" );
+  //TFile * fin = new TFile( argv[1], "read" );
   //string outname = string("output_0000") + argv[2] + ".root";
   //TFile * outFile = new TFile(outname.c_str(), "NEW");
 
@@ -63,8 +63,10 @@ int main(int argc, char** argv) {
   cerr << "Num entries: " << wrapper.getNumEntries() << endl << endl;
   
   for (unsigned int i = 0; i < wrapper.getNumEntries(); i++) {
-
-      auto reading  = wrapper.getReadingTemperature(PTF::T);
+	  
+	  wrapper.setCurrentEntry(i);
+      
+	  auto reading  = wrapper.getReadingTemperature();
 
       cerr << reading.int_1 << reading.ext_1 << reading.ext_2<<endl;
       
