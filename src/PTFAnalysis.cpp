@@ -287,7 +287,7 @@ void PTFAnalysis::FitWaveform( int wavenum, int nwaves, int pmt ) {
   }
 }
 
-PTFAnalysis::PTFAnalysis( TFile* outfile, PTF::Wrapper & wrapper, double errorbar, PTF::PMTChannel & channel, string config_file, bool savewf ){
+PTFAnalysis::PTFAnalysis( TFile* outfile, PTF::Wrapper & wrapper, double errorbar, PTF::PMT & pmt, string config_file, bool savewf ){
 
   // Load config file
   Configuration config;
@@ -330,20 +330,20 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, PTF::Wrapper & wrapper, double errorba
   hfftm = new TH1D( hname_fft.c_str(), "Fast Fourier Transform; Frequency; Coefficient", numTimeBins, -5.0e8, 5.0e8 );
   
   // set up the output TTree
-  string ptf_tree_name = "ptfanalysis" + std::to_string(channel.pmt);
+  string ptf_tree_name = "ptfanalysis" + std::to_string(pmt.pmt);
   ptf_tree = new TTree(ptf_tree_name.c_str(), ptf_tree_name.c_str());
   fitresult = new WaveformFitResult();
   fitresult->MakeTTreeBranches( ptf_tree );
 
   // Create output directories
   // Directories for waveforms
-  string wfdir_name = "PMT" + std::to_string(channel.pmt) + "_Waveforms";
-  string nowfdir_name = "PMT" + std::to_string(channel.pmt) + "_NoWaveforms";
+  string wfdir_name = "PMT" + std::to_string(pmt.pmt) + "_Waveforms";
+  string nowfdir_name = "PMT" + std::to_string(pmt.pmt) + "_NoWaveforms";
   if ( save_waveforms && wfdir==nullptr ) wfdir = outfile->mkdir(wfdir_name.c_str());
   if ( save_waveforms && nowfdir==nullptr ) nowfdir = outfile->mkdir(nowfdir_name.c_str());
   // Directories for FFTs
-  string wfdir_fft_name = "FFT" + std::to_string(channel.pmt) + "_Waveforms";
-  string nowfdir_fft_name = "FFT" + std::to_string(channel.pmt) + "_NoWaveforms";
+  string wfdir_fft_name = "FFT" + std::to_string(pmt.pmt) + "_Waveforms";
+  string nowfdir_fft_name = "FFT" + std::to_string(pmt.pmt) + "_NoWaveforms";
   if ( save_waveforms && wfdir_fft==nullptr ) wfdir_fft = outfile->mkdir(wfdir_fft_name.c_str());
   if ( save_waveforms && nowfdir_fft==nullptr ) nowfdir_fft = outfile->mkdir(nowfdir_fft_name.c_str());
   outfile->cd();
@@ -371,7 +371,7 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, PTF::Wrapper & wrapper, double errorba
     int numWaveforms = wrapper.getNumSamples();
     for ( int j=0; j<numWaveforms; j++) {
       //if( j>20 ) continue;
-      double* pmtsample=wrapper.getPmtSample( channel.pmt, j );
+      double* pmtsample=wrapper.getPmtSample( pmt.pmt, j );
       // set the contents of the histogram
       hwaveform->Reset();
       for ( int ibin=1; ibin <= numTimeBins; ++ibin ){
@@ -380,17 +380,17 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, PTF::Wrapper & wrapper, double errorba
       }
       InitializeFitResult( j, numWaveforms );
       // Do simple charge sum calculation
-      if( channel.pmt == 0 ) ChargeSum(8135.4);
+      if( pmt.pmt == 0 ) ChargeSum(8135.4);
       // For main PMT do FFT and check if there is a waveform
       // If a waveform present then fit it
       bool dofit = true;
-      if( dofit && pulse_location_cut && channel.pmt == 0 ) dofit = PulseLocationCut(10);
-      if( dofit && fft_cut && channel.pmt == 0 ) dofit = FFTCut();
-      //if( dofit && channel.pmt == 1 ) dofit = MonitorCut( 25. );
+      if( dofit && pulse_location_cut && pmt.pmt == 0 ) dofit = PulseLocationCut(10);
+      if( dofit && fft_cut && pmt.pmt == 0 ) dofit = FFTCut();
+      //if( dofit && pmt.pmt == 1 ) dofit = MonitorCut( 25. );
       if( dofit ){
-        FitWaveform( j, numWaveforms, channel.pmt ); // Fit waveform and copy fit results into TTree
+        FitWaveform( j, numWaveforms, pmt.pmt ); // Fit waveform and copy fit results into TTree
       }
-      fitresult->haswf = utils.HasWaveform( fitresult, channel.pmt );
+      fitresult->haswf = utils.HasWaveform( fitresult, pmt.pmt );
       ptf_tree->Fill();
       
       

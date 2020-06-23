@@ -102,24 +102,38 @@ Here is a brief overview of the data types you'll use (all in "wrapper.hpp", in 
 
 ```c++
 enum Gantry {
-  Gantry0,
-  Gantry1
+  Gantry0 = 0,
+  Gantry1 = 1
 };
 ```
 
 Just an enum for which gantry you want to reference.
 
-
-### PMT Channel (`struct PMTChannel`)
+### PMTType (`enum PMTType`)
 
 ```c++
-typedef struct PMTChannel {
+enum PMTType {
+  Hamamatsu_R3600_PMT = 0,
+  PTF_Monitor_PMT = 1,
+  PTF_Receiver_PMT = 2,
+  Hamamatsu_R12199_PMT = 3
+};
+```
+
+An enum for the PMT type
+
+
+### PMT (`struct PMT`)
+
+```c++
+typedef struct PMT {
   int pmt;
   int channel;
+  PMTType type;
 } PMTChannel;
 ```
 
-Represents a pair used to map PMTs to their channel. `int pmt` is the PMT's number, and `int channel` is the channel used to read the info.
+A structure which maps PMTs to their channel and type. `int pmt` is the PMT's number, `int channel` is the digitizer channel used to read the info, and `PMTType type` is the type of PMT.
 
 
 ### Phidget Reading (`struct PhidgetReading`)
@@ -155,9 +169,9 @@ Contains the position information for a gantry.
 
 Here are the methods of `PTF::Wrapper`:
 
-- `Wrapper(size_t maxSamples, size_t sampleSize, const std::vector<PMTChannel>& activeChannels, const std::vector<int>& phidgets, const std::vector<Gantry>& gantries)`
-    - Constructs a wrapper object and prepares to read the given channels and phidgets.
-- `Wrapper(size_t maxSamples, size_t sampleSize, const std::vector<PMTChannel>& activeChannels, const std::vector<int>& phidgets, const std::vector<Gantry>& gantries, const std::string& fileName, const std::string& treeName = "scan_tree")`
+- `Wrapper(size_t maxSamples, size_t sampleSize, const std::vector<PMT>& activePMTs, const std::vector<int>& phidgets, const std::vector<Gantry>& gantries)`
+    - Constructs a wrapper object and prepares to read the given PMTs and phidgets.
+- `Wrapper(size_t maxSamples, size_t sampleSize, const std::vector<PMT>& activePMTs, const std::vector<int>& phidgets, const std::vector<Gantry>& gantries, const std::string& fileName, const std::string& treeName = "scan_tree")`
     - Constructs a wrapper object like above, but immediately opens a file and loads a scan tree ("scan_tree" by default).
 - `void openFile(const std::string& fileName, const std::string& treeName = "scan_tree")`
     - Opens a file, as described above.

@@ -17,13 +17,13 @@
 
 using namespace std;
 
-/// This class takes a PTFWrapper reference, charge errorbar, and PMT channel as input
+/// This class takes a PTFWrapper reference, charge errorbar, and PMT as input
 /// It then does main analysis to fill a TTree of WaveformFitResults
 /// Has methods to later read back entries of the TTree
 /// Keeps track of number of Scan Points, and locations used find entries in TTree
 class PTFAnalysis {
 public:
-  PTFAnalysis( TFile * outfile, PTF::Wrapper & ptf, double errorbar, PTF::PMTChannel & channel, string config_file, bool savewf=false );
+  PTFAnalysis( TFile * outfile, PTF::Wrapper & ptf, double errorbar, PTF::PMT & pmt, string config_file, bool savewf=false );
   ~PTFAnalysis(){
     if ( fitresult ) delete fitresult;
   }

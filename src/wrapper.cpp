@@ -5,15 +5,16 @@ using namespace std;
 using namespace PTF;
 
 
-Wrapper::Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, const vector<PMTChannel>& activeChannels, const vector<int>& phidgets, const vector<Gantry>& gantries)
+Wrapper::Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, const vector<PMT>& activePMTs, const vector<int>& phidgets, const vector<Gantry>& gantries)
   : maxSamples(maxSamples), sampleSize(sampleSize)
 {
-  for (auto chPair : activeChannels) {
+  for (auto pmt : activePMTs) {
     double* data = new double[maxSamples * sampleSize];
     PMTSet* pmtSet  = new PMTSet();
-    pmtSet->channel = chPair.channel;
+    pmtSet->channel = pmt.channel;
+    pmtSet->type = pmt.type;
     pmtSet->data    = data;
-    pmtData[chPair.pmt] = pmtSet;
+    pmtData[pmt.pmt] = pmtSet;
   }
   for (auto phidget : phidgets) {
     PhidgetSet* pSet = new PhidgetSet();
@@ -27,8 +28,8 @@ Wrapper::Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, c
 }
 
 
-Wrapper::Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, const vector<PMTChannel>& activeChannels, const vector<int>& phidgets, const vector<Gantry>& gantries, const string& fileName, const string& treeName)
-  : Wrapper(maxSamples, sampleSize, activeChannels, phidgets, gantries) {
+Wrapper::Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, const vector<PMT>& activePMTs, const vector<int>& phidgets, const vector<Gantry>& gantries, const string& fileName, const string& treeName)
+  : Wrapper(maxSamples, sampleSize, activePMTs, phidgets, gantries) {
   openFile(fileName, treeName);
 }
 

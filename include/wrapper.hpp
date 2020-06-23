@@ -52,9 +52,18 @@ enum Gantry {
 };
 
 
-struct PMTChannel {
+enum PMTType {
+  Hamamatsu_R3600_PMT = 0,
+  PTF_Monitor_PMT = 1,
+  PTF_Receiver_PMT = 2,
+  Hamamatsu_R12199_PMT = 3
+};
+
+
+struct PMT {
   int pmt;
   int channel;
+  PMTType type;
 };
 
 
@@ -76,6 +85,7 @@ struct GantryData {
 
 struct PMTSet {
   int      channel;
+  PMTType  type;
   double*  data{nullptr};
   TBranch* branch{nullptr};
 
@@ -100,8 +110,8 @@ struct GantrySet {
 
 
 struct Wrapper {
-  Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, const std::vector<PMTChannel>& activeChannels, const std::vector<int>& phidgets, const std::vector<Gantry>& gantries);
-  Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, const std::vector<PMTChannel>& activeChannels, const std::vector<int>& phidgets, const std::vector<Gantry>& gantries, const std::string& fileName, const std::string& treeName = "scan_tree");
+  Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, const std::vector<PMT>& activePMTs, const std::vector<int>& phidgets, const std::vector<Gantry>& gantries);
+  Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, const std::vector<PMT>& activePMTs, const std::vector<int>& phidgets, const std::vector<Gantry>& gantries, const std::string& fileName, const std::string& treeName = "scan_tree");
   ~Wrapper();
 
 

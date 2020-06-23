@@ -7,9 +7,9 @@ using namespace std;
 
 
 int main(void) {
-  // decide which channels we'd like
-  vector<PTF::PMTChannel> channels = {
-    {1, 3} // this is saying we want pmt #1, which is on channel 3.
+  // decide which PMTs we'd like
+  vector<PTF::PMT> activePMTs = {
+    {0,0,PTF::Hamamatsu_R3600_PMT} // this is saying we want pmt #0, which is on channel 0 and is the SK PMT.
   };
 
   // decide which phidgets we'd like to read
@@ -20,9 +20,9 @@ int main(void) {
 
   // initialize the wrapper
   auto wrapper = PTF::Wrapper(
-    16384, // the maximum number of samples
-    34, // the size of one sample
-    channels,
+    6000, // the maximum number of samples
+    70, // the size of one sample
+    activePMTs,
     phidgets,
     gantries
   );
