@@ -281,6 +281,34 @@ void PTFAnalysis::FitWaveform( int wavenum, int nwaves, int pmt ) {
     fitresult->amp = amp;
     fitresult->mean = mean;
   }
+  else if( pmt == 2 ){ /// Add a new PMT type for the mPMT analysis.
+    if( fmygauss == nullptr ) fmygauss = new TF1("mygauss",pmt1_gaussian,255,290,4);
+    fmygauss->SetParameters( fitresult->amp, fitresult->mean, 1.0, fitresult->ped );
+    fmygauss->SetParNames( "Amplitude", "Mean", "Sigma", "Offset" );
+
+    fmygauss->SetParameter(0, 100.0);
+    fmygauss->SetParameter(1, 270.0 );
+    fmygauss->SetParameter(2, 1.4 );
+    fmygauss->SetParameter(3, 2040.0 );
+    fmygauss->SetParLimits(0, 0.0, 500.0);
+    fmygauss->SetParLimits(1, 265.0, 275.0 );
+    fmygauss->SetParLimits(2, 0.8, 2.0 );
+    fmygauss->SetParLimits(3, 2035.0, 2045.0 );
+
+    // then fit gaussian
+    int fitstat = hwaveform->Fit( fmygauss, "Q", "", 255, 290.0);
+
+    // collect fit results
+    fitresult->ped       = fmygauss->GetParameter(3);
+    fitresult->mean      = fmygauss->GetParameter(1);
+    fitresult->sigma     = fmygauss->GetParameter(2);
+    fitresult->amp       = fmygauss->GetParameter(0);
+    fitresult->chi2      = fmygauss->GetChisquare();
+    fitresult->ndof      = 30-4;
+    fitresult->prob      = TMath::Prob( fmygauss->GetChisquare(), 30-4 );
+    fitresult->fitstat   = fitstat;
+  }
+
   else{
     cout << "PTFAnalysis::FitWaveForm Error: PMT not 0 or 1!" << endl;
     exit( EXIT_FAILURE );
@@ -393,12 +421,11 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, PTF::Wrapper & wrapper, double errorba
       fitresult->haswf = utils.HasWaveform( fitresult, pmt.pmt );
       ptf_tree->Fill();
       
-      
       // check if we should clone waveform histograms
       if ( save_waveforms && savewf_count<500 && savenowf_count<500 ){
 	    if  ( fabs( curscanpoint.x() - 0.46 ) < 0.0005 && 
 	      fabs( curscanpoint.y() - 0.38 ) < 0.0005 ) {
-
+              
           std::string hwfname = "hwf_" + std::to_string( nfilled );
           std::string hfftmname = "hfftm_" + std::to_string( nfilled );
           if ( fitresult->haswf && savewf_count<500 ) {
