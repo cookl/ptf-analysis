@@ -140,6 +140,10 @@ bool Wrapper::setDataPointers() {
   T_ext1->SetAddress(&Temp.ext_1);
   T_ext2->SetAddress(&Temp.ext_2);
   braNumSamples->SetAddress(&numSamples);
+  TBranch
+      *Time_1=tree->GetBranch("time");
+      Time_1->SetAddress(&ti.time_c);
+
   return true;
 }
 
@@ -328,4 +332,13 @@ Temperature_r Wrapper::getReadingTemperature(double Temperature) const {
     throw new Exceptions::NoFileIsOpen();
   }
   return Temp;
+  
+}
+
+Timing Wrapper::getReadingTime() const {
+ if (!isFileOpen()) {
+    throw new Exceptions::NoFileIsOpen();
+  }
+  return ti;
+
 }

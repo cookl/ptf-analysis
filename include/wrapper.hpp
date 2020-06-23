@@ -96,6 +96,10 @@ struct Temperature_r {
   double ext_2;
 };
 
+struct Timing {
+   double time_c;
+};
+
 struct Wrapper {
   Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, const std::vector<PMTChannel>& activeChannels, const std::vector<int>& phidgets);
   Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, const std::vector<PMTChannel>& activeChannels, const std::vector<int>& phidgets, const std::string& fileName, const std::string& treeName = "scan_tree");
@@ -140,7 +144,9 @@ public:
 
   PhidgetReading getReadingForPhidget(int phidget) const;
   
-  Temperature_r getReadingTemperature(Temperature whichtemperature) const;
+  Temperature_r getReadingTemperature() const;
+  
+  Timing getReadingTime() const;
 
 private:
   TFile* file{0};
@@ -156,6 +162,7 @@ private:
   GantryPos g0;
   GantryPos g1;
   Temperature_r Temp;
+  Timing ti;
   
   unsigned long long    numEntries;
   unsigned long long    numSamples;

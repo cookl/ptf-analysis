@@ -334,7 +334,7 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, PTF::Wrapper & wrapper, double errorba
   ptf_tree = new TTree(ptf_tree_name.c_str(), ptf_tree_name.c_str());
   fitresult = new WaveformFitResult();
   fitresult->MakeTTreeBranches( ptf_tree );
-
+  //ptf_tree->Branch("TBranch", "Temperature2", &Temp.int_1);
   // Create output directories
   // Directories for waveforms
   string wfdir_name = "PMT" + std::to_string(channel.pmt) + "_Waveforms";
@@ -363,8 +363,11 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, PTF::Wrapper & wrapper, double errorba
     }
     wrapper.setCurrentEntry(i);
     auto location = wrapper.getDataForCurrentEntry(PTF::Gantry1);
+    auto T=wrapper.getReadingTemperature();
+    auto time_F=wrapper.getReadingTime();
+    scanpoints.push_back( ScanPoint( location.x, location.y, location.z,time_F.time_c,T.int_1, T.ext_1, T.ext_2, nfilled ) );
     
-    scanpoints.push_back( ScanPoint( location.x, location.y, location.z, nfilled ) );
+	
     ScanPoint& curscanpoint = scanpoints[ scanpoints.size()-1 ];
     
     // loop over the number of waveforms at this ScanPoint (index j)

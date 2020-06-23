@@ -379,6 +379,10 @@ int main( int argc, char* argv[] ) {
   
   //_________________________________________________________________________________________________________
   //Scatter plot to look at the correlation between the 2 PMT
+  
+  wrapper.openFile(argv[1], "scan_tree");
+  
+  
   TGraph* pmt_correlation=new TGraph(pmt1_qe_tot.size(),&pmt0_qe_tot[0],&pmt1_qe_tot[0]);
   pmt_correlation->GetXaxis()->SetTitle("PMT efficiency");//Create normal plot for all the corrected efficiency                                                                     
   pmt_correlation->GetYaxis()->SetTitle("Monitor PMT efficiency");
