@@ -135,16 +135,16 @@ typedef struct PhidgetReading {
 Data read for the phidget. Mostly you'll probably just want index 0 of each, which is the magnetic field.
 
 
-### Ganty Position (`struct GantryPos`)
+### Ganty Position (`struct GantryData`)
 
 ```c++
-typedef struct GantryPos {
+typedef struct GantryData {
   double x;
   double y;
   double z;
   double theta;
   double phi;
-} GantryPos;
+} GantryData;
 ```
 
 Contains the position information for a gantry.
@@ -155,9 +155,9 @@ Contains the position information for a gantry.
 
 Here are the methods of `PTF::Wrapper`:
 
-- `Wrapper(size_t maxSamples, size_t sampleSize, const std::vector<PMTChannel>& activeChannels, const std::vector<int>& phidgets)`
+- `Wrapper(size_t maxSamples, size_t sampleSize, const std::vector<PMTChannel>& activeChannels, const std::vector<int>& phidgets, const std::vector<Gantry>& gantries)`
     - Constructs a wrapper object and prepares to read the given channels and phidgets.
-- `Wrapper(size_t maxSamples, size_t sampleSize, const std::vector<PMTChannel>& activeChannels, const std::vector<int>& phidgets, const std::string& fileName, const std::string& treeName = "scan_tree")`
+- `Wrapper(size_t maxSamples, size_t sampleSize, const std::vector<PMTChannel>& activeChannels, const std::vector<int>& phidgets, const std::vector<Gantry>& gantries, const std::string& fileName, const std::string& treeName = "scan_tree")`
     - Constructs a wrapper object like above, but immediately opens a file and loads a scan tree ("scan_tree" by default).
 - `void openFile(const std::string& fileName, const std::string& treeName = "scan_tree")`
     - Opens a file, as described above.
@@ -181,7 +181,7 @@ Here are the methods of `PTF::Wrapper`:
     - Returns a pointer to an array of length `sampleSize` which is the sample for the PMT on the current entry. Throws `SampleOutOfRange` if the sample is too large, `InvalidPMT` if the PMT can't be found and `NoFileIsOpen` if no file is open.
 - `int getSampleLength() const`
     - Returns `sampleSize`.
-- `GantryPos getDataForCurrentEntry(Gantry whichGantry) const`
+- `GantryData getDataForCurrentEntry(Gantry whichGantry) const`
     - Gets gantry position info for a given gantry. Throws if no file is open.
 - `PhidgetReading getReadingFOrPhidget(int phidget) const`
     - Gets the phidget data for the given phidget and current entry. Throws `InvalidPhidget` if the phidget wasn't registered, and `NoFileIsOpen` if no file is open.

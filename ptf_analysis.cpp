@@ -84,7 +84,8 @@ int main(int argc, char** argv) {
   PTF::PMTChannel Channel0 = {0,0}; // only looking at one channel at a time
   PTF::PMTChannel Channel1 = {1,5}; // only looking at one channel at a time
   vector<PTF::PMTChannel> activeChannels = { Channel0, Channel1 }; // must be ordered {main,monitor}
-  PTF::Wrapper wrapper = PTF::Wrapper(6000, 70, activeChannels, phidgets);
+  vector<PTF::Gantry> gantries = {PTF::Gantry0, PTF::Gantry1};
+  PTF::Wrapper wrapper = PTF::Wrapper(6000, 70, activeChannels, phidgets, gantries);
   wrapper.openFile( string(argv[1]), "scan_tree");
   cerr << "Num entries: " << wrapper.getNumEntries() << endl << endl;
 

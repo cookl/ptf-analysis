@@ -15,12 +15,16 @@ int main(void) {
   // decide which phidgets we'd like to read
   vector<int> phidgets = {1, 3, 4};
 
+  // decide which gantries we'd like to include
+  vector<PTF::Gantry> gantries = {PTF::Gantry0, PTF::Gantry1};
+
   // initialize the wrapper
   auto wrapper = PTF::Wrapper(
     16384, // the maximum number of samples
     34, // the size of one sample
     channels,
-    phidgets
+    phidgets,
+    gantries
   );
 
   // now we can open our file
@@ -37,7 +41,7 @@ int main(void) {
     PhidgetReading phidgetReading = wrapper.getReadingForPhidget(3);
 
     // get data from gantry 1
-    GantryPos gantryData = wrapper.getDataForCurrentEntry(PTF::Gantry1);
+    GantryData gantryData = wrapper.getDataForCurrentEntry(PTF::Gantry1);
 
     // see how many samples there are for the current entry
     auto numSamples = wrapper.getNumSamples();
