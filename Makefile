@@ -20,6 +20,7 @@ TARGET4=ptf_qe_analysis.cpp
 TARGET5=ptf_field_analysis.cpp
 TARGET6=ptf_charge_analysis.cpp
 TARGET7=ptf_timing_analysis.cpp
+TARGET8=mpmt_analysis.cpp
 
 EXECUTABLE1=$(TARGET1:%.cpp=$(BINDIR)/%.app)
 EXECUTABLE2=$(TARGET2:%.cpp=$(BINDIR)/%.app)
@@ -28,6 +29,7 @@ EXECUTABLE4=$(TARGET4:%.cpp=$(BINDIR)/%.app)
 EXECUTABLE5=$(TARGET5:%.cpp=$(BINDIR)/%.app)
 EXECUTABLE6=$(TARGET6:%.cpp=$(BINDIR)/%.app)
 EXECUTABLE7=$(TARGET7:%.cpp=$(BINDIR)/%.app)
+EXECUTABLE8=$(TARGET8:%.cpp=$(BINDIR)/%.app)
 
 FILES= $(wildcard $(SRCDIR)/*.cpp)
 SOURCES=$(FILES)
@@ -41,8 +43,9 @@ OBJ4=$(TARGET4:%.cpp=${OBJDIR}/%.o) $(OBJECTS)
 OBJ5=$(TARGET5:%.cpp=${OBJDIR}/%.o) $(OBJECTS)
 OBJ6=$(TARGET6:%.cpp=${OBJDIR}/%.o) $(OBJECTS)
 OBJ7=$(TARGET7:%.cpp=${OBJDIR}/%.o) $(OBJECTS)
+OBJ8=$(TARGET8:%.cpp=${OBJDIR}/%.o) $(OBJECTS)
 
-all: MESSAGE $(EXECUTABLE1) $(EXECUTABLE2) $(EXECUTABLE3) $(EXECUTABLE4) $(EXECUTABLE5) $(EXECUTABLE6) $(EXECUTABLE7)
+all: MESSAGE $(EXECUTABLE1) $(EXECUTABLE2) $(EXECUTABLE3) $(EXECUTABLE4) $(EXECUTABLE5) $(EXECUTABLE6) $(EXECUTABLE7) $(EXECUTABLE8)
 
 MESSAGE:
 	@echo '**********************************************************************'
@@ -75,6 +78,9 @@ $(EXECUTABLE6): $(OBJECTS) $(OBJ6)
 	$(CXX) $^ -o $@ $(LDFLAGS)
 
 $(EXECUTABLE7): $(OBJECTS) $(OBJ7)
+	$(CXX) $^ -o $@ $(LDFLAGS)
+
+$(EXECUTABLE8): $(OBJECTS) $(OBJ8)
 	$(CXX) $^ -o $@ $(LDFLAGS)
 
 $(OBJDIR)/%.o: %.cpp
