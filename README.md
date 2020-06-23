@@ -77,6 +77,11 @@ The `run_number` argument is to produce an output file with a name specific to t
 
 The `field_to_csv` analysis reads the magnetic field values from the Phidgets and outputs them to a csv file for analysis by the python scripts in the `magnetic-field` directory.  
 
+The `mpmt_analysis` executable fits the mPMT PMT waveforms and produces a ROOT file that contains a TTree with the fitted parameter values. The fitted parameter values can then be analysed by the further executables. The command to run the code from the root directory is:  
+`./bin/mpmt_analysis.dat filename.root run_number mpmt.config.dat`  
+The `run_number` argument is to produce an output file with a name specific to the run.  
+
+
 ## The different classes
 
 These are the classes that are most important to understand.
