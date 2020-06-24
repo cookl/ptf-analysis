@@ -26,17 +26,18 @@
 ///                           pmt seems to be an arbitrary number of user 
 ///                           channel is the PMT channel in the data (digitizer channel)
 ///
-/// PTF::PhigetReading        Holds magnetic field readings (why 10 of them?)
+/// PTF::PhigetReading        Holds magnetic field readings
 ///
-/// PTF::Private::PMTSet      Is it private because its internally used?
-///                           Holds PMT data as pointer to array of doubles, and branch from input
+/// PTF::GantryData           Holds gantry data
 ///
-/// PTF::Private::PhigetSet   Holds one phiget location x,y,z,theta,phi
+/// PTF::PMTSet               Holds PMT data as pointer to array of doubles, and branch from input
+///
+/// PTF::PhigetSet            Holds one phidget reading, and branches from input
+///
+/// PTF::GantrySet            Holds one GantryData object, and branches from input
 ///
 /// PTF::Wrapper              Main helper class for accessing the PTF data
 ///                           See comments on public methods for help
-///
-/// Comments added by Blair
 
 // using namespace std;
 // using namespace boost;
@@ -46,14 +47,24 @@ namespace PTF {
 
 
 enum Gantry {
-  Gantry0,
-  Gantry1
+  Gantry0 = 0,
+  Gantry1 = 1
 };
 
 
-struct PMTChannel {
+enum PMTType {
+  Hamamatsu_R3600_PMT = 0,
+  PTF_Monitor_PMT = 1,
+  PTF_Receiver_PMT = 2,
+  mPMT_REV0_PMT = 3,
+  mPMT_Monitor_PMT = 4
+};
+
+
+struct PMT {
   int pmt;
   int channel;
+  PMTType type;
 };
 
 
@@ -64,24 +75,7 @@ struct PhidgetReading {
 };
 
 
-namespace Private {
-  struct PMTSet {
-    int      channel;
-    double*  data{nullptr};
-    TBranch* branch{nullptr};
-
-  };
-
-  struct PhidgetSet {
-    PhidgetReading data;
-    TBranch*       branchX{nullptr};
-    TBranch*       branchY{nullptr};
-    TBranch*       branchZ{nullptr};
-  };
-}
-
-
-struct GantryPos {
+struct GantryData {
   double x;
   double y;
   double z;
@@ -90,9 +84,35 @@ struct GantryPos {
 };
 
 
+struct PMTSet {
+  int      channel;
+  PMTType  type;
+  double*  data{nullptr};
+  TBranch* branch{nullptr};
+
+};
+
+struct PhidgetSet {
+  PhidgetReading data;
+  TBranch*       branchX{nullptr};
+  TBranch*       branchY{nullptr};
+  TBranch*       branchZ{nullptr};
+};
+
+struct GantrySet {
+  Gantry     gantry;
+  GantryData data;
+  TBranch*   branchX{nullptr};
+  TBranch*   branchY{nullptr};
+  TBranch*   branchZ{nullptr};
+  TBranch*   branchTheta{nullptr};
+  TBranch*   branchPhi{nullptr};
+};
+
+
 struct Wrapper {
-  Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, const std::vector<PMTChannel>& activeChannels, const std::vector<int>& phidgets);
-  Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, const std::vector<PMTChannel>& activeChannels, const std::vector<int>& phidgets, const std::string& fileName, const std::string& treeName = "scan_tree");
+  Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, const std::vector<PMT>& activePMTs, const std::vector<int>& phidgets, const std::vector<Gantry>& gantries);
+  Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, const std::vector<PMT>& activePMTs, const std::vector<int>& phidgets, const std::vector<Gantry>& gantries, const std::string& fileName, const std::string& treeName = "scan_tree");
   ~Wrapper();
 
 
@@ -130,7 +150,7 @@ public:
   // Returns the length of the samples
   int getSampleLength() const;
 
-  GantryPos getDataForCurrentEntry(Gantry whichGantry) const;
+  GantryData getDataForCurrentEntry(Gantry whichGantry) const;
 
   PhidgetReading getReadingForPhidget(int phidget) const;
 
@@ -142,11 +162,10 @@ private:
   unsigned long long entry{ULONG_MAX};
 
   // data
-  std::unordered_map<int, Private::PMTSet*>     pmtData;
-  std::unordered_map<int, Private::PhidgetSet*> phidgetData;
+  std::unordered_map<int, PMTSet*>     pmtData;
+  std::unordered_map<int, PhidgetSet*> phidgetData;
+  std::unordered_map<int, GantrySet*>  gantryData;
   
-  GantryPos g0;
-  GantryPos g1;
   unsigned long long    numEntries;
   unsigned long long    numSamples;
 
@@ -201,6 +220,11 @@ namespace Exceptions {
   class InvalidPMT : public std::runtime_error {
   public:
     InvalidPMT() : runtime_error("No such PMT.") {}
+  };
+
+  class InvalidGantry : public std::runtime_error {
+  public:
+    InvalidGantry() : runtime_error("No such gantry.") {}
   };
 
   class DataPointerError : public std::runtime_error {
