@@ -3,28 +3,33 @@
 
 using namespace std;
 using namespace PTF;
-using namespace Private;
 
 
-Wrapper::Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, const vector<PMTChannel>& activeChannels, const vector<int>& phidgets)
+Wrapper::Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, const vector<PMT>& activePMTs, const vector<int>& phidgets, const vector<Gantry>& gantries)
   : maxSamples(maxSamples), sampleSize(sampleSize)
 {
-  for (auto chPair : activeChannels) {
+  for (auto pmt : activePMTs) {
     double* data = new double[maxSamples * sampleSize];
     PMTSet* pmtSet  = new PMTSet();
-    pmtSet->channel = chPair.channel;
+    pmtSet->channel = pmt.channel;
+    pmtSet->type = pmt.type;
     pmtSet->data    = data;
-    pmtData[chPair.pmt] = pmtSet;
+    pmtData[pmt.pmt] = pmtSet;
   }
   for (auto phidget : phidgets) {
     PhidgetSet* pSet = new PhidgetSet();
     phidgetData[phidget] = pSet;
   }
+  for (auto gantry : gantries) {
+    GantrySet* gSet = new GantrySet();
+    gSet->gantry = gantry;
+    gantryData[gantry] = gSet;
+  }
 }
 
 
-Wrapper::Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, const vector<PMTChannel>& activeChannels, const vector<int>& phidgets, const string& fileName, const string& treeName)
-  : Wrapper(maxSamples, sampleSize, activeChannels, phidgets) {
+Wrapper::Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, const vector<PMT>& activePMTs, const vector<int>& phidgets, const vector<Gantry>& gantries, const string& fileName, const string& treeName)
+  : Wrapper(maxSamples, sampleSize, activePMTs, phidgets, gantries) {
   openFile(fileName, treeName);
 }
 
@@ -41,6 +46,11 @@ Wrapper::~Wrapper() {
   for (auto phidget : phidgetData) {
     delete phidget.second;
   }
+
+  for (auto gantry : gantryData) {
+    delete gantry.second;
+  }
+
   if (tree) {
     unsetDataPointers();
     delete tree;
@@ -110,25 +120,43 @@ bool Wrapper::setDataPointers() {
     }
   }
 
-  TBranch
-    *g0X = tree->GetBranch("gantry0_x"), *g0Y = tree->GetBranch("gantry0_y"), *g0Z = tree->GetBranch("gantry0_z"),
-      *g0Theta = tree->GetBranch("gantry0_rot"), *g0Phi = tree->GetBranch("gantry0_tilt"),
-    *g1X = tree->GetBranch("gantry1_x"), *g1Y = tree->GetBranch("gantry1_y"), *g1Z = tree->GetBranch("gantry1_z"),
-      *g1Theta = tree->GetBranch("gantry1_rot"), *g1Phi = tree->GetBranch("gantry1_tilt"),
+  // Set gantry branches
+  for (auto gantry : gantryData) {
+    snprintf(branchName, 64, GANTRY_FORMAT_X, (int)gantry.second->gantry);
+    gantry.second->branchX = nullptr;
+    gantry.second->branchX = tree->GetBranch(branchName);
+    gantry.second->branchX->SetAddress(&gantry.second->data.x);
 
-    *brNumSamples = tree->GetBranch("num_points");
+    snprintf(branchName, 64, GANTRY_FORMAT_Y, (int)gantry.second->gantry);
+    gantry.second->branchY = nullptr;
+    gantry.second->branchY = tree->GetBranch(branchName);
+    gantry.second->branchY->SetAddress(&gantry.second->data.y);
 
-  g0X->SetAddress(&g0.x);
-  g0Y->SetAddress(&g0.y);
-  g0Z->SetAddress(&g0.z);
-  g0Theta->SetAddress(&g0.theta);
-  g0Phi->SetAddress(&g0.phi);
+    snprintf(branchName, 64, GANTRY_FORMAT_Z, (int)gantry.second->gantry);
+    gantry.second->branchZ = nullptr;
+    gantry.second->branchZ = tree->GetBranch(branchName);
+    gantry.second->branchZ->SetAddress(&gantry.second->data.z);
 
-  g1X->SetAddress(&g1.x);
-  g1Y->SetAddress(&g1.y);
-  g1Z->SetAddress(&g1.z);
-  g1Theta->SetAddress(&g1.theta);
-  g1Phi->SetAddress(&g1.phi);
+    snprintf(branchName, 64, GANTRY_FORMAT_THETA, (int)gantry.second->gantry);
+    gantry.second->branchTheta = nullptr;
+    gantry.second->branchTheta = tree->GetBranch(branchName);
+    gantry.second->branchTheta->SetAddress(&gantry.second->data.theta);
+
+    snprintf(branchName, 64, GANTRY_FORMAT_PHI, (int)gantry.second->gantry);
+    gantry.second->branchPhi = nullptr;
+    gantry.second->branchPhi = tree->GetBranch(branchName);
+    gantry.second->branchPhi->SetAddress(&gantry.second->data.phi);
+
+    if (gantry.second->branchX == nullptr
+        || gantry.second->branchY == nullptr
+        || gantry.second->branchZ == nullptr
+        || gantry.second->branchTheta == nullptr
+        || gantry.second->branchPhi == nullptr) {
+      return false;
+    }
+  }
+
+  TBranch* brNumSamples = tree->GetBranch("num_points");
 
   brNumSamples->SetAddress(&numSamples);
 
@@ -141,23 +169,21 @@ bool Wrapper::unsetDataPointers() {
     return false;
   
   for (auto pmt : pmtData) {
-    // if (pmt.second.branch)
-    //   delete pmt.second.branch;
     pmt.second->branch = nullptr;
   }
 
   for (auto phidget : phidgetData) {
-    // if (phidget.second.branchX)
-    //   delete phidget.second.branchX;
     phidget.second->branchX = nullptr;
-
-    // if (phidget.second.branchY)
-    //   delete phidget.second.branchY;
     phidget.second->branchY= nullptr;
-
-    // if (phidget.second.branchZ)
-    //   delete phidget.second.branchZ;
     phidget.second->branchZ = nullptr;
+  }
+
+  for (auto gantry : gantryData) {
+    gantry.second->branchX = nullptr;
+    gantry.second->branchY= nullptr;
+    gantry.second->branchZ = nullptr;
+    gantry.second->branchTheta = nullptr;
+    gantry.second->branchPhi = nullptr;
   }
 
   return true;
@@ -293,12 +319,17 @@ int Wrapper::getSampleLength() const {
 }
 
 
-GantryPos Wrapper::getDataForCurrentEntry(Gantry whichGantry) const {
+GantryData Wrapper::getDataForCurrentEntry(Gantry whichGantry) const {
   if (!isFileOpen()) {
     throw new Exceptions::NoFileIsOpen();
   }
-
-  return whichGantry == Gantry0 ? g0 : g1;
+  auto res = gantryData.find(whichGantry);
+  if (res == gantryData.end()) {
+    throw new Exceptions::InvalidGantry();
+  }
+  else {
+    return res->second->data;
+  }
 }
 
 
