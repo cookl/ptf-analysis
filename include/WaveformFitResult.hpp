@@ -4,6 +4,8 @@
 #include "TTree.h"
 #include <string>
 
+#define MAX_PULSES 10
+
 /// Structure to hold information about one waveform fit
 /// It is of the form that it can be used to set up a TTree readout
 class WaveformFitResult {
@@ -44,6 +46,13 @@ public:
   int   haswf;      //< 1 if has a pulse, 0 if not
   float qped;       //< fixed pedestal
   float qsum;       //< charge sum
+
+  int numPulses; //< number of pulses found in waveform
+  float pulseTimes[MAX_PULSES]; // Pulse times
+  float pulseTimeErr[MAX_PULSES]; // Pulse time errors
+  float pulseCharges[MAX_PULSES]; // Pulse charges
+  float pulseChargeErr[MAX_PULSES]; // Pulse charge errors
+
 
 private:
   // hold copy of string needed for making TTree

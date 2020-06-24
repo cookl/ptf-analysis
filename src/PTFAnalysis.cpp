@@ -2,6 +2,7 @@
 #include "Configuration.hpp"
 #include "Utilities.hpp"
 #include "TVirtualFFT.h"
+#include "PulseFinding.hpp"
 
 #include "TH2D.h"
 
@@ -322,6 +323,7 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, PTF::Wrapper & wrapper, double errorba
   bool terminal_output;
   bool pulse_location_cut;
   bool fft_cut;
+  bool do_pulse_finding;
 
   config.Load(config_file);
   if( !config.Get("terminal_output", terminal_output) ){
@@ -335,6 +337,10 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, PTF::Wrapper & wrapper, double errorba
   if( !config.Get("fft_cut", fft_cut) ){
     cout << "Missing fft_cut parameter from config file." << endl;
     exit( EXIT_FAILURE );
+  }
+  if( !config.Get("do_pulse_finding", do_pulse_finding) ){
+    cout << "Disabling pulse finding." << std::endl;
+    do_pulse_finding = false;
   }
 
   static int instance_count =0;
@@ -407,6 +413,14 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, PTF::Wrapper & wrapper, double errorba
 	    hwaveform->SetBinError( ibin, errorbar );
       }
       InitializeFitResult( j, numWaveforms );
+      
+      // Do pulse finding (if requested)
+      if(do_pulse_finding){
+        find_pulses(0, hwaveform, fitresult);
+      }else{
+        fitresult->numPulses = 0;
+      }
+        
       // Do simple charge sum calculation
       if( pmt.pmt == 0 ) ChargeSum(8135.4);
       // For main PMT do FFT and check if there is a waveform
