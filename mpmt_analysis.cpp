@@ -83,7 +83,7 @@ int main(int argc, char** argv) {
 
   // Set up PTF Wrapper
   vector<int> phidgets = {0, 1, 3};
-  PTF::PMT PMT0 = {2,0,PTF::Hamamatsu_R12199_PMT}; // only looking at one pmt at a time
+  PTF::PMT PMT0 = {2,0,PTF::mPMT_REV0_PMT}; // only looking at one pmt at a time
   PTF::PMT PMT1 = {1,1,PTF::mPMT_Monitor_PMT}; // only looking at one pmt at a time
   vector<PTF::PMT> activePMTs = { PMT0, PMT1 }; // must be ordered {main,monitor}
   vector<PTF::Gantry> gantries = {PTF::Gantry0, PTF::Gantry1};
