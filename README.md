@@ -121,8 +121,8 @@ enum PMTType {
   Hamamatsu_R3600_PMT = 0,
   PTF_Monitor_PMT = 1,
   PTF_Receiver_PMT = 2,
-  Hamamatsu_R12199_PMT = 3,
-  mPMT_Monitor_PMT
+  mPMT_REV0_PMT = 3,
+  mPMT_Monitor_PMT = 4
 };
 ```
 
