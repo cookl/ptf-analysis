@@ -24,7 +24,7 @@ int main(int argc, char** argv) {
 
   vector<PTF::Gantry> gantries = {PTF::Gantry0, PTF::Gantry1};
 
-  PTF::Wrapper wrapper = PTF::Wrapper(16384, 70, activePMTs, phidgets, gantries);
+  PTF::Wrapper wrapper = PTF::Wrapper(16384, 70, activePMTs, phidgets, gantries, PTF::PTF_CAEN_V1730);
 
   unordered_set<int> skipLines = {};// {962,1923,2884,5240,6201,9611,10572,11533,12494,13455,15811,16771};
 

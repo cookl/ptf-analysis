@@ -87,7 +87,7 @@ int main(int argc, char** argv) {
   PTF::PMT PMT1 = {1,1,PTF::mPMT_Monitor_PMT}; // only looking at one pmt at a time
   vector<PTF::PMT> activePMTs = { PMT0, PMT1 }; // must be ordered {main,monitor}
   vector<PTF::Gantry> gantries = {PTF::Gantry0, PTF::Gantry1};
-  PTF::Wrapper wrapper = PTF::Wrapper(1, 1024, activePMTs, phidgets, gantries);
+  PTF::Wrapper wrapper = PTF::Wrapper(1, 1024, activePMTs, phidgets, gantries, PTF::mPMT_DIGITIZER);
   std::cout << "Open file: " << std::endl;
   wrapper.openFile( string(argv[1]), "scan_tree");
   cerr << "Num entries: " << wrapper.getNumEntries() << endl << endl;
@@ -101,13 +101,13 @@ int main(int argc, char** argv) {
   //std::cout << "Using errorbar size " << errbars0->get_errorbar() << std::endl;
   
   // Do analysis of waveforms for each scanpoint
-  PTFAnalysis *analysis0 = new PTFAnalysis( outFile, wrapper, 4.4/*errbars0->get_errorbar()*/, PMT0, string(argv[3]), true );
+  PTFAnalysis *analysis0 = new PTFAnalysis( outFile, wrapper, 5.4e-4/*errbars0->get_errorbar()*/, PMT0, string(argv[3]), true );
   analysis0->write_scanpoints();
 
   // Switch PMT to monitor PMT
   
   // Do analysis of waveforms for each scanpoint
-  PTFAnalysis *analysis1 = new PTFAnalysis( outFile, wrapper, 4.4/*errbars1->get_errorbar()*/, PMT1, string(argv[3]), true );
+  PTFAnalysis *analysis1 = new PTFAnalysis( outFile, wrapper, 5.4e-4/*errbars1->get_errorbar()*/, PMT1, string(argv[3]), true );
   
   // Do quantum efficiency analysis
   // This is now also done in a separate analysis script (including temperature corrections)
