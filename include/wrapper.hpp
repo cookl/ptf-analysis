@@ -110,9 +110,23 @@ struct GantrySet {
 };
 
 
+enum DigitizerModel {
+  PTF_CAEN_V1730 = 0,
+  mPMT_DIGITIZER = 1
+};
+
+
+struct Digitizer {
+  DigitizerModel model;
+  int samplingRate;
+  double fullScaleRange;
+  int resolution;
+};
+
+
 struct Wrapper {
-  Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, const std::vector<PMT>& activePMTs, const std::vector<int>& phidgets, const std::vector<Gantry>& gantries);
-  Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, const std::vector<PMT>& activePMTs, const std::vector<int>& phidgets, const std::vector<Gantry>& gantries, const std::string& fileName, const std::string& treeName = "scan_tree");
+  Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, const std::vector<PMT>& activePMTs, const std::vector<int>& phidgets, const std::vector<Gantry>& gantries, DigitizerModel digi);
+  Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, const std::vector<PMT>& activePMTs, const std::vector<int>& phidgets, const std::vector<Gantry>& gantries, DigitizerModel digi, const std::string& fileName, const std::string& treeName = "scan_tree");
   ~Wrapper();
 
 
@@ -154,6 +168,8 @@ public:
 
   PhidgetReading getReadingForPhidget(int phidget) const;
 
+  Digitizer getDigitizerSettings() const {return digiData;}
+
 private:
   TFile* file{0};
   TTree* tree{0};
@@ -165,6 +181,7 @@ private:
   std::unordered_map<int, PMTSet*>     pmtData;
   std::unordered_map<int, PhidgetSet*> phidgetData;
   std::unordered_map<int, GantrySet*>  gantryData;
+  Digitizer digiData;
   
   unsigned long long    numEntries;
   unsigned long long    numSamples;
