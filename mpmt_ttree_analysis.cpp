@@ -23,15 +23,16 @@ int main( int argc, char* argv[] ) {
   
   std::cout << "Looping tree " << std::endl;
   // Loop the first scan point and print something
-  for(int i = 0; i < 10; i++){
+  for(int i = 0; i < tt->GetEntries(); i++){
     tt->GetEvent(i );
-    std::cout <<"iev = "<<i
-	      <<" scanpt="<<wf->scanpt
-	      <<" amp="<<wf->amp
-	      <<" iswf="<<wf->haswf
-              <<" npulses="<<wf->numPulses
-              <<" pulsetime="<<wf->pulseTimes[0]
-              <<std::endl;
+    std::cout  <<" number of found pulses="<<wf->numPulses << std::endl;
+    if(wf->numPulses > 0){
+      for(int i = 0; i < wf->numPulses; i++){
+        std::cout <<" pulse " << i << " has time = "<<wf->pulseTimes[i]
+                  << " ns " <<  std::endl;
+      }
+
+    }
 
   }
       
