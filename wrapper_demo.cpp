@@ -24,7 +24,8 @@ int main(void) {
     70, // the size of one sample
     activePMTs,
     phidgets,
-    gantries
+    gantries,
+    PTF::PTF_CAEN_V1730 // which digitizer to use
   );
 
   // now we can open our file

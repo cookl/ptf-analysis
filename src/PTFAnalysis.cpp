@@ -9,6 +9,7 @@
 #include <iostream>
 #include <ostream>
 #include <fstream>
+#include <math.h>
 
 void PTFAnalysis::ChargeSum( float ped ){
   fitresult->qped = ped;
@@ -352,6 +353,10 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, PTF::Wrapper & wrapper, double errorba
   // Get utilities
   Utilities utils;
 
+  // Get digitizer settings
+  PTF::Digitizer digi = wrapper.getDigitizerSettings();
+  double digiCounts = pow(2.0, digi.resolution);
+
   // get length of waveforms
   wrapper.setCurrentEntry(0);
   int  numTimeBins= wrapper.getSampleLength();
@@ -360,7 +365,7 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, PTF::Wrapper & wrapper, double errorba
   std::string hname = "hwaveform" + std::to_string(instance_count);
   std::string hname_fft = "hfftm" + std::to_string(instance_count);
   outfile->cd();
-  hwaveform = new TH1D( hname.c_str(), "Pulse waveform; Time bin (tdc clock ticks); Charge (adc units)", numTimeBins, 0., float(numTimeBins) );
+  hwaveform = new TH1D( hname.c_str(), "Pulse waveform; Time (ns); Voltage (V)", numTimeBins, 0., float(numTimeBins)*1000/digi.samplingRate );
   hfftm = new TH1D( hname_fft.c_str(), "Fast Fourier Transform; Frequency; Coefficient", numTimeBins, -5.0e8, 5.0e8 );
   
   // set up the output TTree
@@ -412,6 +417,7 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, PTF::Wrapper & wrapper, double errorba
         hwaveform->SetBinContent( ibin, pmtsample[ibin-1] );
 	    hwaveform->SetBinError( ibin, errorbar );
       }
+      hwaveform->Scale(digi.fullScaleRange/digiCounts);
       InitializeFitResult( j, numWaveforms );
       
       // Do pulse finding (if requested)
