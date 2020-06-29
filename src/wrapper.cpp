@@ -5,7 +5,7 @@ using namespace std;
 using namespace PTF;
 
 
-Wrapper::Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, const vector<PMT>& activePMTs, const vector<int>& phidgets, const vector<Gantry>& gantries)
+Wrapper::Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, const vector<PMT>& activePMTs, const vector<int>& phidgets, const vector<Gantry>& gantries, DigitizerModel digi)
   : maxSamples(maxSamples), sampleSize(sampleSize)
 {
   for (auto pmt : activePMTs) {
@@ -25,11 +25,22 @@ Wrapper::Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, c
     gSet->gantry = gantry;
     gantryData[gantry] = gSet;
   }
+  digiData.model = digi;
+  switch( digi ) {
+    case PTF_CAEN_V1730:
+      digiData.samplingRate = PTF_CAEN_V1730_SAMPLE_RATE;
+      digiData.fullScaleRange = PTF_CAEN_V1730_FULL_SCALE_RANGE;
+      digiData.resolution = PTF_CAEN_V1730_RESOLUTION;
+    case mPMT_DIGITIZER:
+      digiData.samplingRate = mPMT_DIGITIZER_SAMPLE_RATE;
+      digiData.fullScaleRange = mPMT_DIGITIZER_FULL_SCALE_RANGE;
+      digiData.resolution = mPMT_DIGITIZER_RESOLUTION;
+  }
 }
 
 
-Wrapper::Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, const vector<PMT>& activePMTs, const vector<int>& phidgets, const vector<Gantry>& gantries, const string& fileName, const string& treeName)
-  : Wrapper(maxSamples, sampleSize, activePMTs, phidgets, gantries) {
+Wrapper::Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, const vector<PMT>& activePMTs, const vector<int>& phidgets, const vector<Gantry>& gantries, DigitizerModel digi, const string& fileName, const string& treeName)
+  : Wrapper(maxSamples, sampleSize, activePMTs, phidgets, gantries, digi) {
   openFile(fileName, treeName);
 }
 
