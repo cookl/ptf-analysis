@@ -94,7 +94,7 @@ int main( int argc, char* argv[] ) {
     os_title<<"; T (ns) for X="<<fixed<<setprecision(3)<<scanpoints[iscan].x()<<" Y="<<scanpoints[iscan].y();
     os_title<<"; Counts/bin";
     if (iscan%1000==0) std::cout<<"Scan point "<<iscan<<" creating histogram: "<<os_title.str()<<std::endl;
-    TH1D* htmp = new TH1D( os_name.str().c_str(), os_title.str().c_str(), 15, 20., 50. ) ;
+    TH1D* htmp = new TH1D( os_name.str().c_str(), os_title.str().c_str(), 15, 40., 100. ) ;
     htmp->SetDirectory( dirscanpt );
     h_pmt0_tscanpt.push_back( htmp );
 
@@ -104,7 +104,7 @@ int main( int argc, char* argv[] ) {
     os_title<<"PMT1: Time for signal, scan point "<<iscan;
     os_title<<"; T (ns) for X="<<fixed<<setprecision(3)<<scanpoints[iscan].x()<<" Y="<<scanpoints[iscan].y();
     os_title<<"; Counts/bin";
-    htmp = new TH1D( os_name.str().c_str(), os_title.str().c_str(), 15, 20., 50. ) ;
+    htmp = new TH1D( os_name.str().c_str(), os_title.str().c_str(), 15, 40., 100. ) ;
     htmp->SetDirectory( dirscanpt );
     h_pmt1_tscanpt.push_back( htmp );
   }
@@ -171,15 +171,15 @@ int main( int argc, char* argv[] ) {
     //std::cout<<"Fitting "<<fname.str()
 	//     <<" with "<<h_pmt0_tscanpt[iscan]->GetEntries()
 	//     <<std::endl;
-    TF1* ftmp = new TF1( fname.str().c_str(), my_gaussian, 20., 50., 3 );
+    TF1* ftmp = new TF1( fname.str().c_str(), my_gaussian, 40., 100., 3 );
     ftmp->SetParNames("Amplitude","Mean","Sigma");
     ftmp->SetParameter(0, 20.);
-    ftmp->SetParameter(1, 35.);
-    ftmp->SetParameter(2, 5.);
+    ftmp->SetParameter(1, 70.);
+    ftmp->SetParameter(2, 10.);
     ftmp->SetParLimits(0, 0.0, 5000.0);
-    ftmp->SetParLimits(1, 28.0, 45.0 );
-    ftmp->SetParLimits(2, 0.0, 100.0 );
-    h_pmt0_tscanpt[iscan]->Fit( ftmp, "Q", "", 20., 50. );
+    ftmp->SetParLimits(1, 56.0, 90.0 );
+    ftmp->SetParLimits(2, 0.0, 200.0 );
+    h_pmt0_tscanpt[iscan]->Fit( ftmp, "Q", "", 40., 100. );
     vecpmtresponse.push_back( ftmp );
     //if( ftmp->GetParameter(1) > 25. &&
     //  ftmp->GetParameter(1) < min_time ) min_time = ftmp->GetParameter(1);
@@ -204,11 +204,11 @@ int main( int argc, char* argv[] ) {
   zero_outside_circle( h_tts, circ );
 
   //Set plot ranges
-  h_rtt->SetMinimum(34.5);
-  h_rtt->SetMaximum(40.0);
-  h_tts->SetMinimum(2.2);
-  //h_tts->SetMaximum(4.4);
-  h_tts->SetMaximum(3.2);
+  h_rtt->SetMinimum(69.0);
+  h_rtt->SetMaximum(80.0);
+  h_tts->SetMinimum(4.4);
+  //h_tts->SetMaximum(8.8);
+  h_tts->SetMaximum(6.4);
 
   //Make plots
   TCanvas* c = new TCanvas("canvas");

@@ -101,13 +101,13 @@ int main(int argc, char** argv) {
   //std::cout << "Using errorbar size " << errbars0->get_errorbar() << std::endl;
   
   // Do analysis of waveforms for each scanpoint
-  PTFAnalysis *analysis0 = new PTFAnalysis( outFile, wrapper, 5.4e-4/*errbars0->get_errorbar()*/, PMT0, string(argv[3]), true );
+  PTFAnalysis *analysis0 = new PTFAnalysis( outFile, wrapper, 2.1e-3/*errbars0->get_errorbar()*/, PMT0, string(argv[3]), true );
   analysis0->write_scanpoints();
 
   // Switch PMT to monitor PMT
   
   // Do analysis of waveforms for each scanpoint
-  PTFAnalysis *analysis1 = new PTFAnalysis( outFile, wrapper, 5.4e-4/*errbars1->get_errorbar()*/, PMT1, string(argv[3]), true );
+  PTFAnalysis *analysis1 = new PTFAnalysis( outFile, wrapper, 2.1e-3/*errbars1->get_errorbar()*/, PMT1, string(argv[3]), true );
   
   // Do quantum efficiency analysis
   // This is now also done in a separate analysis script (including temperature corrections)

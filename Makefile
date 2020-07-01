@@ -52,7 +52,7 @@ all: MESSAGE $(EXECUTABLE1) $(EXECUTABLE2) $(EXECUTABLE3) $(EXECUTABLE4) $(EXECU
 
 MESSAGE:
 	@echo '**********************************************************************'
-	@echo '* Compiling ptf-analysis-2 programs:                                 *'
+	@echo '* Compiling ptf-analysis programs:                                   *'
 	@echo '*   - field_to_csv                                                   *'
 	@echo '*   - ptf_analysis                                                   *'
 	@echo '*   - ptf_ttree_analysis                                             *'
@@ -60,6 +60,8 @@ MESSAGE:
 	@echo '*   - ptf_field_analysis                                             *'
 	@echo '*   - ptf_charge_analysis                                            *'
 	@echo '*   - ptf_timing_analysis                                            *'
+	@echo '*   - mpmt_analysis                                                  *'
+	@echo '*   - mpmt_ttree_analysis                                            *'
 	@echo '**********************************************************************'
 
 $(EXECUTABLE1): $(OBJECTS) $(OBJ1)

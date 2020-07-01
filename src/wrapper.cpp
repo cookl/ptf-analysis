@@ -31,10 +31,12 @@ Wrapper::Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, c
       digiData.samplingRate = PTF_CAEN_V1730_SAMPLE_RATE;
       digiData.fullScaleRange = PTF_CAEN_V1730_FULL_SCALE_RANGE;
       digiData.resolution = PTF_CAEN_V1730_RESOLUTION;
+      break;
     case mPMT_DIGITIZER:
       digiData.samplingRate = mPMT_DIGITIZER_SAMPLE_RATE;
       digiData.fullScaleRange = mPMT_DIGITIZER_FULL_SCALE_RANGE;
       digiData.resolution = mPMT_DIGITIZER_RESOLUTION;
+      break;
   }
 }
 
