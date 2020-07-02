@@ -452,7 +452,7 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, PTF::Wrapper & wrapper, double errorba
             wfdir->cd();
             TH1D* hwf = (TH1D*) hwaveform->Clone( hwfname.c_str() );
             hwf->SetName( hwfname.c_str() );
-            hwf->SetTitle("HAS a pulse; Time bin (tdc clock ticks); Charge (adc units)");
+            hwf->SetTitle("HAS a pulse; Time (ns); Voltage (V)");
             hwf->SetDirectory( wfdir );
             wfdir_fft->cd();
             TH1D* hfftm_tmp = (TH1D*) hfftm->Clone( hfftmname.c_str() );
@@ -464,7 +464,7 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, PTF::Wrapper & wrapper, double errorba
             nowfdir->cd();
             TH1D* hwf = (TH1D*) hwaveform->Clone( hwfname.c_str() );
             hwf->SetName( hwfname.c_str() );
-            hwf->SetTitle("Noise pulse; Time bin (tdc clock ticks); Charge (adc units)");
+            hwf->SetTitle("Noise pulse; Time (ns); Voltage (V)");
             hwf->SetDirectory( nowfdir );
             nowfdir_fft->cd();
             TH1D* hfftm_tmp = (TH1D*) hfftm->Clone( hfftmname.c_str() );
