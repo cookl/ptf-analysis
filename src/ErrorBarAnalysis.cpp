@@ -11,6 +11,12 @@ ErrorBarAnalysis::ErrorBarAnalysis( TFile* outfile, PTF::Wrapper & wrapper, PTF:
   MeanRMSCalc absrmscalc;
   MeanRMSCalc diffrmscalc;
 
+  // Get digitizer settings
+  PTF::Digitizer digi = wrapper.getDigitizerSettings();
+  double digiCounts = pow(2.0, digi.resolution);
+
+  int  numTimeBins= wrapper.getSampleLength();
+
   // First lets determine mean and rms to use for defining histogram ranges
   // Loop over scan points (index i)
   for (unsigned long long i = 0; i < wrapper.getNumEntries(); ++i) {
@@ -24,6 +30,9 @@ ErrorBarAnalysis::ErrorBarAnalysis( TFile* outfile, PTF::Wrapper & wrapper, PTF:
     for ( int j=0; j<numSamples; ++j ) {
       //if ( j>50 ) continue;
       double* pmtsample=wrapper.getPmtSample( pmt.pmt, j );
+      for ( int i=0; i < numTimeBins; ++i ){
+        pmtsample[i] = pmtsample[i] * digi.fullScaleRange / digiCounts;
+      }
       diffrmscalc.add( pmtsample[ 1 ] - pmtsample[ 0 ] );
       // only use first 20 time-bins of the waveform (time-bin index k)
       for ( int k = 0; k < std::min( 20, wrapper.getSampleLength() ); ++k ){
@@ -58,6 +67,9 @@ ErrorBarAnalysis::ErrorBarAnalysis( TFile* outfile, PTF::Wrapper & wrapper, PTF:
     for ( int j=0; j<numSamples; ++j) {
       //if ( j>50 ) continue;
       double* pmtsample=wrapper.getPmtSample( pmt.pmt, j );
+      for ( int i=0; i < numTimeBins; ++i ){
+        pmtsample[i] = pmtsample[i] * digi.fullScaleRange / digiCounts;
+      }
       hdiff->Fill( pmtsample[1] - pmtsample[ 0 ] );
       // only use first 20 time-bins of the waveform (time-bin index k)
       for ( int k = 0; k < std::min( 20, wrapper.getSampleLength() ); ++k ){
