@@ -90,12 +90,12 @@ int main(int argc, char** argv) {
   cerr << "Num entries: " << wrapper.getNumEntries() << endl << endl;
 
   // Determine error bars to use on waveforms
-  // Commented out for the time being because it causes a seg fault once PTFAnalysis tries to fit the first waveform
-  // Very strange behaviour!
-  // Spent ages trying to work out what was going wrong but never got to the bottom of it
+  // Commented to save time
+  // Approximate error bars for waveforms are sufficient for fitting
   //ErrorBarAnalysis * errbars0 = new ErrorBarAnalysis( outFile, wrapper, PMT0 );
-
-  //std::cout << "Using errorbar size " << errbars0->get_errorbar() << std::endl;
+  //std::cout << "Using PMT0 errorbar size " << errbars0->get_errorbar() << std::endl;
+  //ErrorBarAnalysis * errbars1 = new ErrorBarAnalysis( outFile, wrapper, PMT1 );
+  //std::cout << "Using PMT1 errorbar size " << errbars1->get_errorbar() << std::endl;
   
   // Do analysis of waveforms for each scanpoint
   PTFAnalysis *analysis0 = new PTFAnalysis( outFile, wrapper, 5.4e-4/*errbars0->get_errorbar()*/, PMT0, string(argv[3]), true );
