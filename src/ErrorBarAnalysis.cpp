@@ -30,9 +30,6 @@ ErrorBarAnalysis::ErrorBarAnalysis( TFile* outfile, PTF::Wrapper & wrapper, PTF:
     for ( int j=0; j<numSamples; ++j ) {
       //if ( j>50 ) continue;
       double* pmtsample=wrapper.getPmtSample( pmt.pmt, j );
-      for ( int i=0; i < numTimeBins; ++i ){
-        pmtsample[i] = pmtsample[i] * digi.fullScaleRange / digiCounts;
-      }
       diffrmscalc.add( pmtsample[ 1 ] - pmtsample[ 0 ] );
       // only use first 20 time-bins of the waveform (time-bin index k)
       for ( int k = 0; k < std::min( 20, wrapper.getSampleLength() ); ++k ){
@@ -67,9 +64,6 @@ ErrorBarAnalysis::ErrorBarAnalysis( TFile* outfile, PTF::Wrapper & wrapper, PTF:
     for ( int j=0; j<numSamples; ++j) {
       //if ( j>50 ) continue;
       double* pmtsample=wrapper.getPmtSample( pmt.pmt, j );
-      for ( int i=0; i < numTimeBins; ++i ){
-        pmtsample[i] = pmtsample[i] * digi.fullScaleRange / digiCounts;
-      }
       hdiff->Fill( pmtsample[1] - pmtsample[ 0 ] );
       // only use first 20 time-bins of the waveform (time-bin index k)
       for ( int k = 0; k < std::min( 20, wrapper.getSampleLength() ); ++k ){
