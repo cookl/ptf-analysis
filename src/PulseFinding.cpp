@@ -27,7 +27,7 @@ void simple_threshold_technique(TH1D *hwaveform, WaveformFitResult *fitresult ){
 
   int nsamples = hwaveform->GetNbinsX();
 
-  int min_bin = 9999, min_value = 9999; // Find the minimum bin and value for each pulse.
+  double min_bin = 9999, min_value = 9999; // Find the minimum bin and value for each pulse.
   bool in_pulse = false; // are we currently in a pulse?
   for(int ib = 1; ib < nsamples+1; ib++){
     double sample = hwaveform->GetBinContent(ib);
