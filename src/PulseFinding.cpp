@@ -22,14 +22,15 @@ void find_pulses(int algo_type, TH1D *hwaveform, WaveformFitResult *fitresult ){
 void simple_threshold_technique(TH1D *hwaveform, WaveformFitResult *fitresult ){
   
   // Loop over waveform; look for every case of waveform going below fixed threshold
-  int threshold = 2045 - 15;
+  double baseline = 0.9985;
+  double threshold = baseline - 0.004;
 
   int nsamples = hwaveform->GetNbinsX();
 
   int min_bin = 9999, min_value = 9999; // Find the minimum bin and value for each pulse.
   bool in_pulse = false; // are we currently in a pulse?
   for(int ib = 1; ib < nsamples+1; ib++){
-    int sample = hwaveform->GetBinContent(ib);
+    double sample = hwaveform->GetBinContent(ib);
 
     if(sample < min_value){
       min_value = sample;
@@ -54,7 +55,7 @@ void simple_threshold_technique(TH1D *hwaveform, WaveformFitResult *fitresult ){
     
   }
 
-  if(fitresult->numPulses){ std::cout << "number of pulses found: " << fitresult->numPulses << " " << std::endl;}
+  //  if(fitresult->numPulses){ std::cout << "number of pulses found: " << fitresult->numPulses << " " << std::endl;}
   
 }
 

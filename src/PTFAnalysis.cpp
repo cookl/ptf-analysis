@@ -291,11 +291,11 @@ void PTFAnalysis::FitWaveform( int wavenum, int nwaves, PTF::PMTType pmt ) {
     fmygauss->SetParameter(0, 0.05);
     fmygauss->SetParameter(1, 2160.0 );
     fmygauss->SetParameter(2, 11.2 );
-    fmygauss->SetParameter(3, 2040.0 );
+    fmygauss->SetParameter(3, 1.0 );
     fmygauss->SetParLimits(0, 0.0, 1.0);
     fmygauss->SetParLimits(1, 2120.0, 2200.0 );
     fmygauss->SetParLimits(2, 6.4, 16.0 );
-    fmygauss->SetParLimits(3, 0.99, 1.0 );
+    fmygauss->SetParLimits(3, 0.99, 1.01 );
 
     // then fit gaussian
     int fitstat = hwaveform->Fit( fmygauss, "Q", "", 2040.0, 2320.0);
