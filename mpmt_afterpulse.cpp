@@ -128,6 +128,24 @@ int main( int argc, char* argv[] ) {
 
         // classifying laser pulses as multiples of pe
         if (wf->pulseTimes[i]<afpTimeThreshold){
+
+          lsr1Happened=false;
+          lsr2Happened=false;
+          lsr3Happened=false;
+          lsr4Happened=false;
+          lsr5Happened=false;
+          lsr6Happened=false;
+          lsr7Happened=false;
+          lsr8Happened=false;
+          lsr9Happened=false;
+          lsr10Happened=false;
+          lsr11Happened=false;
+          lsr12Happened=false;
+          lsr13Happened=false;
+          lsr14Happened=false;
+          lsr15Happened=false;
+          lsr16Happened=false;
+
           wfValue = (wf->pulseCharges[i]*1000)/maxX;
           if (wfValue <=0.5) {
             lsrCounter1++;
