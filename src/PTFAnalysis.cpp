@@ -277,10 +277,20 @@ void PTFAnalysis::FitWaveform( int wavenum, int nwaves, PTF::PMTType pmt ) {
     for( int ibin = 1; ibin<=hwaveform->GetNbinsX(); ibin++ ){
       if( ped - hwaveform->GetBinContent( ibin ) > amp ){
         amp = ped - hwaveform->GetBinContent( ibin );
-        mean = (float)ibin - 1.;
+        mean = hwaveform->GetXaxis()->GetBinCenter(ibin);
       }
     }
     fitresult->amp = amp;
+    fitresult->mean = mean;
+  }
+  else if( pmt == PTF::Reference ){
+    float mean = 0.0;
+    for( int ibin = 1; ibin<=hwaveform->GetNbinsX(); ibin++ ){
+      if( hwaveform->GetBinContent( ibin ) < 0.5 ){
+        mean = hwaveform->GetXaxis()->GetBinCenter(ibin);
+        break;
+      }
+    }
     fitresult->mean = mean;
   }
   else if( pmt == PTF::mPMT_REV0_PMT ){ /// Add a new PMT type for the mPMT analysis.
