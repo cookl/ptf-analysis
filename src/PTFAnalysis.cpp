@@ -284,21 +284,41 @@ void PTFAnalysis::FitWaveform( int wavenum, int nwaves, PTF::PMTType pmt ) {
     fitresult->mean = mean;
   }
   else if( pmt == PTF::mPMT_REV0_PMT ){ /// Add a new PMT type for the mPMT analysis.
-    if( fmygauss == nullptr ) fmygauss = new TF1("mygauss",pmt1_gaussian,2040,2320,4);
+
+    // Find the mininum bin between 2040.0ns (bin 255) and  2320.0ns (bin 290)
+    double min_bin = 2160;
+    double min_value = 999.0;
+    for(int i = 255; i < 290; i++){
+      double value = hwaveform->GetBinContent(i);
+      if(value < min_value){
+        min_value = value;
+        min_bin = hwaveform->GetBinCenter(i);
+      }
+    }
+
+    double fit_minx = min_bin - 200.0;
+    double fit_maxx = min_bin + 8.0*3.0;
+    
+    //std::cout << "Min bin = " << min_bin << ", min_value = " << min_value 
+    //        << " fit range = " << fit_minx << " - " << fit_maxx << std::endl;
+      
+    
+    if( fmygauss == nullptr ) fmygauss = new TF1("mygauss",pmt1_gaussian,fit_minx,fit_maxx,4);
     fmygauss->SetParameters( fitresult->amp, fitresult->mean, 8.0, fitresult->ped );
     fmygauss->SetParNames( "Amplitude", "Mean", "Sigma", "Offset" );
 
+    
     fmygauss->SetParameter(0, 0.05);
-    fmygauss->SetParameter(1, 2160.0 );
+    fmygauss->SetParameter(1, min_bin );
     fmygauss->SetParameter(2, 11.2 );
     fmygauss->SetParameter(3, 1.0 );
     fmygauss->SetParLimits(0, 0.0, 1.0);
-    fmygauss->SetParLimits(1, 2120.0, 2200.0 );
+    fmygauss->SetParLimits(1, 2032.0, 2328.0 );
     fmygauss->SetParLimits(2, 6.4, 16.0 );
     fmygauss->SetParLimits(3, 0.99, 1.01 );
 
     // then fit gaussian
-    int fitstat = hwaveform->Fit( fmygauss, "Q", "", 2040.0, 2320.0);
+    int fitstat = hwaveform->Fit( fmygauss, "Q", "", fit_minx, fit_maxx);
 
     // collect fit results
     fitresult->ped       = fmygauss->GetParameter(3);
