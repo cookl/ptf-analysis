@@ -345,8 +345,8 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, PTF::Wrapper & wrapper, double errorba
   }
 
   static int instance_count =0;
-  static int savewf_count =0;
-  static int savenowf_count = 0;
+  int savewf_count =0;
+  int savenowf_count = 0;
   ++instance_count;
   save_waveforms = savewf;
   
