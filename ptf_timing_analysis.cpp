@@ -1,4 +1,4 @@
-/* ptf_charge_analysis.cpp
+/* ptf_timing_analysis.cpp
    Analysis of fitted waveforms to determine the PMT timing response.
    Produces histogram of the PMT pulse location.
    Currently taken relative to digitised trigger pulse.
@@ -29,18 +29,6 @@
 #include <iomanip>
 
 using namespace std;
-
-//Gaussian fitting function
-// x[0] is x value
-// par[0] = amplitude
-// par[1] = mean
-// par[2] = sigma
-double my_gaussian(double *x, double *par) {
-  double arg=0;
-  if(par[2]!=0) arg=(x[0]-par[1])/par[2];
-  double gfunc=par[0] * TMath::Exp( -0.5*arg*arg );
-  return gfunc;
-}
 
 int main( int argc, char* argv[] ) {
 
@@ -95,7 +83,7 @@ int main( int argc, char* argv[] ) {
     os_title<<"; T (ns) for X="<<fixed<<setprecision(3)<<scanpoints[iscan].x()<<" Y="<<scanpoints[iscan].y();
     os_title<<"; Counts/bin";
     if (iscan%1000==0) std::cout<<"Scan point "<<iscan<<" creating histogram: "<<os_title.str()<<std::endl;
-    TH1D* htmp = new TH1D( os_name.str().c_str(), os_title.str().c_str(), 40, 10., 70. ) ;
+    TH1D* htmp = new TH1D( os_name.str().c_str(), os_title.str().c_str(), 60, 10., 70. ) ;
     htmp->SetDirectory( dirscanpt );
     h_pmt0_tscanpt.push_back( htmp );
 
@@ -105,7 +93,7 @@ int main( int argc, char* argv[] ) {
     os_title<<"PMT1: Time for signal, scan point "<<iscan;
     os_title<<"; T (ns) for X="<<fixed<<setprecision(3)<<scanpoints[iscan].x()<<" Y="<<scanpoints[iscan].y();
     os_title<<"; Counts/bin";
-    htmp = new TH1D( os_name.str().c_str(), os_title.str().c_str(), 40, 10., 70. ) ;
+    htmp = new TH1D( os_name.str().c_str(), os_title.str().c_str(), 60, 10., 70. ) ;
     htmp->SetDirectory( dirscanpt );
     h_pmt1_tscanpt.push_back( htmp );
 
@@ -115,7 +103,7 @@ int main( int argc, char* argv[] ) {
     os_title<<"PMT2: Time for signal, scan point "<<iscan;
     os_title<<"; T (ns) for X="<<fixed<<setprecision(3)<<scanpoints[iscan].x()<<" Y="<<scanpoints[iscan].y();
     os_title<<"; Counts/bin";
-    htmp = new TH1D( os_name.str().c_str(), os_title.str().c_str(), 40, 10., 70. ) ;
+    htmp = new TH1D( os_name.str().c_str(), os_title.str().c_str(), 60, 10., 70. ) ;
     htmp->SetDirectory( dirscanpt );
     h_pmt2_tscanpt.push_back( htmp );
   }
@@ -196,15 +184,8 @@ int main( int argc, char* argv[] ) {
     //std::cout<<"Fitting "<<fname.str()
 	//     <<" with "<<h_pmt0_tscanpt[iscan]->GetEntries()
 	//     <<std::endl;
-    TF1* ftmp = new TF1( fname.str().c_str(), my_gaussian, 20., 50., 3 );
-    ftmp->SetParNames("Amplitude","Mean","Sigma");
-    ftmp->SetParameter(0, 200.);
-    ftmp->SetParameter(1, 34.);
-    ftmp->SetParameter(2, 10.);
-    ftmp->SetParLimits(0, 0.0, 1000.0);
-    ftmp->SetParLimits(1, 20.0, 50.0 );
-    ftmp->SetParLimits(2, 0.0, 10.0 );
-    h_pmt0_tscanpt[iscan]->Fit( ftmp, "Q", "", 20., 50. );
+    TF1* ftmp = new TF1( fname.str().c_str(), "gaus", 20., 50. );
+    h_pmt0_tscanpt[iscan]->Fit( ftmp, "Q" );
     vecpmtresponse.push_back( ftmp );
     //if( ftmp->GetParameter(1) > 25. &&
     //  ftmp->GetParameter(1) < min_time ) min_time = ftmp->GetParameter(1);
@@ -229,11 +210,11 @@ int main( int argc, char* argv[] ) {
   zero_outside_circle( h_tts, circ );
 
   //Set plot ranges
-  h_rtt->SetMinimum(30.0);
-  h_rtt->SetMaximum(40.0);
-  h_tts->SetMinimum(1.5);
+  h_rtt->SetMinimum(29.0);
+  h_rtt->SetMaximum(38.0);
+  h_tts->SetMinimum(1.4);
   //h_tts->SetMaximum(8.8);
-  h_tts->SetMaximum(4.5);
+  h_tts->SetMaximum(4.0);
 
   //Make plots
   TCanvas* c = new TCanvas("canvas");
