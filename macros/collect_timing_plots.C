@@ -275,10 +275,10 @@ void collect_timing_plots(){
     TH2D* h_rtt_2d = (TH2D*)bscan2_files[i]->Get("h_rtt");
     TH2D* h_tts_2d = (TH2D*)bscan2_files[i]->Get("h_tts");
 
-    TH1D* h_rtt = make_1d_from_2d( h_rtt_2d, " ; RTT [ns] ; scan points / bin", 100, 34., 40. );
+    TH1D* h_rtt = make_1d_from_2d( h_rtt_2d, " ; RTT [ns] ; scan points / bin", 100, 28., 40. );
     double scale = h_rtt->GetMaximum();
     h_rtt->Scale( 1.0/scale );
-    TH1D* h_tts = make_1d_from_2d( h_tts_2d, " ; TTS [ns] ; scan points / bin", 100, 1.4, 4.0 );
+    TH1D* h_tts = make_1d_from_2d( h_tts_2d, " ; TTS [ns] ; scan points / bin", 100, 1.0, 4.5 );
     scale = h_tts->GetMaximum();
     h_tts->Scale( 1.0/scale );
 
@@ -622,10 +622,6 @@ void collect_timing_plots(){
   mg_sy->Add(gr_sya0);
   mg_sy->Add(gr_syw0);
   mg_sy->SetTitle( "; By [mG]; Mean TTS [ns]" );
-  //TAxis *axis = mg_sy->GetYaxis();
-  //axis->SetLimits(2.587, 2.612);
-  mg_sy->GetHistogram()->SetMinimum(2.587);
-  mg_sy->GetHistogram()->SetMaximum(2.612);
   mg_sy->Draw("AP");
   tc->BuildLegend(0.2, 0.65, 0.45, 0.8);
   gPad->Modified();
