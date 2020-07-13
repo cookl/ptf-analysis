@@ -64,7 +64,7 @@ bool PTFAnalysis::FFTCut(){
   double maxValue = hfftm->GetBinContent(maxBin);
   fitresult->fftmaxbin = maxBin;
   fitresult->fftmaxval = maxValue;
-  if( maxValue > 80.0 && ((maxBin > 1 && maxBin <= 4) || (maxBin >= nbins-3 && maxBin <= nbins)) ){
+  if( maxValue > 0.01 && ((maxBin > 1 && maxBin <= 4) || (maxBin >= nbins-3 && maxBin <= nbins)) ){
     return true;
   }
   else{
@@ -168,57 +168,57 @@ void PTFAnalysis::InitializeFitResult( int wavenum, int nwaves  ) {
   fitresult->z         = scanpoint.z();
 }
 
-void PTFAnalysis::FitWaveform( int wavenum, int nwaves, int pmt ) {
+void PTFAnalysis::FitWaveform( int wavenum, int nwaves, PTF::PMTType pmt ) {
   // assumes hwaveform already defined and filled
   // assumes fit result structure already setup
   // Fit waveform for main PMT
-  if( pmt == 0 ){
+  if( pmt == PTF::Hamamatsu_R3600_PMT ){
     // check if we need to build the function to fit
-    if( fmygauss == nullptr ) fmygauss = new TF1("mygauss",pmt0_gaussian,0,70,7);
-    fmygauss->SetParameters( 1.0, 35.0, 3.6, 8135.0, 10.0, 0.5, 0.0 );
+    if( fmygauss == nullptr ) fmygauss = new TF1("mygauss",pmt0_gaussian,0,140,7);
+    fmygauss->SetParameters( 1.0e-4, 70.0, 5.2, 1.0, 1.0e-3, 0.25, 0.0 );
     fmygauss->SetParNames( "Amplitude", "Mean", "Sigma", "Offset",
       		 "Sine-Amp",  "Sin-Freq", "Sin-Phase" );
 
-    fmygauss->SetParLimits(0, 0.0, 8500.0);
-    fmygauss->SetParLimits(1, 1.0, 69.0 );
-    fmygauss->SetParLimits(2, 0.25, 10.0 );
-    fmygauss->SetParLimits(3, 7500.0, 8500.0 );
-    fmygauss->SetParLimits(4, 0.0, 8500.0);
-    fmygauss->SetParLimits(5, 0.4, 0.7);
+    fmygauss->SetParLimits(0, 0.0, 1.0);
+    fmygauss->SetParLimits(1, 2.0, 138.0 );
+    fmygauss->SetParLimits(2, 0.5, 20.0 );
+    fmygauss->SetParLimits(3, 0.9, 1.1 );
+    fmygauss->SetParLimits(4, 0.0, 1.1);
+    fmygauss->SetParLimits(5, 0.2, 0.35);
     fmygauss->SetParLimits(6, -TMath::Pi(), TMath::Pi() );
  
     // first fit for sine wave:
-    fmygauss->FixParameter(0,1.0);
-    fmygauss->FixParameter(1,35.0);
-    fmygauss->FixParameter(2,3.6);
-    hwaveform->Fit( fmygauss, "Q", "", 0,30.0);
+    fmygauss->FixParameter(0,1.0e-4);
+    fmygauss->FixParameter(1,70.0);
+    fmygauss->FixParameter(2,5.2);
+    hwaveform->Fit( fmygauss, "Q", "", 0,60.0);
 
     // then fit gaussian
     fmygauss->ReleaseParameter(0);
     fmygauss->ReleaseParameter(1);
     fmygauss->ReleaseParameter(2);
-    fmygauss->SetParLimits(0, 0.0, 8500.0);
-    fmygauss->SetParLimits(1, 1.0, 69.0 );
-    fmygauss->SetParLimits(2, 0.25, 10.0 );
+    fmygauss->SetParLimits(0, 0.0, 1.1);
+    fmygauss->SetParLimits(1, 2.0, 138.0 );
+    fmygauss->SetParLimits(2, 0.5, 20.0 );
     fmygauss->FixParameter(3, fmygauss->GetParameter(3) );
     fmygauss->FixParameter(4, fmygauss->GetParameter(4));
     fmygauss->FixParameter(5, fmygauss->GetParameter(5));
     fmygauss->FixParameter(6, fmygauss->GetParameter(6));
-    hwaveform->Fit( fmygauss, "Q", "", 20.0, 50.0);
+    hwaveform->Fit( fmygauss, "Q", "", 40.0, 100.0);
 
     // then fit sine and gaussian together
     fmygauss->ReleaseParameter(3);
     fmygauss->ReleaseParameter(4);
     fmygauss->ReleaseParameter(5);
     fmygauss->ReleaseParameter(6);
-    fmygauss->SetParLimits(0, 0.0, 8500.0);
-    fmygauss->SetParLimits(1, 1.0, 69.0 );
-    fmygauss->SetParLimits(2, 0.25, 10.0 );
-    fmygauss->SetParLimits(3, 7500.0, 8500.0 );
-    fmygauss->SetParLimits(4, 0.0, 8500.0);
-    fmygauss->SetParLimits(5, 0.4, 0.7);
+    fmygauss->SetParLimits(0, 0.0, 1.1);
+    fmygauss->SetParLimits(1, 2.0, 138.0 );
+    fmygauss->SetParLimits(2, 0.5, 20.0 );
+    fmygauss->SetParLimits(3, 0.9, 1.1 );
+    fmygauss->SetParLimits(4, 0.0, 1.1);
+    fmygauss->SetParLimits(5, 0.2, 0.35);
     fmygauss->SetParLimits(6, -TMath::Pi(), TMath::Pi() );
-    int fitstat = hwaveform->Fit( fmygauss, "Q", "", 0, 70);
+    int fitstat = hwaveform->Fit( fmygauss, "Q", "", 0, 140);
     // collect fit results
     fitresult->ped       = fmygauss->GetParameter(3);
     fitresult->mean      = fmygauss->GetParameter(1);
@@ -265,7 +265,7 @@ void PTFAnalysis::FitWaveform( int wavenum, int nwaves, int pmt ) {
   //  fitresult->prob      = TMath::Prob( fmygauss->GetChisquare(), 30-4 );
   //  fitresult->fitstat   = fitstat;
   //}
-  else if( pmt == 1 ){
+  else if( pmt == PTF::PTF_Monitor_PMT ){
     float ped = 0.0;
     int nbins = 20;
     for( int ibin = 1; ibin<=nbins; ibin++ ){
@@ -283,22 +283,22 @@ void PTFAnalysis::FitWaveform( int wavenum, int nwaves, int pmt ) {
     fitresult->amp = amp;
     fitresult->mean = mean;
   }
-  else if( pmt == 2 ){ /// Add a new PMT type for the mPMT analysis.
-    if( fmygauss == nullptr ) fmygauss = new TF1("mygauss",pmt1_gaussian,255,290,4);
-    fmygauss->SetParameters( fitresult->amp, fitresult->mean, 1.0, fitresult->ped );
+  else if( pmt == PTF::mPMT_REV0_PMT ){ /// Add a new PMT type for the mPMT analysis.
+    if( fmygauss == nullptr ) fmygauss = new TF1("mygauss",pmt1_gaussian,2040,2320,4);
+    fmygauss->SetParameters( fitresult->amp, fitresult->mean, 8.0, fitresult->ped );
     fmygauss->SetParNames( "Amplitude", "Mean", "Sigma", "Offset" );
 
-    fmygauss->SetParameter(0, 100.0);
-    fmygauss->SetParameter(1, 270.0 );
-    fmygauss->SetParameter(2, 1.4 );
-    fmygauss->SetParameter(3, 2040.0 );
-    fmygauss->SetParLimits(0, 0.0, 500.0);
-    fmygauss->SetParLimits(1, 265.0, 275.0 );
-    fmygauss->SetParLimits(2, 0.8, 2.0 );
-    fmygauss->SetParLimits(3, 2035.0, 2045.0 );
+    fmygauss->SetParameter(0, 0.05);
+    fmygauss->SetParameter(1, 2160.0 );
+    fmygauss->SetParameter(2, 11.2 );
+    fmygauss->SetParameter(3, 1.0 );
+    fmygauss->SetParLimits(0, 0.0, 1.0);
+    fmygauss->SetParLimits(1, 2120.0, 2200.0 );
+    fmygauss->SetParLimits(2, 6.4, 16.0 );
+    fmygauss->SetParLimits(3, 0.99, 1.01 );
 
     // then fit gaussian
-    int fitstat = hwaveform->Fit( fmygauss, "Q", "", 255, 290.0);
+    int fitstat = hwaveform->Fit( fmygauss, "Q", "", 2040.0, 2320.0);
 
     // collect fit results
     fitresult->ped       = fmygauss->GetParameter(3);
@@ -312,7 +312,7 @@ void PTFAnalysis::FitWaveform( int wavenum, int nwaves, int pmt ) {
   }
 
   else{
-    cout << "PTFAnalysis::FitWaveForm Error: PMT not 0 or 1!" << endl;
+    cout << "PTFAnalysis::FitWaveForm Error: No fit function for PMT type!" << endl;
     exit( EXIT_FAILURE );
   }
 }
@@ -428,7 +428,7 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, PTF::Wrapper & wrapper, double errorba
       }
         
       // Do simple charge sum calculation
-      if( pmt.pmt == 0 ) ChargeSum(8135.4);
+      if( pmt.pmt == 0 ) ChargeSum(0.9931);
       // For main PMT do FFT and check if there is a waveform
       // If a waveform present then fit it
       bool dofit = true;
@@ -436,7 +436,7 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, PTF::Wrapper & wrapper, double errorba
       if( dofit && fft_cut && pmt.pmt == 0 ) dofit = FFTCut();
       //if( dofit && pmt.pmt == 1 ) dofit = MonitorCut( 25. );
       if( dofit ){
-        FitWaveform( j, numWaveforms, pmt.pmt ); // Fit waveform and copy fit results into TTree
+        FitWaveform( j, numWaveforms, pmt.type ); // Fit waveform and copy fit results into TTree
       }
       fitresult->haswf = utils.HasWaveform( fitresult, pmt.pmt );
       ptf_tree->Fill();
@@ -452,7 +452,7 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, PTF::Wrapper & wrapper, double errorba
             wfdir->cd();
             TH1D* hwf = (TH1D*) hwaveform->Clone( hwfname.c_str() );
             hwf->SetName( hwfname.c_str() );
-            hwf->SetTitle("HAS a pulse; Time bin (tdc clock ticks); Charge (adc units)");
+            hwf->SetTitle("HAS a pulse; Time (ns); Voltage (V)");
             hwf->SetDirectory( wfdir );
             wfdir_fft->cd();
             TH1D* hfftm_tmp = (TH1D*) hfftm->Clone( hfftmname.c_str() );
@@ -464,7 +464,7 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, PTF::Wrapper & wrapper, double errorba
             nowfdir->cd();
             TH1D* hwf = (TH1D*) hwaveform->Clone( hwfname.c_str() );
             hwf->SetName( hwfname.c_str() );
-            hwf->SetTitle("Noise pulse; Time bin (tdc clock ticks); Charge (adc units)");
+            hwf->SetTitle("Noise pulse; Time (ns); Voltage (V)");
             hwf->SetDirectory( nowfdir );
             nowfdir_fft->cd();
             TH1D* hfftm_tmp = (TH1D*) hfftm->Clone( hfftmname.c_str() );

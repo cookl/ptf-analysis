@@ -11,6 +11,12 @@ ErrorBarAnalysis::ErrorBarAnalysis( TFile* outfile, PTF::Wrapper & wrapper, PTF:
   MeanRMSCalc absrmscalc;
   MeanRMSCalc diffrmscalc;
 
+  // Get digitizer settings
+  PTF::Digitizer digi = wrapper.getDigitizerSettings();
+  double digiCounts = pow(2.0, digi.resolution);
+
+  int  numTimeBins= wrapper.getSampleLength();
+
   // First lets determine mean and rms to use for defining histogram ranges
   // Loop over scan points (index i)
   for (unsigned long long i = 0; i < wrapper.getNumEntries(); ++i) {
