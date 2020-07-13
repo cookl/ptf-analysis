@@ -4,7 +4,7 @@
 
 # Turn on if running ptf_analysis with output to a terminal
 # Output formatting does not work if piped to a text file
-terminal_output = true
+terminal_output = false
 
 # ===========================================================
 # PTFAnalysis parameters
