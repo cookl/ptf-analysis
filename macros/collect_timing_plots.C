@@ -24,6 +24,7 @@
 #include "TMultiGraph.h"
 #include "TVector2.h"
 #include "TAxis.h"
+#include "TPaveStats.h"
 
 #include <stdlib.h>
 #include <string>
@@ -319,6 +320,9 @@ void collect_timing_plots(){
   cout<< "\\end{center}" <<endl;
 
 
+  gStyle->SetOptFit();
+  TF1 *gr_fit = ((TF1 *)(gROOT->GetFunction("pol1")));
+
   // Plot RTT spread vs magnetic field
   // x-direction, air, cover off
   TCanvas * tc = new TCanvas( "timing_vs_bfield", "timing_vs_bfield" );
@@ -335,6 +339,7 @@ void collect_timing_plots(){
   double ey_rxa0[n] = { vec_h_rtt[2]->GetRMSError(),
                    vec_h_rtt[3]->GetRMSError(),
                    vec_h_rtt[0]->GetRMSError(),
+                   vec_h_rtt[1]->GetRMSError(),
                    vec_h_rtt[4]->GetRMSError(),
                    vec_h_rtt[5]->GetRMSError() };
   TGraphErrors* gr_rxa0 = new TGraphErrors(n,x_rxa0,y_rxa0,ex_rxa0,ey_rxa0);
@@ -342,6 +347,11 @@ void collect_timing_plots(){
   gr_rxa0->SetMarkerColor(kMagenta+3);
   gr_rxa0->SetMarkerStyle(21);
   gr_rxa0->Draw("AP");
+  gr_rxa0->Fit(gr_fit,"QW");
+  gr_rxa0->Fit(gr_fit,"Q");
+  gr_rxa0->GetFunction("pol1")->SetLineColor(kMagenta+3);
+  gPad->Modified();
+  gPad->Update();
   string plotname = string("ptf_timing_analysis_rtt_vs_bfield_air_coveroff_x.pdf");
   tc->SaveAs(plotname.c_str(),"pdf");
 
@@ -365,6 +375,9 @@ void collect_timing_plots(){
   gr_rya0->SetMarkerColor(kMagenta+3);
   gr_rya0->SetMarkerStyle(21);
   gr_rya0->Draw("AP");
+  gr_rya0->Fit(gr_fit,"QW");
+  gr_rya0->Fit(gr_fit,"Q");
+  gr_rya0->GetFunction("pol1")->SetLineColor(kMagenta+3);
   gPad->Modified();
   gPad->Update();
   plotname = string("ptf_timing_analysis_rtt_vs_bfield_air_coveroff_y.pdf");
@@ -390,8 +403,14 @@ void collect_timing_plots(){
   gr_rza0->SetMarkerColor(kMagenta+3);
   gr_rza0->SetMarkerStyle(21);
   gr_rza0->Draw("AP");
-  gPad->Modified();
+  gr_rza0->Fit(gr_fit,"QW");
+  gr_rza0->Fit(gr_fit,"Q");
+  gr_rza0->GetFunction("pol1")->SetLineColor(kMagenta+3);
   gPad->Update();
+  TPaveStats* stats_rza0 = (TPaveStats*)gr_rza0->GetListOfFunctions()->FindObject("stats");
+  stats_rza0->SetTextColor(kMagenta+3);
+  stats_rza0->SetX1NDC(0.12); stats_rza0->SetX2NDC(0.32); stats_rza0->SetY1NDC(0.85);
+  gPad->Modified();
   plotname = string("ptf_timing_analysis_rtt_vs_bfield_air_coveroff_z.pdf");
   tc->SaveAs(plotname.c_str(),"pdf");
 
@@ -414,6 +433,9 @@ void collect_timing_plots(){
   gr_rxw0->SetMarkerColor(kOrange-3);
   gr_rxw0->SetMarkerStyle(21);
   gr_rxw0->Draw("AP");
+  gr_rxw0->Fit(gr_fit,"QW");
+  gr_rxw0->Fit(gr_fit,"Q");
+  gr_rxw0->GetFunction("pol1")->SetLineColor(kOrange-3);
   gPad->Modified();
   gPad->Update();
   plotname = string("ptf_timing_analysis_rtt_vs_bfield_water_coveroff_x.pdf");
@@ -439,6 +461,9 @@ void collect_timing_plots(){
   gr_ryw0->SetMarkerColor(kOrange-3);
   gr_ryw0->SetMarkerStyle(21);
   gr_ryw0->Draw("AP");
+  gr_ryw0->Fit(gr_fit,"QW");
+  gr_ryw0->Fit(gr_fit,"Q");
+  gr_ryw0->GetFunction("pol1")->SetLineColor(kOrange-3);
   gPad->Modified();
   gPad->Update();
   plotname = string("ptf_timing_analysis_rtt_vs_bfield_water_coveroff_y.pdf");
@@ -466,6 +491,9 @@ void collect_timing_plots(){
   gr_sxa0->SetMarkerColor(kMagenta+3);
   gr_sxa0->SetMarkerStyle(21);
   gr_sxa0->Draw("AP");
+  gr_sxa0->Fit(gr_fit,"QW");
+  gr_sxa0->Fit(gr_fit,"Q");
+  gr_sxa0->GetFunction("pol1")->SetLineColor(kMagenta+3);
   gPad->Modified();
   gPad->Update();
   plotname = string("ptf_timing_analysis_tts_vs_bfield_air_coveroff_x.pdf");
@@ -491,6 +519,9 @@ void collect_timing_plots(){
   gr_sya0->SetMarkerColor(kMagenta+3);
   gr_sya0->SetMarkerStyle(21);
   gr_sya0->Draw("AP");
+  gr_sya0->Fit(gr_fit,"QW");
+  gr_sya0->Fit(gr_fit,"Q");
+  gr_sya0->GetFunction("pol1")->SetLineColor(kMagenta+3);
   gPad->Modified();
   gPad->Update();
   plotname = string("ptf_timing_analysis_tts_vs_bfield_air_coveroff_y.pdf");
@@ -516,8 +547,14 @@ void collect_timing_plots(){
   gr_sza0->SetMarkerColor(kMagenta+3);
   gr_sza0->SetMarkerStyle(21);
   gr_sza0->Draw("AP");
-  gPad->Modified();
+  gr_sza0->Fit(gr_fit,"QW");
+  gr_sza0->Fit(gr_fit,"Q");
+  gr_sza0->GetFunction("pol1")->SetLineColor(kMagenta+3);
   gPad->Update();
+  TPaveStats* stats_sza0 = (TPaveStats*)gr_sza0->GetListOfFunctions()->FindObject("stats");
+  stats_sza0->SetTextColor(kMagenta+3);
+  stats_sza0->SetX1NDC(0.12); stats_sza0->SetX2NDC(0.32); stats_sza0->SetY1NDC(0.85);
+  gPad->Modified();
   plotname = string("ptf_timing_analysis_tts_vs_bfield_air_coveroff_z.pdf");
   tc->SaveAs(plotname.c_str(),"pdf");
 
@@ -539,6 +576,9 @@ void collect_timing_plots(){
   gr_sxw0->SetMarkerColor(kOrange-3);
   gr_sxw0->SetMarkerStyle(21);
   gr_sxw0->Draw("AP");
+  gr_sxw0->Fit(gr_fit,"QW");
+  gr_sxw0->Fit(gr_fit,"Q");
+  gr_sxw0->GetFunction("pol1")->SetLineColor(kOrange-3);
   gPad->Modified();
   gPad->Update();
   plotname = string("ptf_timing_analysis_tts_vs_bfield_water_coveroff_x.pdf");
@@ -564,6 +604,9 @@ void collect_timing_plots(){
   gr_syw0->SetMarkerColor(kOrange-3);
   gr_syw0->SetMarkerStyle(21);
   gr_syw0->Draw("AP");
+  gr_syw0->Fit(gr_fit,"QW");
+  gr_syw0->Fit(gr_fit,"Q");
+  gr_syw0->GetFunction("pol1")->SetLineColor(kOrange-3);
   gPad->Modified();
   gPad->Update();
   plotname = string("ptf_timing_analysis_tts_vs_bfield_water_coveroff_y.pdf");
@@ -585,8 +628,14 @@ void collect_timing_plots(){
   mg_rx->SetTitle( "; Bx [mG]; RTT RMS [ns]" );
   mg_rx->Draw("AP");
   tc->BuildLegend(0.2, 0.2, 0.45, 0.35);
-  gPad->Modified();
   gPad->Update();
+  TPaveStats* stats_rxa0 = (TPaveStats*)gr_rxa0->GetListOfFunctions()->FindObject("stats");
+  TPaveStats* stats_rxw0 = (TPaveStats*)gr_rxw0->GetListOfFunctions()->FindObject("stats");
+  stats_rxa0->SetTextColor(kMagenta+3);
+  stats_rxw0->SetTextColor(kOrange-3);
+  stats_rxa0->SetX1NDC(0.12); stats_rxa0->SetX2NDC(0.32); stats_rxa0->SetY1NDC(0.85);
+  stats_rxw0->SetX1NDC(0.72); stats_rxw0->SetX2NDC(0.92); stats_rxw0->SetY1NDC(0.85);
+  gPad->Modified();
   plotname = string("ptf_timing_analysis_rtt_vs_bfield_coveroff_x.pdf");
   tc->SaveAs(plotname.c_str(),"pdf");
 
@@ -598,8 +647,14 @@ void collect_timing_plots(){
   mg_ry->SetTitle( "; By [mG]; RTT RMS [ns]" );
   mg_ry->Draw("AP");
   tc->BuildLegend(0.55, 0.65, 0.8, 0.8);
-  gPad->Modified();
   gPad->Update();
+  TPaveStats* stats_rya0 = (TPaveStats*)gr_rya0->GetListOfFunctions()->FindObject("stats");
+  TPaveStats* stats_ryw0 = (TPaveStats*)gr_ryw0->GetListOfFunctions()->FindObject("stats");
+  stats_rya0->SetTextColor(kMagenta+3);
+  stats_ryw0->SetTextColor(kOrange-3);
+  stats_rya0->SetX1NDC(0.12); stats_rya0->SetX2NDC(0.32); stats_rya0->SetY1NDC(0.85);
+  stats_ryw0->SetX1NDC(0.72); stats_ryw0->SetX2NDC(0.92); stats_ryw0->SetY1NDC(0.85);
+  gPad->Modified();
   plotname = string("ptf_timing_analysis_rtt_vs_bfield_coveroff_y.pdf");
   tc->SaveAs(plotname.c_str(),"pdf");
 
@@ -611,8 +666,14 @@ void collect_timing_plots(){
   mg_sx->SetTitle( "; Bx [mG]; Mean TTS [ns]" );
   mg_sx->Draw("AP");
   tc->BuildLegend(0.2, 0.65, 0.45, 0.8);
-  gPad->Modified();
   gPad->Update();
+  TPaveStats* stats_sxa0 = (TPaveStats*)gr_sxa0->GetListOfFunctions()->FindObject("stats");
+  TPaveStats* stats_sxw0 = (TPaveStats*)gr_sxw0->GetListOfFunctions()->FindObject("stats");
+  stats_sxa0->SetTextColor(kMagenta+3);
+  stats_sxw0->SetTextColor(kOrange-3);
+  stats_sxa0->SetX1NDC(0.12); stats_sxa0->SetX2NDC(0.32); stats_sxa0->SetY1NDC(0.85);
+  stats_sxw0->SetX1NDC(0.72); stats_sxw0->SetX2NDC(0.92); stats_sxw0->SetY1NDC(0.85);
+  gPad->Modified();
   plotname = string("ptf_timing_analysis_tts_vs_bfield_coveroff_x.pdf");
   tc->SaveAs(plotname.c_str(),"pdf");
 
@@ -624,8 +685,14 @@ void collect_timing_plots(){
   mg_sy->SetTitle( "; By [mG]; Mean TTS [ns]" );
   mg_sy->Draw("AP");
   tc->BuildLegend(0.2, 0.65, 0.45, 0.8);
-  gPad->Modified();
   gPad->Update();
+  TPaveStats* stats_sya0 = (TPaveStats*)gr_sya0->GetListOfFunctions()->FindObject("stats");
+  TPaveStats* stats_syw0 = (TPaveStats*)gr_syw0->GetListOfFunctions()->FindObject("stats");
+  stats_sya0->SetTextColor(kMagenta+3);
+  stats_syw0->SetTextColor(kOrange-3);
+  stats_sya0->SetX1NDC(0.12); stats_sya0->SetX2NDC(0.32); stats_sya0->SetY1NDC(0.85);
+  stats_syw0->SetX1NDC(0.72); stats_syw0->SetX2NDC(0.92); stats_syw0->SetY1NDC(0.85);
+  gPad->Modified();
   plotname = string("ptf_timing_analysis_tts_vs_bfield_coveroff_y.pdf");
   tc->SaveAs(plotname.c_str(),"pdf");
 }
