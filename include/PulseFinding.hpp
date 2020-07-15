@@ -9,10 +9,10 @@
 // int algo_type : which pulse finding algorithm to use?
 // TH1D *hwaveform : the input waveform
 // WaveformFitResult *fitresult : store the list of pulses in WaveformFitResult
-void find_pulses(int algo_type, TH1D *hwaveform, WaveformFitResult *fitresult );
+void find_pulses(int algo_type, TH1D *hwaveform, WaveformFitResult *fitresult, int pmt_channel );
 
 // Do simple comparison to fixed threshold to find pulses
-void simple_threshold_technique(TH1D *hwaveform, WaveformFitResult *fitresult );
+void simple_threshold_technique(TH1D *hwaveform, WaveformFitResult *fitresult, int pmt_channel );
 
 #endif // __PULSEFINDING__
 
