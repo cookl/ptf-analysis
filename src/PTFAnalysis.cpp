@@ -313,22 +313,10 @@ void PTFAnalysis::FitWaveform( int wavenum, int nwaves, PTF::PMTType pmt, int pm
       }
     }
 
-    double fit_minx = min_bin - 80.0;
-    double fit_maxx = min_bin + 8.0*1.5;
+    double fit_minx = min_bin - 40.0;
+    double fit_maxx = min_bin + 8.0*2.5;
     
-    //std::cout << "Min bin = " << min_bin << ", min_value = " << min_value 
-    //        << " fit range = " << fit_minx << " - " << fit_maxx << std::endl;
-      
-    
-    //PTFAnalysis::funcEMG(double *x, double *p){
-  //Exponential gaussian used for fitting
-  //  // p[0]: amplitude
-  //    // p[1]: gaussian mu
-  //      // p[2]: gaussian sig
-  //        // p[3]: exponential decay constant
-  //          // p[4]: baseline
-  //
-  //          
+
     if( fmygauss == nullptr ) fmygauss = new TF1("mygauss",funcEMG,fit_minx,fit_maxx,5);
     fmygauss->SetParameters( fitresult->amp, fitresult->mean, 8.0, 1.0, fitresult->ped );
     fmygauss->SetParNames( "Amplitude", "Mean", "Sigma", "exp decay", "Offset" );
@@ -338,12 +326,16 @@ void PTFAnalysis::FitWaveform( int wavenum, int nwaves, PTF::PMTType pmt, int pm
     fmygauss->SetParameter(1, min_bin );
     fmygauss->FixParameter(2, 10.9 );
     fmygauss->FixParameter(3, 0.5 );
-    fmygauss->SetParameter(4, 0.99 );
+    //    fmygauss->SetParameter(4, 0.99 );
+    if(pmt_channel == 0)
+      fmygauss->FixParameter(4, 0.999);
+    else if(pmt_channel == 1)
+      fmygauss->FixParameter(4, 1.0036);
     fmygauss->SetParLimits(0, -10, 0);
     fmygauss->SetParLimits(1, 2022.0, 2358.0 );
     //fmygauss->SetParLimits(2, 10.56, 10.58 );
     //fmygauss->SetParLimits(3, 0.1, 0.9 );
-    fmygauss->SetParLimits(4, 0.99, 1.01 );
+    //    fmygauss->SetParLimits(4, 0.99, 1.01 );
 
     // then fit gaussian
     int fitstat = hwaveform->Fit( fmygauss, "Q", "", fit_minx, fit_maxx);
@@ -518,7 +510,7 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, PTF::Wrapper & wrapper, double errorba
       
       // Do pulse finding (if requested)
       if(do_pulse_finding){
-        find_pulses(0, hwaveform, fitresult);
+        find_pulses(0, hwaveform, fitresult, pmt.channel);
       }else{
         fitresult->numPulses = 0;
       }
