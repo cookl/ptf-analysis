@@ -94,7 +94,7 @@ $(EXECUTABLE8): $(OBJECTS) $(OBJ8)
 $(EXECUTABLE9): $(OBJECTS) $(OBJ9)
 	$(CXX) $^ -o $@ $(LDFLAGS)
 
-$(EXECUTABLE11): $(OBJECTS) $(OBJ9)
+$(EXECUTABLE11): $(OBJECTS) $(OBJ11)
 	$(CXX) $^ -o $@ $(LDFLAGS)
 
 $(OBJDIR)/%.o: %.cpp
