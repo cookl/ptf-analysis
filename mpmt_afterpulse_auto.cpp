@@ -64,7 +64,7 @@ int main( int argc, char* argv[] ) {
   auto afpSingleGraph = new TGraph();
 
   // get the waveform fit TTree
-  TTree * tt = (TTree*)fin->Get("ptfanalysis0");
+  TTree * tt = (TTree*)fin->Get("ptfanalysis1");
   WaveformFitResult * wf = new WaveformFitResult;
   wf->SetBranchAddresses( tt );
   
