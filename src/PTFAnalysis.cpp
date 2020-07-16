@@ -422,7 +422,7 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, PTF::Wrapper & wrapper, double errorba
       
       // Do pulse finding (if requested)
       if(do_pulse_finding){
-        find_pulses(0, hwaveform, fitresult);
+        find_pulses(0, hwaveform, fitresult, pmt);
       }else{
         fitresult->numPulses = 0;
       }
