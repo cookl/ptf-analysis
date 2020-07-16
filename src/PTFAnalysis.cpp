@@ -83,38 +83,6 @@ bool PTFAnalysis::PulseLocationCut( int cut ){
     return true;
   }
 }
-
-//bool PTFAnalysis::HasWaveform(int pmt){
-//  if( pmt == 0 ){
-//    // check if fit is valid
-//    if ( fitresult->fitstat != 0 ) return false;
-//    // check if ringing is bigger than waveform
-//    if ( fitresult->amp - fitresult->sinamp < 20.0 ) return false; 
-//    // check if pulse width is reasonable
-//    if ( fitresult->sigma < 1.0 || fitresult->sigma > 7.0 ) return false;
-//    // check if mean pulse time is reasonable
-//    if ( fitresult->mean < 28.0 || fitresult->mean > 45.0 ) return false;
-//    // cut on chi2
-//    //if ( fitresult->chi2 > 200.0 ) return false;
-//  }
-//  if( pmt == 1 ){
-//    // Checks if monitor (PMT1) is being fitted
-//    // check if fit is valid
-//    //if ( fitresult->fitstat != 0 ) return false;
-//    // check if ringing is bigger than waveform
-//    //if ( fitresult->amp - fitresult->sinamp < 40.0 ) return false; 
-//    // check if pulse width is reasonable
-//    //if ( fitresult->sigma < 0.25 || fitresult->sigma > 5.0 ) return false;
-//    // check if mean pulse time is reasonable
-//    //if ( fitresult->mean < 25.0 || fitresult->mean > 55.0 ) return false;
-//    // cut on chi2
-//    //if ( fitresult->chi2 > 200.0 ) return false;
-//
-//    // Checks if using simpler analysis of bin furthest from pedestal
-//    if ( fitresult->amp < 25.0 ) return false;
-//  }
-//  return true;
-//}
   
 // Returns constant reference to a particular fit result
 // it is useable until next entry in TTree is added, or another get_fitresult
@@ -157,6 +125,26 @@ double PTFAnalysis::pmt1_gaussian(double *x, double *par) {
   return gfunc;
 }
 
+//Piece-wise linear fit to reference wave
+// x[0] is x value
+// par[0] = range1
+// par[1] = range2
+// par[2] = amplitude1
+// par[3] = amplitude2
+double PTFAnalysis::pmt2_piecewise(double *x, double *par) {
+  if(x[0] < par[0]){
+    return par[2];
+  }
+  else if(x[0] >= par[1]){
+    return par[3];
+  }
+  else{
+    double slope = (par[2] - par[3]) / (par[0] - par[1]);
+    double intercept = par[2] - slope * par[0];
+    return slope * x[0] + intercept;
+  }
+}
+
 void PTFAnalysis::InitializeFitResult( int wavenum, int nwaves  ) {
   fitresult->Init();
   ScanPoint & scanpoint = scanpoints[ scanpoints.size()-1 ];
@@ -174,95 +162,95 @@ void PTFAnalysis::FitWaveform( int wavenum, int nwaves, PTF::PMTType pmt ) {
   // Fit waveform for main PMT
   if( pmt == PTF::Hamamatsu_R3600_PMT ){
     // check if we need to build the function to fit
-    if( fmygauss == nullptr ) fmygauss = new TF1("mygauss",pmt0_gaussian,0,140,7);
-    fmygauss->SetParameters( 1.0e-4, 70.0, 5.2, 1.0, 1.0e-3, 0.25, 0.0 );
-    fmygauss->SetParNames( "Amplitude", "Mean", "Sigma", "Offset",
+    if( ffitfunc == nullptr ) ffitfunc = new TF1("mygauss",pmt0_gaussian,0,140,7);
+    ffitfunc->SetParameters( 1.0e-4, 70.0, 5.2, 1.0, 1.0e-3, 0.25, 0.0 );
+    ffitfunc->SetParNames( "Amplitude", "Mean", "Sigma", "Offset",
       		 "Sine-Amp",  "Sin-Freq", "Sin-Phase" );
 
-    fmygauss->SetParLimits(0, 0.0, 1.0);
-    fmygauss->SetParLimits(1, 2.0, 138.0 );
-    fmygauss->SetParLimits(2, 0.5, 20.0 );
-    fmygauss->SetParLimits(3, 0.9, 1.1 );
-    fmygauss->SetParLimits(4, 0.0, 1.1);
-    fmygauss->SetParLimits(5, 0.2, 0.35);
-    fmygauss->SetParLimits(6, -TMath::Pi(), TMath::Pi() );
+    ffitfunc->SetParLimits(0, 0.0, 1.0);
+    ffitfunc->SetParLimits(1, 2.0, 138.0 );
+    ffitfunc->SetParLimits(2, 0.5, 20.0 );
+    ffitfunc->SetParLimits(3, 0.9, 1.1 );
+    ffitfunc->SetParLimits(4, 0.0, 1.1);
+    ffitfunc->SetParLimits(5, 0.2, 0.35);
+    ffitfunc->SetParLimits(6, -TMath::Pi(), TMath::Pi() );
  
     // first fit for sine wave:
-    fmygauss->FixParameter(0,1.0e-4);
-    fmygauss->FixParameter(1,70.0);
-    fmygauss->FixParameter(2,5.2);
-    hwaveform->Fit( fmygauss, "Q", "", 0,60.0);
+    ffitfunc->FixParameter(0,1.0e-4);
+    ffitfunc->FixParameter(1,70.0);
+    ffitfunc->FixParameter(2,5.2);
+    hwaveform->Fit( ffitfunc, "Q", "", 0,60.0);
 
     // then fit gaussian
-    fmygauss->ReleaseParameter(0);
-    fmygauss->ReleaseParameter(1);
-    fmygauss->ReleaseParameter(2);
-    fmygauss->SetParLimits(0, 0.0, 1.1);
-    fmygauss->SetParLimits(1, 2.0, 138.0 );
-    fmygauss->SetParLimits(2, 0.5, 20.0 );
-    fmygauss->FixParameter(3, fmygauss->GetParameter(3) );
-    fmygauss->FixParameter(4, fmygauss->GetParameter(4));
-    fmygauss->FixParameter(5, fmygauss->GetParameter(5));
-    fmygauss->FixParameter(6, fmygauss->GetParameter(6));
-    hwaveform->Fit( fmygauss, "Q", "", 40.0, 100.0);
+    ffitfunc->ReleaseParameter(0);
+    ffitfunc->ReleaseParameter(1);
+    ffitfunc->ReleaseParameter(2);
+    ffitfunc->SetParLimits(0, 0.0, 1.1);
+    ffitfunc->SetParLimits(1, 2.0, 138.0 );
+    ffitfunc->SetParLimits(2, 0.5, 20.0 );
+    ffitfunc->FixParameter(3, ffitfunc->GetParameter(3) );
+    ffitfunc->FixParameter(4, ffitfunc->GetParameter(4));
+    ffitfunc->FixParameter(5, ffitfunc->GetParameter(5));
+    ffitfunc->FixParameter(6, ffitfunc->GetParameter(6));
+    hwaveform->Fit( ffitfunc, "Q", "", 40.0, 100.0);
 
     // then fit sine and gaussian together
-    fmygauss->ReleaseParameter(3);
-    fmygauss->ReleaseParameter(4);
-    fmygauss->ReleaseParameter(5);
-    fmygauss->ReleaseParameter(6);
-    fmygauss->SetParLimits(0, 0.0, 1.1);
-    fmygauss->SetParLimits(1, 2.0, 138.0 );
-    fmygauss->SetParLimits(2, 0.5, 20.0 );
-    fmygauss->SetParLimits(3, 0.9, 1.1 );
-    fmygauss->SetParLimits(4, 0.0, 1.1);
-    fmygauss->SetParLimits(5, 0.2, 0.35);
-    fmygauss->SetParLimits(6, -TMath::Pi(), TMath::Pi() );
-    int fitstat = hwaveform->Fit( fmygauss, "Q", "", 0, 140);
+    ffitfunc->ReleaseParameter(3);
+    ffitfunc->ReleaseParameter(4);
+    ffitfunc->ReleaseParameter(5);
+    ffitfunc->ReleaseParameter(6);
+    ffitfunc->SetParLimits(0, 0.0, 1.1);
+    ffitfunc->SetParLimits(1, 2.0, 138.0 );
+    ffitfunc->SetParLimits(2, 0.5, 20.0 );
+    ffitfunc->SetParLimits(3, 0.9, 1.1 );
+    ffitfunc->SetParLimits(4, 0.0, 1.1);
+    ffitfunc->SetParLimits(5, 0.2, 0.35);
+    ffitfunc->SetParLimits(6, -TMath::Pi(), TMath::Pi() );
+    int fitstat = hwaveform->Fit( ffitfunc, "Q", "", 0, 140);
     // collect fit results
-    fitresult->ped       = fmygauss->GetParameter(3);
-    fitresult->mean      = fmygauss->GetParameter(1);
-    fitresult->sigma     = fmygauss->GetParameter(2);
-    fitresult->amp       = fmygauss->GetParameter(0);
-    fitresult->sinamp    = fmygauss->GetParameter(4);
-    fitresult->sinw      = fmygauss->GetParameter(5);
-    fitresult->sinphi    = fmygauss->GetParameter(6);
-    fitresult->ped_err   = fmygauss->GetParError(3);
-    fitresult->mean_err  = fmygauss->GetParError(1);
-    fitresult->sigma_err = fmygauss->GetParError(2);
-    fitresult->amp_err   = fmygauss->GetParError(0);
-    fitresult->sinamp_err= fmygauss->GetParError(4);
-    fitresult->sinw_err  = fmygauss->GetParError(5);
-    fitresult->sinphi_err= fmygauss->GetParError(6);
-    fitresult->chi2      = fmygauss->GetChisquare();
+    fitresult->ped       = ffitfunc->GetParameter(3);
+    fitresult->mean      = ffitfunc->GetParameter(1);
+    fitresult->sigma     = ffitfunc->GetParameter(2);
+    fitresult->amp       = ffitfunc->GetParameter(0);
+    fitresult->sinamp    = ffitfunc->GetParameter(4);
+    fitresult->sinw      = ffitfunc->GetParameter(5);
+    fitresult->sinphi    = ffitfunc->GetParameter(6);
+    fitresult->ped_err   = ffitfunc->GetParError(3);
+    fitresult->mean_err  = ffitfunc->GetParError(1);
+    fitresult->sigma_err = ffitfunc->GetParError(2);
+    fitresult->amp_err   = ffitfunc->GetParError(0);
+    fitresult->sinamp_err= ffitfunc->GetParError(4);
+    fitresult->sinw_err  = ffitfunc->GetParError(5);
+    fitresult->sinphi_err= ffitfunc->GetParError(6);
+    fitresult->chi2      = ffitfunc->GetChisquare();
     fitresult->ndof      = 30-4;
-    fitresult->prob      = TMath::Prob( fmygauss->GetChisquare(), 30-4 );
+    fitresult->prob      = TMath::Prob( ffitfunc->GetChisquare(), 30-4 );
     fitresult->fitstat   = fitstat;
   }
   // Simpler analysis for monitor PMT
   // Fit with simple gaussian
   // OR find bin furthest from pedestal
   //else if( pmt == 1 ){
-  //  if( fmygauss == nullptr ) fmygauss = new TF1("mygauss",pmt1_gaussian,0,70,4);
-  //  fmygauss->SetParameters( fitresult->amp, fitresult->mean, 1.0, fitresult->ped );
-  //  fmygauss->SetParNames( "Amplitude", "Mean", "Sigma", "Offset" );
+  //  if( ffitfunc == nullptr ) ffitfunc = new TF1("mygauss",pmt1_gaussian,0,70,4);
+  //  ffitfunc->SetParameters( fitresult->amp, fitresult->mean, 1.0, fitresult->ped );
+  //  ffitfunc->SetParNames( "Amplitude", "Mean", "Sigma", "Offset" );
 
-  //  fmygauss->SetParLimits(0, 0.0, 8500.0);
-  //  fmygauss->SetParLimits(1, 0.0, 70.0 );
-  //  fmygauss->SetParLimits(2, 0.01, 3.0 );
-  //  fmygauss->SetParLimits(3, 7500.0, 9000.0 );
+  //  ffitfunc->SetParLimits(0, 0.0, 8500.0);
+  //  ffitfunc->SetParLimits(1, 0.0, 70.0 );
+  //  ffitfunc->SetParLimits(2, 0.01, 3.0 );
+  //  ffitfunc->SetParLimits(3, 7500.0, 9000.0 );
 
   //  // then fit gaussian
-  //  int fitstat = hwaveform->Fit( fmygauss, "Q", "", 30.0, 50.0);
+  //  int fitstat = hwaveform->Fit( ffitfunc, "Q", "", 30.0, 50.0);
 
   //  // collect fit results
-  //  fitresult->ped       = fmygauss->GetParameter(3);
-  //  fitresult->mean      = fmygauss->GetParameter(1);
-  //  fitresult->sigma     = fmygauss->GetParameter(2);
-  //  fitresult->amp       = fmygauss->GetParameter(0);
-  //  fitresult->chi2      = fmygauss->GetChisquare();
+  //  fitresult->ped       = ffitfunc->GetParameter(3);
+  //  fitresult->mean      = ffitfunc->GetParameter(1);
+  //  fitresult->sigma     = ffitfunc->GetParameter(2);
+  //  fitresult->amp       = ffitfunc->GetParameter(0);
+  //  fitresult->chi2      = ffitfunc->GetChisquare();
   //  fitresult->ndof      = 30-4;
-  //  fitresult->prob      = TMath::Prob( fmygauss->GetChisquare(), 30-4 );
+  //  fitresult->prob      = TMath::Prob( ffitfunc->GetChisquare(), 30-4 );
   //  fitresult->fitstat   = fitstat;
   //}
   else if( pmt == PTF::PTF_Monitor_PMT ){
@@ -277,37 +265,70 @@ void PTFAnalysis::FitWaveform( int wavenum, int nwaves, PTF::PMTType pmt ) {
     for( int ibin = 1; ibin<=hwaveform->GetNbinsX(); ibin++ ){
       if( ped - hwaveform->GetBinContent( ibin ) > amp ){
         amp = ped - hwaveform->GetBinContent( ibin );
-        mean = (float)ibin - 1.;
+        mean = hwaveform->GetXaxis()->GetBinCenter(ibin);
       }
     }
     fitresult->amp = amp;
     fitresult->mean = mean;
   }
-  else if( pmt == PTF::mPMT_REV0_PMT ){ /// Add a new PMT type for the mPMT analysis.
-    if( fmygauss == nullptr ) fmygauss = new TF1("mygauss",pmt1_gaussian,2040,2320,4);
-    fmygauss->SetParameters( fitresult->amp, fitresult->mean, 8.0, fitresult->ped );
-    fmygauss->SetParNames( "Amplitude", "Mean", "Sigma", "Offset" );
+  else if( pmt == PTF::Reference ){
+    float mean = 0.0;
+    for( int ibin = 1; ibin<=hwaveform->GetNbinsX(); ibin++ ){
+      if( hwaveform->GetBinContent( ibin ) < 0.5 ){
+        mean = hwaveform->GetXaxis()->GetBinCenter(ibin);
+        break;
+      }
+    }
+    fitresult->mean = mean;
+  }
+  //else if( pmt == PTF::Reference ){
+  //  if( ffitfunc == nullptr ) ffitfunc = new TF1("mygauss",pmt2_piecewise,0,140,4);
+  //  ffitfunc->SetParameters( 30.0, 40., 1.0, 0.1 );
+  //  ffitfunc->SetParNames( "range1", "range2", "amplitude1", "amplitude2" );
+  //  ffitfunc->SetParLimits(0, 10., 60. );
+  //  ffitfunc->SetParLimits(1, 10., 60. );
+  //  ffitfunc->SetParLimits(2, 0.9, 1.1 );
+  //  ffitfunc->SetParLimits(3, 0.0, 0.2 );
 
-    fmygauss->SetParameter(0, 0.05);
-    fmygauss->SetParameter(1, 2160.0 );
-    fmygauss->SetParameter(2, 11.2 );
-    fmygauss->SetParameter(3, 1.0 );
-    fmygauss->SetParLimits(0, 0.0, 1.0);
-    fmygauss->SetParLimits(1, 2120.0, 2200.0 );
-    fmygauss->SetParLimits(2, 6.4, 16.0 );
-    fmygauss->SetParLimits(3, 0.99, 1.01 );
+  //  // then fit gaussian
+  //  int fitstat = hwaveform->Fit( ffitfunc, "Q", "", 0.0, 140.0);
+
+  //  // collect fit results
+  //  // Set mean to value at 0.5
+  //  double slope = (ffitfunc->GetParameter(2) - ffitfunc->GetParameter(3)) / (ffitfunc->GetParameter(0) - ffitfunc->GetParameter(1));
+  //  double intercept = ffitfunc->GetParameter(2) - slope * ffitfunc->GetParameter(0);
+  //  if( fabs(slope) > 1e-8 )
+  //    fitresult->mean      = (0.5 - intercept) / slope;
+  //  fitresult->chi2      = ffitfunc->GetChisquare();
+  //  fitresult->ndof      = 30-5;
+  //  fitresult->prob      = TMath::Prob( ffitfunc->GetChisquare(), 30-5 );
+  //  fitresult->fitstat   = fitstat;
+  //}
+  else if( pmt == PTF::mPMT_REV0_PMT ){ /// Add a new PMT type for the mPMT analysis.
+    if( ffitfunc == nullptr ) ffitfunc = new TF1("mygauss",pmt1_gaussian,2040,2320,4);
+    ffitfunc->SetParameters( fitresult->amp, fitresult->mean, 8.0, fitresult->ped );
+    ffitfunc->SetParNames( "Amplitude", "Mean", "Sigma", "Offset" );
+
+    ffitfunc->SetParameter(0, 0.05);
+    ffitfunc->SetParameter(1, 2160.0 );
+    ffitfunc->SetParameter(2, 11.2 );
+    ffitfunc->SetParameter(3, 1.0 );
+    ffitfunc->SetParLimits(0, 0.0, 1.0);
+    ffitfunc->SetParLimits(1, 2120.0, 2200.0 );
+    ffitfunc->SetParLimits(2, 6.4, 16.0 );
+    ffitfunc->SetParLimits(3, 0.99, 1.01 );
 
     // then fit gaussian
-    int fitstat = hwaveform->Fit( fmygauss, "Q", "", 2040.0, 2320.0);
+    int fitstat = hwaveform->Fit( ffitfunc, "Q", "", 2040.0, 2320.0);
 
     // collect fit results
-    fitresult->ped       = fmygauss->GetParameter(3);
-    fitresult->mean      = fmygauss->GetParameter(1);
-    fitresult->sigma     = fmygauss->GetParameter(2);
-    fitresult->amp       = fmygauss->GetParameter(0);
-    fitresult->chi2      = fmygauss->GetChisquare();
+    fitresult->ped       = ffitfunc->GetParameter(3);
+    fitresult->mean      = ffitfunc->GetParameter(1);
+    fitresult->sigma     = ffitfunc->GetParameter(2);
+    fitresult->amp       = ffitfunc->GetParameter(0);
+    fitresult->chi2      = ffitfunc->GetChisquare();
     fitresult->ndof      = 30-4;
-    fitresult->prob      = TMath::Prob( fmygauss->GetChisquare(), 30-4 );
+    fitresult->prob      = TMath::Prob( ffitfunc->GetChisquare(), 30-4 );
     fitresult->fitstat   = fitstat;
   }
 

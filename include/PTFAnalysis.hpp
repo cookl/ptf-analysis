@@ -49,13 +49,13 @@ private:
   bool PulseLocationCut( int cut ); // Cut on pulse in first or last bins
   void InitializeFitResult( int wavenum, int nwaves  );
   void FitWaveform( int wavenum, int nwaves, PTF::PMTType pmt );
-  //bool HasWaveform( int pmt );
   static double pmt0_gaussian(double *x, double *par);
   static double pmt1_gaussian(double *x, double *par);
-  static bool comparison (double i, double j){ return (fabs( i-j ) < 1e-5); }
+  static double pmt2_piecewise(double *x, double *par);
+  static bool comparison(double i, double j){ return (fabs( i-j ) < 1e-5); }
 
   std::vector< ScanPoint > scanpoints;
-  TF1* fmygauss{nullptr};  // gaussian function used to fit waveform
+  TF1* ffitfunc{nullptr};  // function used to fit waveform
   TH1D* hwaveform{nullptr}; // current waveform
   TH1* hfftm{nullptr}; // fast fourier transform magnitude
   WaveformFitResult * fitresult{nullptr};
