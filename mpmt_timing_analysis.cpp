@@ -30,8 +30,8 @@ int main( int argc, char* argv[] ) {
   wf1->SetBranchAddresses( tt1 );
 
 
-  TH1F *tdiffs[10];
-  for(int i =0; i < 10; i++){
+  TH1F *tdiffs[15];
+  for(int i =0; i < 15; i++){
     char name[100];
     char title[100];
     sprintf(name,"timediff_%i_pe",i+1);
@@ -73,16 +73,28 @@ int main( int argc, char* argv[] ) {
     double cfd_time1 = wf1->sinw;
     double time_diff = time0 - time1;
 
-    for(int j = 0; j < 10; j++){
+    for(int j = 0; j < 15; j++){
 
+      
       double min_pe = (j+1.0) - 0.5;
       double max_pe = (j+1.0) + 0.5;
       if(pulse_height[0] < max_pe && pulse_height[1] < max_pe &&
          pulse_height[0] > min_pe && pulse_height[1] > min_pe){
 
         tdiffs[j]->Fill(time_diff);
-      }
 
+        if(j == 0 and time_diff < -3 && i < 50000){
+          std::cout << i << " Time difference: " << time0 << " - " << time1
+                    << " : " << time0-time1 << std::endl;
+          std::cout << "Charge: " << wf0->amp << " " << wf1->amp << " "
+                    << pulse_time[0] << " " << pulse_time[1] << " "
+                    << pulse_height[0] << " " << pulse_height[1] << " "
+                    << std::endl;
+          std::cout << "Ratio "
+                    << wf0->amp/pulse_height[0] << " " 
+                    << wf1->amp/pulse_height[1] << " " << std::endl;
+        }
+      }
     }
     
 
@@ -92,7 +104,7 @@ int main( int argc, char* argv[] ) {
       tdiff->Fill(time0-time1);
       tdiff2->Fill(cfd_time0-cfd_time1);
 
-      if(i < 10000){
+      if(i < 10000 && 0){
         std::cout << i << " Time difference: " << time0 << " - " << time1
                   << " : " << time0-time1 << std::endl;
         std::cout << "Charge: " << wf0->amp << " " << wf1->amp << " "
@@ -124,7 +136,7 @@ int main( int argc, char* argv[] ) {
   
   
     
-  for(int i = 0; i < 10; i++){
+  for(int i = 0; i < 15; i++){
 
     char name[100];
     sprintf(name,"C%i",i);
@@ -133,7 +145,8 @@ int main( int argc, char* argv[] ) {
     tdiffs[i]->Fit("gaus","R");
     gStyle->SetOptFit(1111);
     sprintf(name,"tdiff_%i.png",i+1);
-    gr->SetPoint(i,i+1,gaus->GetParameter(2));
+    int x = i+1;
+    gr->SetPoint(i,x,gaus->GetParameter(2));
     c->SaveAs(name);
     
     
@@ -141,7 +154,12 @@ int main( int argc, char* argv[] ) {
 
   TCanvas *c2 = new TCanvas("CC");
   gr->Draw("AP*");
+  TF1 *sqrtf = new TF1("sqrtf","sqrt([0]/x + [1])",0.5,8);
+  sqrtf->SetParameter(0,1);
+  sqrtf->SetParameter(1,0.5);
   
+  gr->Fit("sqrtf","R");
+  gStyle->SetOptFit(1111);
   c2->SaveAs("tres_vs_ph.png");
   
   return 0;
