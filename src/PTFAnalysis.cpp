@@ -311,6 +311,8 @@ void PTFAnalysis::FitWaveform( int wavenum, int nwaves, PTF::PMTType pmt ) {
     fitresult->fitstat   = fitstat;
   }
 
+  
+
   else{
     cout << "PTFAnalysis::FitWaveForm Error: No fit function for PMT type!" << endl;
     exit( EXIT_FAILURE );

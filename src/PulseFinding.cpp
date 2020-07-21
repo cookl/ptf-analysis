@@ -49,9 +49,10 @@ void simple_threshold_technique(TH1D *hwaveform, WaveformFitResult *fitresult, P
       in_pulse = false;
       if(fitresult->numPulses < MAX_PULSES){
         fitresult->pulseTimes[fitresult->numPulses] = min_bin * 8.0;
-        fitresult->pulseCharges[fitresult->numPulses] = baseline - min_value;        
-        if(0)std::cout << "Pulse found : " << fitresult->numPulses << " " << min_bin
-                  << " " << min_value << " " << std::endl;
+        fitresult->pulseCharges[fitresult->numPulses] = baseline - min_value;
+
+        //if(0)std::cout << "Pulse found : " << fitresult->numPulses << " " << min_bin
+        //          << " " << min_value << " " << std::endl;
         fitresult->numPulses++;      
       }
       min_bin = 9999, min_value = 9999;
