@@ -47,34 +47,32 @@ int main(int argc, char** argv) {
     // Set style
   utils.set_style();
    
-  TFile * fin = new TFile( argv[1], "read" );
+  //TFile * fin = new TFile( argv[1], "read" );
   //string outname = string("output_0000") + argv[2] + ".root";
   //TFile * outFile = new TFile(outname.c_str(), "NEW");
-  std::vector< ScanPoint > scanpoints = ReadScanPoints( fin );
-  
-  vector< double > xbins = utils.get_bins( scanpoints, 'x' ); // how to use the template correctly
-  vector< double > ybins = utils.get_bins( scanpoints, 'y' );
-   
+
   vector<int> phidgets = {0, 1, 3, 4};
   vector<PTF::PMTChannel> activeChannels = {};
  
   PTF::Wrapper wrapper = PTF::Wrapper(16384, 70, activeChannels, phidgets);
-
-  unordered_set<int> skipLines = {};// {962,1923,2884,5240,6201,9611,10572,11533,12494,13455,15811,16771};
 
   wrapper.openFile(argv[1], "scan_tree");
 
   cerr << "Num entries: " << wrapper.getNumEntries() << endl << endl;
   
   for (unsigned int i = 0; i < wrapper.getNumEntries(); i++) {
-	  
-	  wrapper.setCurrentEntry(i);
-      
-	  auto reading  = wrapper.getReadingTemperature();
-	  
-
-      cerr << reading.int_1 << reading.ext_1 << reading.ext_2<<endl;
-      
+      wrapper.setCurrentEntry(i);
+      //auto location = wrapper.getDataForCurrentEntry(PTF::Gantry1);
+      auto reading  = wrapper.getReadingTemperature();
+      auto time_value=wrapper.getReadingTime();
+      wrapper.setCurrentEntry(0);
+      auto time_s=wrapper.getReadingTime();
+      auto reading_2  = wrapper.getReadingTemperature();
+      cout <<wrapper.getCurrentEntry()<<endl;
+      //cerr << location.x << " " << location.y << " " << location.z << " "<<endl;
+      cerr <<" "<<reading.ext_2<< " "<<time_value.time_c-time_s.time_c <<endl;
+      //cout<<setprecision(5)<<time_value.time_c<<endl;
   }
 }
+
 

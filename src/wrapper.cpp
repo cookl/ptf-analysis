@@ -74,7 +74,7 @@ bool Wrapper::setDataPointers() {
   if (tree == nullptr || file == nullptr)
     return false;
   
-  // Set PMT branches
+  // Set PMT branchess
   char branchName[64];
   for (auto pmt : pmtData) {
     snprintf(branchName, 64, PMT_CHANNEL_FORMAT, pmt.second->channel);
@@ -133,16 +133,17 @@ bool Wrapper::setDataPointers() {
 
   brNumSamples->SetAddress(&numSamples);
   TBranch
-  	*T_int = tree->GetBranch("int_temp"), *T_ext1 = tree->GetBranch("ext1_temp"), *T_ext2 = tree->GetBranch("ext2_temp"),
-  	
-	*braNumSamples = tree->GetBranch("num_points");
-  T_int->SetAddress(&Temp.int_1);
-  T_ext1->SetAddress(&Temp.ext_1);
+    //*T_int = tree->GetBranch("int_temp"),//, *T_ext1 = tree->GetBranch("ext1_temp")
+    *T_ext2 = tree->GetBranch("ext2_temp");
+    
+   // *braNumSamples = tree->GetBranch("num_points");
+  //T_int->SetAddress(&Temp.int_1);
+  //T_ext1->SetAddress(&Temp.ext_1);
   T_ext2->SetAddress(&Temp.ext_2);
-  braNumSamples->SetAddress(&numSamples);
+  //braNumSamples->SetAddress(&numSamples);
   TBranch
-      *Time_1=tree->GetBranch("time");
-      Time_1->SetAddress(&ti.time_c);
+    *Time_1=tree->GetBranch("timestamp");
+    Time_1->SetAddress(&ti.time_c);
 
   return true;
 }
@@ -332,9 +333,7 @@ Temperature_r Wrapper::getReadingTemperature() const {
     throw new Exceptions::NoFileIsOpen();
   }
   return Temp;
-  
 }
-
 Timing Wrapper::getReadingTime() const {
  if (!isFileOpen()) {
     throw new Exceptions::NoFileIsOpen();
@@ -342,3 +341,5 @@ Timing Wrapper::getReadingTime() const {
   return ti;
 
 }
+
+ 
