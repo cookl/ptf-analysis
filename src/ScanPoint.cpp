@@ -20,7 +20,7 @@ ScanPoint::ScanPoint( double x, double y, double z,double time_1,double t_int1,d
 }
 
 void WriteScanPoints( const std::vector< ScanPoint > & scanpoints ){
-  float X,Y,Z;
+  float X,Y,Z,Time_1,T_int1,T_ext1,T_ext2;
   unsigned long long Entry,Entries;
 
   TTree * tt = new TTree( "scanpoints", "scanpoints" );

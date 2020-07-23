@@ -327,7 +327,7 @@ PhidgetReading Wrapper::getReadingForPhidget(int phidget) const {
   }
 }
 
-Temperature_r Wrapper::getReadingTemperature(double Temperature) const {
+Temperature_r Wrapper::getReadingTemperature() const {
   if (!isFileOpen()) {
     throw new Exceptions::NoFileIsOpen();
   }

@@ -30,8 +30,7 @@ int g_nb =5;
 
 Double_t func5P(float qe_sk,float qe_mon_diff, Double_t *par)//Double_t is a data type from root                                                                                      
                                                                                                                                                                                    
-{
-   Double_t t_correction = qe_sk * ( 1+par[0] * qe_mon_diff+par[1] * pow(qe_mon_diff, 2) + par[2] * pow(qe_mon_diff, 3)
+{   Double_t t_correction = qe_sk * ( 1+par[0] * qe_mon_diff+par[1] * pow(qe_mon_diff, 2) + par[2] * pow(qe_mon_diff, 3)
 				     + par[3] * pow(qe_mon_diff, 4)+par[4]* pow(qe_mon_diff, 5) );
   return t_correction;
 }
@@ -380,7 +379,7 @@ int main( int argc, char* argv[] ) {
   //_________________________________________________________________________________________________________
   //Scatter plot to look at the correlation between the 2 PMT
   
-  wrapper.openFile(argv[1], "scan_tree");
+  
   
   
   TGraph* pmt_correlation=new TGraph(pmt1_qe_tot.size(),&pmt0_qe_tot[0],&pmt1_qe_tot[0]);

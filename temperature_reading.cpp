@@ -54,15 +54,6 @@ int main(int argc, char** argv) {
   
   vector< double > xbins = utils.get_bins( scanpoints, 'x' ); // how to use the template correctly
   vector< double > ybins = utils.get_bins( scanpoints, 'y' );
-  
-  
-  TGraph* temperature=new TGraph(xbins.size()-1, &xbins[0], ybins.size()-1, &ybins[0]);
-  temperature->GetXaxis()->SetTitle("temperature");//Create normal plot for all the corrected efficiency                                                                     
-  pmt_correlation->GetYaxis()->SetTitle("temperature");
-  pmt_correlation->SetTitle("Temperature readings");
-  pmt_correlation->SetMarkerStyle(1);
-  pmt_correlation->SetMarkerColor(2);
-   
    
   vector<int> phidgets = {0, 1, 3, 4};
   vector<PTF::PMTChannel> activeChannels = {};
@@ -80,7 +71,7 @@ int main(int argc, char** argv) {
 	  wrapper.setCurrentEntry(i);
       
 	  auto reading  = wrapper.getReadingTemperature();
-	  temperature->Fill(reading.int_1,pmt1_qe->GetBinContent(ix, iy));     
+	  
 
       cerr << reading.int_1 << reading.ext_1 << reading.ext_2<<endl;
       
