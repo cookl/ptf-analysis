@@ -76,6 +76,11 @@ int main( int argc, char* argv[] ) {
         //auto location = wrapper.getDataForCurrentEntry(PTF::Gantry1);                                                                                                      
         auto reading  = wrapper.getReadingTemperature();
         auto time_value=wrapper.getReadingTime();
+		int n1,n2;
+		n1=wrapper.getCurrentEntry();
+		n2=wrapper.getNumEntries();
+		std::cout << "Num entries: " <<  n1 <<"  "<<n2 <<"\t\r" << std::flush;
+		
         wrapper.setCurrentEntry(0);
         auto time_s=wrapper.getReadingTime();
 	//temperature_int.push_back(reading.int_1);
