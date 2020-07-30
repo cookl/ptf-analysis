@@ -309,6 +309,7 @@ void PTFAnalysis::FitWaveform( int wavenum, int nwaves, PTF::PMTType pmt ) {
     fitresult->ndof      = 30-4;
     fitresult->prob      = TMath::Prob( fmygauss->GetChisquare(), 30-4 );
     fitresult->fitstat   = fitstat;
+    fitresult->pulseArea = sqrt(2.*M_PI)*(fmygauss->GetParameter(0)*1000.)*(fmygauss->GetParameter(2))*erf(2.0/sqrt(2) ); //< 2 sigma under the curve 
   }
 
   
