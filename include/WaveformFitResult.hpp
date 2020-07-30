@@ -46,13 +46,21 @@ public:
   int   haswf;      //< 1 if has a pulse, 0 if not
   float qped;       //< fixed pedestal
   float qsum;       //< charge sum
-
   int numPulses; //< number of pulses found in waveform
   float pulseTimes[MAX_PULSES]; // Pulse times
   float pulseTimeErr[MAX_PULSES]; // Pulse time errors
   float pulseCharges[MAX_PULSES]; // Pulse charges
   float pulseChargeErr[MAX_PULSES]; // Pulse charge errors
-
+  float pulseArea; //< area under the fit gaussian
+  float pulseExtNumber; //< number of extrema on your waveform
+  float pulseMinNumber; //< number of minima on your waveform
+  float pulseMaxNumber; //< number of maxima on your waveform
+  float pulseTimeExtrema[MAX_PULSES];
+  float pulseTimeMinima[MAX_PULSES];
+  float pulseTimeMaxima[MAX_PULSES];
+  float pulseAmpExtrema[MAX_PULSES];
+  float pulseAmpMinima[MAX_PULSES];
+  float pulseAmpMaxima[MAX_PULSES];
 
 private:
   // hold copy of string needed for making TTree
