@@ -43,7 +43,7 @@ void WriteScanPoints( const std::vector< ScanPoint > & scanpoints ){
     Time_1=sp.time_1();
     //T_int1=sp.t_int1();
     //T_ext1=sp.t_ext1();
-    //T_ext2=sp.t_ext2();
+    T_ext2=sp.t_ext2();
 	
     Entry=sp.get_entry();
     Entries=sp.nentries();

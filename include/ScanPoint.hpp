@@ -27,7 +27,7 @@ public:
   double time_1() const {return fTime_1;}
   //double t_int1()	const	{return fT_int1;}
   //double t_ext1()	const	{return fT_ext1;}
-  //double t_ext2()	const	{return fT_ext2;}
+  double t_ext2()	const	{return fT_ext2;}
   unsigned long long get_entry() const { return fEntry; }
   unsigned long long nentries() const { return fEntries; }
 
