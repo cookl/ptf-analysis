@@ -8,8 +8,6 @@
 #include "Utilities.hpp"
 #include "temperature_correction.hpp"
 
-
-
 #include <string>
 #include <iostream>
 #include <ostream>
@@ -206,7 +204,7 @@ int main( int argc, char* argv[] ) {
  TH2D * nbevents = new TH2D("nbevents", "Temperature correlation with QE_SK ",20,QEBins[0],QEBins.back() ,20,19,tempbins.back()  );
  nbevents->GetXaxis()->SetTitle("QE");
  nbevents->GetYaxis()->SetTitle("Temperature");
- TH2D * nbevents_MN = new TH2D("nbevents", "Temperature correlation with QE_MN ",20,0.3,0.6 ,20,19,tempbins.back()  );
+ TH2D * nbevents_MN = new TH2D("nbevents_MN", "Temperature correlation with QE_MN ",20,0.3,0.6 ,20,19,tempbins.back()  );
  nbevents_MN->GetXaxis()->SetTitle("QE");
  nbevents_MN->GetYaxis()->SetTitle("Temperature");
 
@@ -227,7 +225,7 @@ int main( int argc, char* argv[] ) {
        QE_corr.push_back(t_model(pmt1_diff->GetBinContent(ix, iy),parameter));                                                                                                     
      }
    }
-
+   
    TH2D * nbevents_corr = new TH2D("nbevents_corr", "Temperature correlation with QE_SK ",20,QEBins[0],QEBins.back() ,20,19,tempbins.back()  );
    nbevents_corr->GetXaxis()->SetTitle("QE");//Create normal plot for all the corrected efficiency                                                                                                                                                                                                                                                                
    nbevents_corr->GetYaxis()->SetTitle("Temperature");
@@ -241,15 +239,18 @@ int main( int argc, char* argv[] ) {
    nbevents->SetDirectory(fout );
    TCanvas* c1 = new TCanvas("canvas");
    string plotname;
-   nbevents->Draw("colz0");
    
-   plotname = string("~/Desktop/ptf-analysis/temp_his_2_SK")+argv[3]+".pdf";
-   c1->SaveAs(plotname.c_str(),"pdf");
+   nbevents->Draw("colz0");
+   gPad->Modified();
+   gPad->Update();
+   plotname = string("/Users/vincentgousy-leblanc/Desktop/ptf-analysis/temp_his_2_SK")+argv[2]+".pdf";
+   
+//c1->SaveAs(plotname.c_str(),"pdf");
    nbevents_MN->Draw("colz0");
-   plotname = string("~/Desktop/ptf-analysis/temp_his_2_MN")+argv[3]+".pdf";
+   plotname = string("~/Desktop/ptf-analysis/temp_his_2_MN")+argv[2]+".pdf";
    c1->SaveAs(plotname.c_str(),"pdf");
    nbevents_corr->Draw("colz0");
-   plotname = string("~/Desktop/ptf-analysis/temp_his_2_corr")+argv[3]+".pdf";
+   plotname = string("~/Desktop/ptf-analysis/temp_his_2_corr")+argv[2]+".pdf";
    c1->SaveAs(plotname.c_str(),"pdf");
    
 
@@ -260,12 +261,9 @@ int main( int argc, char* argv[] ) {
   for (int i=0;i<=variables.size();i++){
   
   }
+   */
 
-
-
-
-
-    */
+   
    TGraph*QE_SK = new TGraph(temp.size(),&timing[0],&v_pmt0_qe[0]);
    TGraph*QE_MN = new TGraph(temp.size(),&timing[0],&v_pmt1_qe[0]);
    TGraph*QE_correction = new TGraph(temp.size(),&timing[0],&QE_corr[0]);
@@ -327,9 +325,11 @@ int main( int argc, char* argv[] ) {
    //c1->BuildLegend();
    gPad->Modified();
    gPad->Update();
-   plotname = string("~/Desktop/ptf-analysis/qe_effect")+argv[3]+".pdf";
+   
+   plotname = string("~/Desktop/ptf-analysis/qe_effect")+argv[2]+".pdf";
    c1->SaveAs(plotname.c_str(),"pdf");
    
    fout->Write();
    fout->Close();
+  
   } 
