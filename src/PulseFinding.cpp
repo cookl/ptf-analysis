@@ -1,13 +1,14 @@
 #include "PulseFinding.hpp"
 #include <iostream>
 
-void find_pulses(int algo_type, TH1D *hwaveform, WaveformFitResult *fitresult, int pmt_channel ){
+
+void find_pulses(int algo_type, TH1D *hwaveform, WaveformFitResult *fitresult, PTF::PMT pmt){
 
   // Reset the number of pulses
   fitresult->numPulses = 0;
 
   if(algo_type == 0){
-    simple_threshold_technique(hwaveform, fitresult, pmt_channel);
+    simple_threshold_technique(hwaveform, fitresult, pmt);
   }else{
     std::cerr << "Invalid pulse finding algorithm = " << algo_type
               << ". Exiting"<< std::endl;
@@ -19,12 +20,14 @@ void find_pulses(int algo_type, TH1D *hwaveform, WaveformFitResult *fitresult, i
 
 
 
-void simple_threshold_technique(TH1D *hwaveform, WaveformFitResult *fitresult, int pmt_channel ){
+void simple_threshold_technique(TH1D *hwaveform, WaveformFitResult *fitresult, PTF::PMT pmt){
   
   // Loop over waveform; look for every case of waveform going below fixed threshold
-  double baseline = 0.9985;
-  if(pmt_channel == 0) baseline = 0.9996;
-  if(pmt_channel == 1) baseline = 0.996;
+  
+  double baseline = 1.0;
+  if(pmt.channel == 0){ baseline = 0.9985; }
+  if(pmt.channel == 1){ baseline = 1.006; }
+
   double threshold = baseline - 0.004;
 
   int nsamples = hwaveform->GetNbinsX();
@@ -47,9 +50,10 @@ void simple_threshold_technique(TH1D *hwaveform, WaveformFitResult *fitresult, i
       in_pulse = false;
       if(fitresult->numPulses < MAX_PULSES){
         fitresult->pulseTimes[fitresult->numPulses] = min_bin * 8.0;
-        fitresult->pulseCharges[fitresult->numPulses] = min_value;        
-        if(0)std::cout << "Pulse found : " << fitresult->numPulses << " " << min_bin
-                  << " " << min_value << " " << std::endl;
+        fitresult->pulseCharges[fitresult->numPulses] = baseline - min_value;
+
+        //if(0)std::cout << "Pulse found : " << fitresult->numPulses << " " << min_bin
+        //          << " " << min_value << " " << std::endl;
         fitresult->numPulses++;      
       }
       min_bin = 9999, min_value = 9999;
