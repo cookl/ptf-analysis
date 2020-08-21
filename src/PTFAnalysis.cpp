@@ -375,8 +375,8 @@ void PTFAnalysis::FitWaveform( int wavenum, int nwaves, PTF::PMT pmt) {
     // Do CFD analysis on the fitted pulse
     double pulse_amplitude = ffitfunc->GetParameter(0) * 3.0 / 100.0;
     double baseline = ffitfunc->GetParameter(4);
-    if(pmt.channel == 0) baseline = 0.9996;
-    if(pmt.channel == 1) baseline = 1.004;
+    if(pmt.channel == 0) baseline = 0.991;
+    if(pmt.channel == 1) baseline = 0.9966;
     double cfd_threshold = baseline + pulse_amplitude/2.0;
     double crossing_time;
     // Step back from min_bin
