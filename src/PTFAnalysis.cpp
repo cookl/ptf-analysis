@@ -331,7 +331,7 @@ void PTFAnalysis::FitWaveform( int wavenum, int nwaves, PTF::PMTType pmt, int pm
       fmygauss->FixParameter(4, 0.999);
     else if(pmt_channel == 1)
       fmygauss->FixParameter(4, 1.0036);
-    fmygauss->SetParLimits(0, -10, 0);
+    fmygauss->SetParLimits(0, -100, 0);
     fmygauss->SetParLimits(1, 2022.0, 2358.0 );
     //fmygauss->SetParLimits(2, 10.56, 10.58 );
     //fmygauss->SetParLimits(3, 0.1, 0.9 );

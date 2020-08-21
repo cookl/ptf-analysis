@@ -24,7 +24,7 @@ void simple_threshold_technique(TH1D *hwaveform, WaveformFitResult *fitresult, i
   // Loop over waveform; look for every case of waveform going below fixed threshold
   double baseline = 0.9985;
   if(pmt_channel == 0) baseline = 0.9996;
-  if(pmt_channel == 1) baseline = 1.004;
+  if(pmt_channel == 1) baseline = 0.996;
   double threshold = baseline - 0.004;
 
   int nsamples = hwaveform->GetNbinsX();
