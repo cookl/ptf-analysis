@@ -122,7 +122,8 @@ enum PMTType {
   PTF_Monitor_PMT = 1,
   PTF_Receiver_PMT = 2,
   mPMT_REV0_PMT = 3,
-  mPMT_Monitor_PMT = 4
+  mPMT_Monitor_PMT = 4,
+  Reference = 5
 };
 ```
 
