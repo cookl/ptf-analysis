@@ -15,20 +15,11 @@ void WaveformFitResult::Init(){
   haswf=0; qped=0.; qsum=-999.;
   numPulses = 0;
   pulseArea = 0.0;
-  pulseExtNumber = 0;
-  pulseMinNumber = 0;
-  pulseMaxNumber = 0;
   for(int i = 0; i < MAX_PULSES; i++){
     pulseTimes[i] = 0.0;
     pulseTimeErr[i] = 0.0;
     pulseCharges[i] = 0.0;
     pulseChargeErr[i] = 0.0;
-    pulseTimeExtrema[i] = 0.0;
-    // pulseTimeMinima[i]  = 0.0;
-    // pulseTimeMaxima[i]  = 0.0;
-    // pulseAmpExtrema[i] = 0.0;
-    // pulseAmpMinima[i]  = 0.0;
-    // pulseAmpMaxima[i]  = 0.0;
   }
 }
 
@@ -70,14 +61,6 @@ const char * WaveformFitResult::GetRootString(){
   rootstring+=":pulseChargeErr[numPulses]/F";
   rootstring+=":pulseTimeExtrema[numPulses]/F";
   rootstring+=":pulseArea/F";
-  rootstring+=":pulseExtNumber/I";
-  rootstring+=":pulseMinNumber/I";
-  rootstring+=":pulseMaxNumber/I";
-  // rootstring+=":pulseTimeMinima[numPulses]/F";
-  // rootstring+=":pulseTimeMaxima[numPulses]/F";
-  // rootstring+=":pulseAmpExtrema[numPulses]/F";
-  // rootstring+=":pulseAmpMinima[numPulses]/F";
-  // rootstring+=":pulseAmpMaxima[numPulses]/F";
 
   return rootstring.c_str(); 
 }
@@ -117,17 +100,7 @@ void WaveformFitResult::MakeTTreeBranches(TTree * t){
   t->Branch( "pulseTimeErr",pulseTimeErr,"pulseTimeErr[numPulses]/F" );
   t->Branch( "pulseCharges",pulseCharges,"pulseCharges[numPulses]/F" );
   t->Branch( "pulseChargeErr",pulseChargeErr,"pulseChargeErr[numPulses]/F" );
-  t->Branch( "pulseTimeExtrema",pulseTimeExtrema,"pulseTimeExtrema[numPulses]/F" );
-  t->Branch( "pulseArea",&pulseArea,"pulseArea/F" );
-  t->Branch( "pulseExtNumber",&pulseExtNumber,"pulseExtNumber/I" );
-  t->Branch( "pulseMinNumber",&pulseMinNumber,"pulseMinNumber/I" );
-  t->Branch( "pulseMaxNumber",&pulseMaxNumber,"pulseMaxNumber/I" );
-  // t->Branch( "pulseTimeMinima",pulseTimeMinima,"pulseTimeMinima[numPulses]/F" );
-  // t->Branch( "pulseTimeExtrema",pulseTimeExtrema,"pulseTimeMaxima[numPulses]/F" );
-  // t->Branch( "pulseAmpExtrema",pulseAmpExtrema,"pulseAmpExtrema[numPulses]/F" );
-  // t->Branch( "pulseAmpMinima",pulseAmpMinima,"pulseAmpMinima[numPulses]/F" );
-  // t->Branch( "pulseAmpExtrema",pulseAmpExtrema,"pulseAmpMaxima[numPulses]/F" );  
-  
+
   return;
 }
 
@@ -166,17 +139,7 @@ void WaveformFitResult::SetBranchAddresses(TTree * t){
   t->SetBranchAddress( "pulseTimeErr", pulseTimeErr );
   t->SetBranchAddress( "pulseCharges", pulseCharges );
   t->SetBranchAddress( "pulseChargeErr", pulseChargeErr );
-  t->SetBranchAddress( "pulseTimeExtrema", pulseTimeExtrema);
   t->SetBranchAddress( "pulseArea", &pulseArea );
-  t->SetBranchAddress( "pulseExtNumber", &pulseExtNumber );
-  t->SetBranchAddress( "pulseMinNumber", &pulseMinNumber );
-  t->SetBranchAddress( "pulseMaxNumber", &pulseMaxNumber );
-
-  // t->SetBranchAddress( "pulseTimeMinima", pulseTimeMinima);
-  // t->SetBranchAddress( "pulseTimeMaxima", pulseTimeMaxima);
-  // t->SetBranchAddress( "pulseAmpExtrema", pulseAmpExtrema);
-  // t->SetBranchAddress( "pulseAmpMinima", pulseAmpMinima);
-  // t->SetBranchAddress( "pulseAmpMaxima", pulseAmpMaxima);
-
+  
   return;
 }
