@@ -58,6 +58,9 @@ struct PhidgetReading {
   double Bx[150];
   double By[150];
   double Bz[150];
+  double accx[150];
+  double accy[150];
+  double accz[150];
 };
 
 
@@ -74,6 +77,9 @@ namespace Private {
     TBranch*       branchX{nullptr};
     TBranch*       branchY{nullptr};
     TBranch*       branchZ{nullptr};
+    TBranch*       branchaccx{nullptr};
+    TBranch*       branchaccy{nullptr};
+    TBranch*       branchaccz{nullptr};
   };
 }
 
@@ -91,6 +97,13 @@ struct Temperature_r {
   //double ext_1;
   double ext_2;
 };
+
+struct Phidget_acce00 
+  *double acc_x;
+  *double acc_y;
+  *double acc_z;
+};
+
 struct Timing {
    Double_t time_c;
 };
@@ -139,6 +152,9 @@ public:
   PhidgetReading getReadingForPhidget(int phidget) const;
   
   Temperature_r getReadingTemperature() const;
+  
+  *Phidget_acce00 getReadingAcceleration() const;
+  
   Timing getReadingTime() const;
 
 private:
@@ -156,6 +172,7 @@ private:
   GantryPos g1;
   Temperature_r Temp;
   Timing ti;
+  *Phidget_acce00 ACC;
   
   unsigned long long    numEntries;
   unsigned long long    numSamples;

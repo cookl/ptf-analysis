@@ -13,7 +13,7 @@ int main(void) {
   };
 
   // decide which phidgets we'd like to read
-  vector<int> phidgets = {1, 3, 4};
+  vector<int> phidgets = {1, 2, 5};
 
   // initialize the wrapper
   auto wrapper = PTF::Wrapper(
@@ -34,7 +34,7 @@ int main(void) {
     wrapper.setCurrentEntry(i);
 
     // get data from phidget 3
-    PhidgetReading phidgetReading = wrapper.getReadingForPhidget(3);
+    PhidgetReading phidgetReading = wrapper.getReadingForPhidget(3);// looking at which phidget will be use int 
 
     // get data from gantry 1
     GantryPos gantryData = wrapper.getDataForCurrentEntry(PTF::Gantry1);
