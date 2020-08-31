@@ -23,7 +23,6 @@ TARGET7=ptf_timing_analysis.cpp
 TARGET8=mpmt_analysis.cpp
 TARGET9=mpmt_ttree_analysis.cpp
 TARGET10=mpmt_afterpulse.cpp
-TARGET11=mpmt_afterpulse_auto.cpp
 
 EXECUTABLE1=$(TARGET1:%.cpp=$(BINDIR)/%.app)
 EXECUTABLE2=$(TARGET2:%.cpp=$(BINDIR)/%.app)
@@ -35,7 +34,6 @@ EXECUTABLE7=$(TARGET7:%.cpp=$(BINDIR)/%.app)
 EXECUTABLE8=$(TARGET8:%.cpp=$(BINDIR)/%.app)
 EXECUTABLE9=$(TARGET9:%.cpp=$(BINDIR)/%.app)
 EXECUTABLE10=$(TARGET10:%.cpp=$(BINDIR)/%.app)
-EXECUTABLE11=$(TARGET11:%.cpp=$(BINDIR)/%.app)
 
 FILES= $(wildcard $(SRCDIR)/*.cpp)
 SOURCES=$(FILES)
@@ -52,9 +50,8 @@ OBJ7=$(TARGET7:%.cpp=${OBJDIR}/%.o) $(OBJECTS)
 OBJ8=$(TARGET8:%.cpp=${OBJDIR}/%.o) $(OBJECTS)
 OBJ9=$(TARGET9:%.cpp=${OBJDIR}/%.o) $(OBJECTS)
 OBJ10=$(TARGET10:%.cpp=${OBJDIR}/%.o) $(OBJECTS)
-OBJ11=$(TARGET11:%.cpp=${OBJDIR}/%.o) $(OBJECTS)
 
-all: MESSAGE $(EXECUTABLE1) $(EXECUTABLE2) $(EXECUTABLE3) $(EXECUTABLE4) $(EXECUTABLE5) $(EXECUTABLE6) $(EXECUTABLE7) $(EXECUTABLE8)  $(EXECUTABLE9) $(EXECUTABLE10) $(EXECUTABLE11) 
+all: MESSAGE $(EXECUTABLE1) $(EXECUTABLE2) $(EXECUTABLE3) $(EXECUTABLE4) $(EXECUTABLE5) $(EXECUTABLE6) $(EXECUTABLE7) $(EXECUTABLE8)  $(EXECUTABLE9) $(EXECUTABLE10)
 
 MESSAGE:
 	@echo '**********************************************************************'
@@ -98,9 +95,6 @@ $(EXECUTABLE9): $(OBJECTS) $(OBJ9)
 	$(CXX) $^ -o $@ $(LDFLAGS)
 
 $(EXECUTABLE10): $(OBJECTS) $(OBJ10)
-	$(CXX) $^ -o $@ $(LDFLAGS)
-
-$(EXECUTABLE11): $(OBJECTS) $(OBJ11)
 	$(CXX) $^ -o $@ $(LDFLAGS)
 
 $(OBJDIR)/%.o: %.cpp

@@ -85,7 +85,10 @@ int main(int argc, char** argv) {
   vector<int> phidgets = {0, 1, 3};
   PTF::PMT PMT0 = {0,0,PTF::mPMT_REV0_PMT}; // only looking at one pmt at a time
   PTF::PMT PMT1 = {1,1,PTF::mPMT_REV0_PMT}; // only looking at one pmt at a time
-  vector<PTF::PMT> activePMTs = { PMT0, PMT1 }; // must be ordered {main,monitor}
+  PTF::PMT PMT2 = {2,2,PTF::mPMT_REV0_PMT}; // < NEED TO CHANGE PMT DESCRIPTION
+  PTF::PMT PMT3 = {3,3,PTF::mPMT_REV0_PMT}; // < NEED TO CHANGE PMT DESCRIPTION
+  // PTF::
+  vector<PTF::PMT> activePMTs = { PMT0, PMT1, PMT2, PMT3 }; // must be ordered {main,monitor}
   vector<PTF::Gantry> gantries = {PTF::Gantry0, PTF::Gantry1};
   PTF::Wrapper wrapper = PTF::Wrapper(1, 1024, activePMTs, phidgets, gantries, PTF::mPMT_DIGITIZER);
   std::cout << "Open file: " << std::endl;
@@ -108,6 +111,8 @@ int main(int argc, char** argv) {
   
   // Do analysis of waveforms for each scanpoint
   PTFAnalysis *analysis1 = new PTFAnalysis( outFile, wrapper, 2.1e-3/*errbars1->get_errorbar()*/, PMT1, string(argv[3]), true );
+  PTFAnalysis *analysis2 = new PTFAnalysis( outFile, wrapper, 2.1e-3/*errbars1->get_errorbar()*/, PMT2, string(argv[3]), true );
+  PTFAnalysis *analysis3 = new PTFAnalysis( outFile, wrapper, 2.1e-3/*errbars1->get_errorbar()*/, PMT3, string(argv[3]), true );
   
   // Do quantum efficiency analysis
   // This is now also done in a separate analysis script (including temperature corrections)
