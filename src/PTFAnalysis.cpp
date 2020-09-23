@@ -125,6 +125,20 @@ double PTFAnalysis::pmt1_gaussian(double *x, double *par) {
   return gfunc;
 }
 
+double PTFAnalysis::funcEMG(double *x, double *p){
+  //Exponential gaussian used for fitting
+  // p[0]: amplitude
+  // p[1]: gaussian mu
+  // p[2]: gaussian sig
+  // p[3]: exponential decay constant
+  // p[4]: baseline
+  
+ double y = p[4] + (p[0]/0.3)*(p[3]/2.)*exp((p[1]+p[2]*p[2]/p[3]/2.-x[0])/(p[3]))*
+    TMath::Erfc((p[1]+p[2]*p[2]/p[3] -x[0])/sqrt(2.)/p[2]);
+
+  return y;
+}
+
 //Piece-wise linear fit to reference wave
 // x[0] is x value
 // par[0] = range1
@@ -143,6 +157,7 @@ double PTFAnalysis::pmt2_piecewise(double *x, double *par) {
     double intercept = par[2] - slope * par[0];
     return slope * x[0] + intercept;
   }
+
 }
 
 void PTFAnalysis::InitializeFitResult( int wavenum, int nwaves  ) {
@@ -156,11 +171,11 @@ void PTFAnalysis::InitializeFitResult( int wavenum, int nwaves  ) {
   fitresult->z         = scanpoint.z();
 }
 
-void PTFAnalysis::FitWaveform( int wavenum, int nwaves, PTF::PMTType pmt ) {
+void PTFAnalysis::FitWaveform( int wavenum, int nwaves, PTF::PMT pmt) {
   // assumes hwaveform already defined and filled
   // assumes fit result structure already setup
   // Fit waveform for main PMT
-  if( pmt == PTF::Hamamatsu_R3600_PMT ){
+  if( pmt.type == PTF::Hamamatsu_R3600_PMT ){
     // check if we need to build the function to fit
     if( ffitfunc == nullptr ) ffitfunc = new TF1("mygauss",pmt0_gaussian,0,140,7);
     ffitfunc->SetParameters( 1.0e-4, 70.0, 5.2, 1.0, 1.0e-3, 0.25, 0.0 );
@@ -253,7 +268,7 @@ void PTFAnalysis::FitWaveform( int wavenum, int nwaves, PTF::PMTType pmt ) {
   //  fitresult->prob      = TMath::Prob( ffitfunc->GetChisquare(), 30-4 );
   //  fitresult->fitstat   = fitstat;
   //}
-  else if( pmt == PTF::PTF_Monitor_PMT ){
+  else if( pmt.type == PTF::PTF_Monitor_PMT ){
     float ped = 0.0;
     int nbins = 20;
     for( int ibin = 1; ibin<=nbins; ibin++ ){
@@ -271,7 +286,7 @@ void PTFAnalysis::FitWaveform( int wavenum, int nwaves, PTF::PMTType pmt ) {
     fitresult->amp = amp;
     fitresult->mean = mean;
   }
-  else if( pmt == PTF::Reference ){
+  else if( pmt.type == PTF::Reference ){
     float mean = 0.0;
     for( int ibin = 1; ibin<=hwaveform->GetNbinsX(); ibin++ ){
       if( hwaveform->GetBinContent( ibin ) < 0.5 ){
@@ -304,32 +319,106 @@ void PTFAnalysis::FitWaveform( int wavenum, int nwaves, PTF::PMTType pmt ) {
   //  fitresult->prob      = TMath::Prob( ffitfunc->GetChisquare(), 30-5 );
   //  fitresult->fitstat   = fitstat;
   //}
-  else if( pmt == PTF::mPMT_REV0_PMT ){ /// Add a new PMT type for the mPMT analysis.
-    if( ffitfunc == nullptr ) ffitfunc = new TF1("mygauss",pmt1_gaussian,2040,2320,4);
-    ffitfunc->SetParameters( fitresult->amp, fitresult->mean, 8.0, fitresult->ped );
-    ffitfunc->SetParNames( "Amplitude", "Mean", "Sigma", "Offset" );
+  else if( pmt.type == PTF::mPMT_REV0_PMT ){ /// Add a new PMT type for the mPMT analysis.
 
-    ffitfunc->SetParameter(0, 0.05);
-    ffitfunc->SetParameter(1, 2160.0 );
-    ffitfunc->SetParameter(2, 11.2 );
-    ffitfunc->SetParameter(3, 1.0 );
-    ffitfunc->SetParLimits(0, 0.0, 1.0);
-    ffitfunc->SetParLimits(1, 2120.0, 2200.0 );
-    ffitfunc->SetParLimits(2, 6.4, 16.0 );
-    ffitfunc->SetParLimits(3, 0.99, 1.01 );
+    // Find the mininum bin between 2040.0ns (bin 255) and  2320.0ns (bin 290)
+    double min_bin = 2160;
+    double min_bini = 0;
+    double min_value = 999.0;
+    for(int i = 255; i < 290; i++){
+      double value = hwaveform->GetBinContent(i);
+      if(value < min_value){
+        min_value = value;
+        min_bin = hwaveform->GetBinCenter(i);
+	min_bini = i;
+      }
+    }
+
+    double fit_minx = min_bin - 40.0;
+    double fit_maxx = min_bin + 8.0*2.5;
+    
+
+    if( ffitfunc == nullptr ) ffitfunc = new TF1("mygauss",funcEMG,fit_minx-30,fit_maxx+30,5);
+    ffitfunc->SetParameters( fitresult->amp, fitresult->mean, 8.0, 1.0, fitresult->ped );
+    ffitfunc->SetParNames( "Amplitude", "Mean", "Sigma", "exp decay", "Offset" );
+
+    
+    ffitfunc->SetParameter(0, -2);
+    ffitfunc->SetParameter(1, min_bin );
+    ffitfunc->FixParameter(2, 10.9 );
+    ffitfunc->FixParameter(3, 0.5 );
+    //    ffitfunc->SetParameter(4, 0.99 );
+    if(pmt.channel == 0)
+      ffitfunc->FixParameter(4, 0.999);
+    else if(pmt.channel == 1)
+      ffitfunc->FixParameter(4, 1.0036);
+    ffitfunc->SetParLimits(0, -100, 0);
+    ffitfunc->SetParLimits(1, 2022.0, 2358.0 );
+    //ffitfunc->SetParLimits(2, 10.56, 10.58 );
+    //ffitfunc->SetParLimits(3, 0.1, 0.9 );
+    //    ffitfunc->SetParLimits(4, 0.99, 1.01 );
 
     // then fit gaussian
-    int fitstat = hwaveform->Fit( ffitfunc, "Q", "", 2040.0, 2320.0);
+    int fitstat = hwaveform->Fit( ffitfunc, "Q", "", fit_minx, fit_maxx);
 
     // collect fit results
-    fitresult->ped       = ffitfunc->GetParameter(3);
+    fitresult->ped       = ffitfunc->GetParameter(4);
     fitresult->mean      = ffitfunc->GetParameter(1);
     fitresult->sigma     = ffitfunc->GetParameter(2);
     fitresult->amp       = ffitfunc->GetParameter(0);
     fitresult->chi2      = ffitfunc->GetChisquare();
-    fitresult->ndof      = 30-4;
+    fitresult->ndof      = ffitfunc->GetParameter(3);
     fitresult->prob      = TMath::Prob( ffitfunc->GetChisquare(), 30-4 );
+
     fitresult->fitstat   = fitstat;
+
+    // Do CFD analysis on the fitted pulse
+    double pulse_amplitude = ffitfunc->GetParameter(0) * 3.0 / 100.0;
+    double baseline = ffitfunc->GetParameter(4);
+    if(pmt.channel == 0) baseline = 0.991;
+    if(pmt.channel == 1) baseline = 0.9966;
+    double cfd_threshold = baseline + pulse_amplitude/2.0;
+    double crossing_time;
+    // Step back from min_bin
+    bool found_cfd = false;
+    int ii = min_bini;
+    double x1=0,x2=0,y1=0,y2=0;
+    double m=0, b=0;
+    while(!found_cfd){
+      
+      // check if this bin is < CFD threshold and previous bin > CFD threshold
+      y2 = hwaveform->GetBinContent(ii);
+      y1 = hwaveform->GetBinContent(ii-1);
+      if(y2 < cfd_threshold && y1 > cfd_threshold){ // found cross-over
+
+	x1 = hwaveform->GetBinCenter(ii-1);
+	x2 = hwaveform->GetBinCenter(ii);
+
+	b=y1;
+	m=(y2-y1)/(x2-x1);
+	  
+	// y = m * (x-x1) + b
+	// (y - b)/m + x1 = x
+	crossing_time = (cfd_threshold - b)/m + x1;
+	found_cfd = true;
+      }
+
+      ii--;
+      if (ii < 200) found_cfd = true;
+
+    }
+
+    fitresult->sinw = crossing_time;    
+    if(0)std::cout << "CFD: " << pulse_amplitude << " " << baseline << " " 
+	      << cfd_threshold << " " << ii << " " 
+	      << " X1/Y1: " << x1<<":"<<y1 
+	      << " X2/Y2: " << x2<<":"<<y2 
+	      << " crossing : " << m << " " << b << " " << crossing_time 
+	      << std::endl;
+    
+    
+
+
   }
 
   
@@ -459,16 +548,17 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, PTF::Wrapper & wrapper, double errorba
       if( dofit && fft_cut && pmt.pmt == 0 ) dofit = FFTCut();
       //if( dofit && pmt.pmt == 1 ) dofit = MonitorCut( 25. );
       if( dofit ){
-        FitWaveform( j, numWaveforms, pmt.type ); // Fit waveform and copy fit results into TTree
+        FitWaveform( j, numWaveforms, pmt ); // Fit waveform and copy fit results into TTree
       }
       fitresult->haswf = utils.HasWaveform( fitresult, pmt.pmt );
       ptf_tree->Fill();
-      
+      if(0)std::cout << "Check save waveform: " << save_waveforms << " " << savewf_count
+<< " " << savenowf_count << " " << curscanpoint.x() << std::endl; 
       // check if we should clone waveform histograms
       if ( save_waveforms && savewf_count<500 && savenowf_count<500 ){
 	    if  ( fabs( curscanpoint.x() - 0.46 ) < 0.0005 && 
 	      fabs( curscanpoint.y() - 0.38 ) < 0.0005 ) {
-              
+           //   std::cout << "Success:" << std::endl;
           std::string hwfname = "hwf_" + std::to_string( nfilled );
           std::string hfftmname = "hfftm_" + std::to_string( nfilled );
           if ( fitresult->haswf && savewf_count<500 ) {

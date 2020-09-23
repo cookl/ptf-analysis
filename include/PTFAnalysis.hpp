@@ -48,9 +48,11 @@ private:
   bool FFTCut(); // Do FFT and check if waveform present
   bool PulseLocationCut( int cut ); // Cut on pulse in first or last bins
   void InitializeFitResult( int wavenum, int nwaves  );
-  void FitWaveform( int wavenum, int nwaves, PTF::PMTType pmt );
+
+  void FitWaveform( int wavenum, int nwaves, PTF::PMT pmt );
   static double pmt0_gaussian(double *x, double *par);
   static double pmt1_gaussian(double *x, double *par);
+  static double funcEMG(double* x, double* p);
   static double pmt2_piecewise(double *x, double *par);
   static bool comparison(double i, double j){ return (fabs( i-j ) < 1e-5); }
 
