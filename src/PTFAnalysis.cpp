@@ -437,6 +437,7 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, PTF::Wrapper & wrapper, double errorba
   bool pulse_location_cut;
   bool fft_cut;
   bool do_pulse_finding;
+  bool dofit = true;
 
   config.Load(config_file);
   if( !config.Get("terminal_output", terminal_output) ){
@@ -454,6 +455,16 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, PTF::Wrapper & wrapper, double errorba
   if( !config.Get("do_pulse_finding", do_pulse_finding) ){
     cout << "Disabling pulse finding." << std::endl;
     do_pulse_finding = false;
+  }
+  if( !config.Get("do_pulse_fitting", dofit) ){
+    std::cout <<"Disabling pulse fitting"<< std::endl;
+    dofit = true;
+  }else{
+    if(dofit){
+      std::cout <<"Enabling pulse fitting"<< std::endl;
+    }else{
+      std::cout <<"Disabling pulse fitting"<< std::endl;
+    }
   }
 
   static int instance_count =0;
@@ -543,7 +554,6 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, PTF::Wrapper & wrapper, double errorba
       if( pmt.pmt == 0 ) ChargeSum(0.9931);
       // For main PMT do FFT and check if there is a waveform
       // If a waveform present then fit it
-      bool dofit = true;
       if( dofit && pulse_location_cut && pmt.pmt == 0 ) dofit = PulseLocationCut(10);
       if( dofit && fft_cut && pmt.pmt == 0 ) dofit = FFTCut();
       //if( dofit && pmt.pmt == 1 ) dofit = MonitorCut( 25. );
