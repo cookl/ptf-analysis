@@ -99,16 +99,7 @@ int main(int argc, char** argv) {
   //ErrorBarAnalysis * errbars0 = new ErrorBarAnalysis( outFile, wrapper, PMT0 );
 
   //std::cout << "Using errorbar size " << errbars0->get_errorbar() << std::endl;
-
-  // OPEN SETTINGS TREE
-  PTF::brbReadings currentReadings;
-  currentReadings = wrapper.GetSettings(string(argv[1]), "settings_tree");
-
-  for (int k = 0; k < 20; k++) {
-    std::cout<<"Baseline "<<k<<": "<<currentReadings.baseline[k]<<std::endl;
-  }
-
-
+  
   // Do analysis of waveforms for each scanpoint
   PTFAnalysis *analysis0 = new PTFAnalysis( outFile, wrapper, 2.1e-3/*errbars0->get_errorbar()*/, PMT0, string(argv[3]), true );
   analysis0->write_scanpoints();
