@@ -255,58 +255,6 @@ void Wrapper::closeFile() {
 }
 
 
-// Open the settings tree to retrieve information:
-PTF::brbReadings Wrapper::GetSettings(const string& fileName, const string& settingsTreeName) {
-
-  // Declare a struct to contain the settings
-  PTF::brbReadings brbSettings;
-
-  // Define variables to store the data.
-  int channelMask;        // "channel_mask/Int_t"
-  double baseline[20];    // "CalcBaseline[20]/Double_t"
-  double hvSetPoints[20]; // "HVsetpoints[20]/Double_t"
-  double hvReadback[20];  // "HVreadback[20]/Double_t"
-  double hvCurrent[20];   // "HVcurrent[20]/Double_t"
-
-  
-
-  // Open the root file if it is not open
-  // file = new TFile(fileName.c_str(), "READ");
-
-  // Get tree
-  auto settingsTree = new TTree();
-  file->GetObject(settingsTreeName.c_str(), settingsTree);
-
-  // Get the branches
-  auto dataMask = settingsTree->GetBranch("channel_mask");
-  auto dataBaseline = settingsTree->GetBranch("CalcBaseline");
-  auto dataHVsetPoints = settingsTree->GetBranch("HVsetpoints");
-  auto dataHVreadBack = settingsTree->GetBranch("HVreadback");
-  auto dataHVcurrent = settingsTree->GetBranch("HVcurrent");
-
-  // Point data to address
-  dataMask->SetAddress(&channelMask);
-  dataBaseline->SetAddress(&baseline);
-  dataHVsetPoints->SetAddress(&hvSetPoints);
-  dataHVreadBack->SetAddress(&hvReadback);
-  dataHVcurrent->SetAddress(&hvCurrent);
-
-  // Get entry
-  settingsTree->GetEntry(0);
-
-  brbSettings.channelMask = channelMask; 
-  for (int k =0; k < 20; k++) {
-    brbSettings.baseline[k] = baseline[k];   
-    brbSettings.hvSetPoints[k] = hvSetPoints[k];
-    brbSettings.hvReadback[k] = hvReadback[k];
-    brbSettings.hvCurrent[k] = hvCurrent[k]; 
-  }
-
-  // Return the settings
-  return brbSettings;
-}
-
-
 int Wrapper::getChannelForPmt(int pmt) const {
   // Could be replaced with binary search, but probably list is small enough to not matter
   auto res = pmtData.find(pmt);
