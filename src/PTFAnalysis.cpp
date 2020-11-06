@@ -322,10 +322,10 @@ void PTFAnalysis::FitWaveform( int wavenum, int nwaves, PTF::PMT pmt) {
   else if( pmt.type == PTF::mPMT_REV0_PMT ){ /// Add a new PMT type for the mPMT analysis.
 
     // Find the mininum bin between 2040.0ns (bin 255) and  2320.0ns (bin 290)
-    double min_bin = 2160;
+    double min_bin = 2400;
     double min_bini = 0;
-    double min_value = 999.0;
-    for(int i = 255; i < 290; i++){
+    double min_value = 1999.0;
+    for(int i = 280; i < 320; i++){
       double value = hwaveform->GetBinContent(i);
       if(value < min_value){
         min_value = value;
@@ -343,23 +343,30 @@ void PTFAnalysis::FitWaveform( int wavenum, int nwaves, PTF::PMT pmt) {
     ffitfunc->SetParNames( "Amplitude", "Mean", "Sigma", "exp decay", "Offset" );
 
     
-    ffitfunc->SetParameter(0, -2);
     ffitfunc->SetParameter(1, min_bin );
-    ffitfunc->FixParameter(2, 10.9 );
-    ffitfunc->FixParameter(3, 0.5 );
-    //    ffitfunc->SetParameter(4, 0.99 );
-    if(pmt.channel == 0)
-      ffitfunc->FixParameter(4, 0.999);
-    else if(pmt.channel == 1)
-      ffitfunc->FixParameter(4, 1.0036);
+    ffitfunc->FixParameter(2, 13 );
+    ffitfunc->FixParameter(3, 1 );
+
+    double sbaseline = 0.9915;
+    if(pmt.channel == 1){
+      sbaseline = 0.9961;      
+    }
+    double amplitude = sbaseline - min_value;
+    ffitfunc->SetParameter(0, amplitude*-10.0);
+
+    ffitfunc->FixParameter(4, sbaseline);
     ffitfunc->SetParLimits(0, -100, 0);
-    ffitfunc->SetParLimits(1, 2022.0, 2358.0 );
+    ffitfunc->SetParLimits(1, 2200.0, 2600.0 );
     //ffitfunc->SetParLimits(2, 10.56, 10.58 );
     //ffitfunc->SetParLimits(3, 0.1, 0.9 );
     //    ffitfunc->SetParLimits(4, 0.99, 1.01 );
 
     // then fit gaussian
     int fitstat = hwaveform->Fit( ffitfunc, "Q", "", fit_minx, fit_maxx);
+
+    std::cout << "Amp " << amplitude << " " << ffitfunc->GetParameter(0) 
+	      << " " << ffitfunc->GetParameter(0)/amplitude
+	      << std::endl;
 
     // collect fit results
     fitresult->ped       = ffitfunc->GetParameter(4);
@@ -373,11 +380,19 @@ void PTFAnalysis::FitWaveform( int wavenum, int nwaves, PTF::PMT pmt) {
     fitresult->fitstat   = fitstat;
 
     // Do CFD analysis on the fitted pulse
-    double pulse_amplitude = ffitfunc->GetParameter(0) * 3.0 / 100.0;
     double baseline = ffitfunc->GetParameter(4);
     if(pmt.channel == 0) baseline = 0.991;
     if(pmt.channel == 1) baseline = 0.9966;
+    double pulse_amplitude = ffitfunc->GetParameter(0) / 3.3;   
+    pulse_amplitude = min_value-baseline;
+
     double cfd_threshold = baseline + pulse_amplitude/2.0;
+    if(0)std::cout << "amp " << pulse_amplitude << " " << baseline-min_value
+		   << " " << (baseline-min_value)/0.008 << " "
+		   << (baseline-min_value) / pulse_amplitude << " "
+		   << ffitfunc->GetParameter(2) << " " << ffitfunc->GetParameter(3)
+		   << " " << cfd_threshold 
+		   << " " << std::endl;
     double crossing_time;
     // Step back from min_bin
     bool found_cfd = false;
@@ -565,13 +580,13 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, PTF::Wrapper & wrapper, double errorba
       if(0)std::cout << "Check save waveform: " << save_waveforms << " " << savewf_count
 << " " << savenowf_count << " " << curscanpoint.x() << std::endl; 
       // check if we should clone waveform histograms
-      if ( save_waveforms && savewf_count<500 && savenowf_count<500 ){
+      if ( save_waveforms && savewf_count<5000 && savenowf_count<5000 ){
 	    if  ( fabs( curscanpoint.x() - 0.46 ) < 0.0005 && 
 	      fabs( curscanpoint.y() - 0.38 ) < 0.0005 ) {
            //   std::cout << "Success:" << std::endl;
           std::string hwfname = "hwf_" + std::to_string( nfilled );
           std::string hfftmname = "hfftm_" + std::to_string( nfilled );
-          if ( fitresult->haswf && savewf_count<500 ) {
+          if ( fitresult->haswf && savewf_count<5000 ) {
             wfdir->cd();
             TH1D* hwf = (TH1D*) hwaveform->Clone( hwfname.c_str() );
             hwf->SetName( hwfname.c_str() );
@@ -583,7 +598,7 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, PTF::Wrapper & wrapper, double errorba
             hfftm_tmp->SetTitle("HAS a pulse; Frequency; Coefficient");
             hfftm_tmp->SetDirectory( wfdir_fft );
             ++savewf_count;	  
-          } else if ( !fitresult->haswf && savenowf_count<500 ){
+          } else if ( !fitresult->haswf && savenowf_count<5000 ){
             nowfdir->cd();
             TH1D* hwf = (TH1D*) hwaveform->Clone( hwfname.c_str() );
             hwf->SetName( hwfname.c_str() );
