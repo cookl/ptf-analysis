@@ -364,7 +364,7 @@ void PTFAnalysis::FitWaveform( int wavenum, int nwaves, PTF::PMT pmt) {
     // then fit gaussian
     int fitstat = hwaveform->Fit( ffitfunc, "Q", "", fit_minx, fit_maxx);
 
-    std::cout << "Amp " << amplitude << " " << ffitfunc->GetParameter(0) 
+    if(0)std::cout << "Amp " << amplitude << " " << ffitfunc->GetParameter(0) 
 	      << " " << ffitfunc->GetParameter(0)/amplitude
 	      << std::endl;
 
