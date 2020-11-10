@@ -41,12 +41,13 @@ int main( int argc, char* argv[] ) {
   }
   
 
-  TH1F *tdiff = new TH1F("time diff","Ch 0 minus Ch 1 time difference",100,-8,4);
+  //  TH1F *tdiff = new TH1F("time diff","Ch 0 minus Ch 1 time difference",100,-8,4);
+  TH1F *tdiff = new TH1F("time diff","Ch 0 minus Ch 1 time difference",100,320,328);
   TH1F *tdiff2 = new TH1F("time diff2","timediff2",100,-8,4);
 
   TH1F *ph[2];
-  ph[0] = new TH1F("PH0","Pulse Heights ",200,0,0.000488/0.008*200);
-  ph[1] = new TH1F("PH1","Pulse Heights",200,0,0.000488/0.008*200);
+  ph[0] = new TH1F("PH0","Pulse Heights ",400,0,0.000488/0.008*400);
+  ph[1] = new TH1F("PH1","Pulse Heights",400,0,0.000488/0.008*400);
   std::cout << "Looping tree " << tt0->GetEntries() << " " << tt1->GetEntries() << std::endl;
   // Loop the first scan point and print something
   for(int i = 0; i < tt0->GetEntries()-1; i++){
@@ -58,13 +59,15 @@ int main( int argc, char* argv[] ) {
     double pulse_time[2] = {-1,-1};
     double pulse_height[2] {-1,-1};
 
-    double baseline[2] = {0.9915,0.9958};
+    //    double baseline[2] = {0.9915,0.9958};
+    double baseline[2] = {1.0015,0.9932};
     for(int j =0; j < 2; j++){
       WaveformFitResult *wf;
       if(j==0) wf = wf0;
       if(j==1) wf = wf1;
       for(int k = 0; k < wf->numPulses; k++){
-        if(wf->pulseTimes[k] > 2250 && wf->pulseTimes[k] < 2650){ // look for laser pulse
+        //if(wf->pulseTimes[k] > 2420 && wf->pulseTimes[k] < 2480){ // look for laser pulse
+        if(wf->pulseTimes[k] > 2020 && wf->pulseTimes[k] < 2480){ // look for laser pulse
           pulse_time[j] = wf->pulseTimes[k];
           //pulse_height[j] = (baseline[j] - wf->pulseCharges[k])/0.01;
           pulse_height[j] = (wf->pulseCharges[k])/0.008;
@@ -118,7 +121,7 @@ int main( int argc, char* argv[] ) {
     
 
     // Only look at large pulses
-    if(pulse_height[0] < 1.5 && pulse_height[1] < 1.5 &&
+    if(pulse_height[0] < 1.5 && pulse_height[1] < 20.5 &&
        pulse_height[0] > 0.5 && pulse_height[1] > 0.5       ){
       tdiff->Fill(time0-time1);
       tdiff2->Fill(cfd_time0-cfd_time1);
@@ -140,7 +143,7 @@ int main( int argc, char* argv[] ) {
 
   TCanvas *c = new TCanvas("C");
   tdiff->Draw();
-  TF1 *gaus = new TF1("gaus","gaus",-4,0);
+  TF1 *gaus = new TF1("gaus","gaus",321.5,324);
   tdiff->Fit("gaus","R");
   tdiff->SetXTitle("time difference (ns)"); 
 
@@ -182,11 +185,11 @@ int main( int argc, char* argv[] ) {
   c2->SaveAs("tres_vs_ph.png");
 
   TCanvas *c3 = new TCanvas("C3");
-  ph[1]->Draw();
-  ph[1]->SetXTitle("Pulse height (PE)");
+  ph[0]->Draw();
+  ph[0]->SetXTitle("Pulse height (PE)");
 
-  ph[0]->Draw("SAME");
-  ph[0]->SetLineColor(2);
+  ph[1]->Draw("SAME");
+  ph[1]->SetLineColor(2);
 
   TLegend *leg = new TLegend(0.5,0.7,0.79,0.89);
   leg->AddEntry(ph[0],"Channel 0");
