@@ -325,7 +325,8 @@ void PTFAnalysis::FitWaveform( int wavenum, int nwaves, PTF::PMT pmt) {
     double min_bin = 2400;
     double min_bini = 0;
     double min_value = 1999.0;
-    for(int i = 280; i < 320; i++){
+    //    for(int i = 280; i < 320; i++){
+    for(int i = 250; i < 320; i++){
       double value = hwaveform->GetBinContent(i);
       if(value < min_value){
         min_value = value;
@@ -348,15 +349,22 @@ void PTFAnalysis::FitWaveform( int wavenum, int nwaves, PTF::PMT pmt) {
     ffitfunc->FixParameter(3, 1 );
 
     double sbaseline = 0.9915;
-    if(pmt.channel == 1){
-      sbaseline = 0.9961;      
-    }
+    if(pmt.channel == 1){sbaseline = 0.9961; }
+    if(pmt.channel == 16){sbaseline = 1.0015; }
+    if(pmt.channel == 17){sbaseline = 0.9932; }
+    if(pmt.channel == 18){sbaseline = 1.0044; }   
+ 
     double amplitude = sbaseline - min_value;
     ffitfunc->SetParameter(0, amplitude*-10.0);
 
     ffitfunc->FixParameter(4, sbaseline);
     ffitfunc->SetParLimits(0, -100, 0);
-    ffitfunc->SetParLimits(1, 2200.0, 2600.0 );
+    ffitfunc->SetParLimits(1, 1900.0, 2600.0 );
+    if(0)std::cout << "FF " << ffitfunc->GetParameter(0)<< " " 
+	      << ffitfunc->GetParameter(1)<< " " 
+	      << ffitfunc->GetParameter(2)<< " " 
+	      << ffitfunc->GetParameter(3)<< " " 
+	      << std::endl;
     //ffitfunc->SetParLimits(2, 10.56, 10.58 );
     //ffitfunc->SetParLimits(3, 0.1, 0.9 );
     //    ffitfunc->SetParLimits(4, 0.99, 1.01 );
