@@ -170,6 +170,10 @@ void PTFAnalysis::InitializeFitResult( int wavenum, int nwaves  ) {
   fitresult->y         = scanpoint.y();
   fitresult->z         = scanpoint.z();
 }
+double p2_top = 0;
+double p2_bottom = 0;
+double p3_top = 0;
+double p3_bottom = 0;
 
 void PTFAnalysis::FitWaveform( int wavenum, int nwaves, PTF::PMT pmt) {
   // assumes hwaveform already defined and filled
@@ -345,26 +349,31 @@ void PTFAnalysis::FitWaveform( int wavenum, int nwaves, PTF::PMT pmt) {
 
     
     ffitfunc->SetParameter(1, min_bin );
+    //ffitfunc->SetParameter(2, 13 );
+    //ffitfunc->SetParameter(3, 1 );    
     ffitfunc->FixParameter(2, 13 );
     ffitfunc->FixParameter(3, 1 );
 
-    double sbaseline = 0.9915;
+    if(pmt.channel >= 16){
+      ffitfunc->FixParameter(2, 9.6 );
+      ffitfunc->FixParameter(3, 15.8 );
+    }
+
+    double sbaseline = 0.9908;
     if(pmt.channel == 1){sbaseline = 0.9961; }
     if(pmt.channel == 16){sbaseline = 1.0015; }
     if(pmt.channel == 17){sbaseline = 0.9932; }
     if(pmt.channel == 18){sbaseline = 1.0044; }   
+    if(pmt.channel == 19){sbaseline = 1.0025; } 
  
     double amplitude = sbaseline - min_value;
     ffitfunc->SetParameter(0, amplitude*-10.0);
-
+    if(pmt.channel >= 16){
+       ffitfunc->SetParameter(0, amplitude*-0.63);
+    }
     ffitfunc->FixParameter(4, sbaseline);
     ffitfunc->SetParLimits(0, -100, 0);
     ffitfunc->SetParLimits(1, 1900.0, 2600.0 );
-    if(0)std::cout << "FF " << ffitfunc->GetParameter(0)<< " " 
-	      << ffitfunc->GetParameter(1)<< " " 
-	      << ffitfunc->GetParameter(2)<< " " 
-	      << ffitfunc->GetParameter(3)<< " " 
-	      << std::endl;
     //ffitfunc->SetParLimits(2, 10.56, 10.58 );
     //ffitfunc->SetParLimits(3, 0.1, 0.9 );
     //    ffitfunc->SetParLimits(4, 0.99, 1.01 );
@@ -372,9 +381,26 @@ void PTFAnalysis::FitWaveform( int wavenum, int nwaves, PTF::PMT pmt) {
     // then fit gaussian
     int fitstat = hwaveform->Fit( ffitfunc, "Q", "", fit_minx, fit_maxx);
 
-    if(0)std::cout << "Amp " << amplitude << " " << ffitfunc->GetParameter(0) 
-	      << " " << ffitfunc->GetParameter(0)/amplitude
+     if(pmt.channel == 18 && 0)std::cout << "FF " << ffitfunc->GetParameter(0)<< " " 
+	      << ffitfunc->GetParameter(1)<< " " 
+	      << ffitfunc->GetParameter(2)<< " " 
+	      << ffitfunc->GetParameter(3)<< "   |||||" 
 	      << std::endl;
+  
+    if(pmt.channel == 16 && 0){
+      p2_top += ffitfunc->GetParameter(2);
+      p2_bottom += 1.0;
+      p3_top += ffitfunc->GetParameter(3);
+      p3_bottom += 1.0;
+
+      std::cout << "Amp " << amplitude << " " << ffitfunc->GetParameter(0) 
+		<< " " << ffitfunc->GetParameter(0)/amplitude
+		<< " " << ffitfunc->GetParameter(2) 
+		<< " " << p2_top/p2_bottom 
+		<< " " << ffitfunc->GetParameter(3)
+		<< " " << p3_top/p3_bottom << " "
+		<< std::endl;
+    }
 
     // collect fit results
     fitresult->ped       = ffitfunc->GetParameter(4);

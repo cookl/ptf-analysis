@@ -85,13 +85,17 @@ int main(int argc, char** argv) {
   vector<int> phidgets = {0, 1, 3};
   PTF::PMT PMT0 = {0,0,PTF::mPMT_REV0_PMT}; // only looking at one pmt at a time
   PTF::PMT PMT1 = {1,1,PTF::mPMT_REV0_PMT}; // only looking at one pmt at a time
-  vector<PTF::PMT> activePMTs = { PMT0, PMT1 }; // must be ordered {main,monitor}
+  //PTF::PMT PMT16 = {16,16,PTF::mPMT_REV0_PMT}; // only looking at one pmt at a time
+  PTF::PMT PMT17 = {17,17,PTF::mPMT_REV0_PMT}; // only looking at one pmt at a time
+  PTF::PMT PMT18 = {18,18,PTF::mPMT_REV0_PMT};
+  PTF::PMT PMT19 = {19,19,PTF::mPMT_REV0_PMT};
+  vector<PTF::PMT> activePMTs = { PMT0, PMT1, PMT17, PMT18, PMT19 }; // must be ordered {main,monitor}
   vector<PTF::Gantry> gantries = {PTF::Gantry0, PTF::Gantry1};
   PTF::Wrapper wrapper = PTF::Wrapper(1, 1024, activePMTs, phidgets, gantries, PTF::mPMT_DIGITIZER);
   std::cout << "Open file: " << std::endl;
   wrapper.openFile( string(argv[1]), "scan_tree");
   cerr << "Num entries: " << wrapper.getNumEntries() << endl << endl;
-
+  cout << "Points ready " << endl;
   // Determine error bars to use on waveforms
   // Commented out for the time being because it causes a seg fault once PTFAnalysis tries to fit the first waveform
   // Very strange behaviour!
@@ -109,6 +113,16 @@ int main(int argc, char** argv) {
   // Do analysis of waveforms for each scanpoint
   PTFAnalysis *analysis1 = new PTFAnalysis( outFile, wrapper, 2.1e-3/*errbars1->get_errorbar()*/, PMT1, string(argv[3]), true );
   
+ // Do analysis of waveforms for each scanpoint
+  //PTFAnalysis *analysis16 = new PTFAnalysis( outFile, wrapper, 2.1e-3/*errbars1->get_errorbar()*/, PMT16, string(argv[3]), true );
+  
+ // Do analysis of waveforms for each scanpoint
+  PTFAnalysis *analysis17 = new PTFAnalysis( outFile, wrapper, 2.1e-3/*errbars1->get_errorbar()*/, PMT17, string(argv[3]), true );
+  
+
+  PTFAnalysis *analysis18 = new PTFAnalysis( outFile, wrapper, 2.1e-3/*errbars1->get_errorbar()*/, PMT18, string(argv[3]), true );
+
+ PTFAnalysis *analysis19 = new PTFAnalysis( outFile, wrapper, 2.1e-3/*errbars1->get_errorbar()*/, PMT19, string(argv[3]), true );
   // Do quantum efficiency analysis
   // This is now also done in a separate analysis script (including temperature corrections)
   //PTFQEAnalysis *qeanalysis = new PTFQEAnalysis( outFile, analysis0, analysis1 );

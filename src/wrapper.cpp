@@ -94,8 +94,10 @@ double* Wrapper::getDataForPmt(int pmt) const {
 
 
 bool Wrapper::setDataPointers() {
-  if (tree == nullptr || file == nullptr)
+  if (tree == nullptr || file == nullptr){
+    cout << "false tree or file ppointer" << endl;
     return false;
+}
   
   // Set PMT branches
   char branchName[64];
@@ -104,7 +106,8 @@ bool Wrapper::setDataPointers() {
     pmt.second->branch = nullptr;
     pmt.second->branch = tree->GetBranch(branchName);
     if (pmt.second->branch == nullptr) {
-      return false;
+      cout << "False second branch pointer " << branchName << endl;   
+   return false;
     }
     pmt.second->branch->SetAddress(pmt.second->data);
   }
@@ -129,6 +132,7 @@ bool Wrapper::setDataPointers() {
     if (phidget.second->branchX == nullptr
         || phidget.second->branchY == nullptr
         || phidget.second->branchZ == nullptr) {
+      cout << "False branch xyz" << endl; 
       return false;
     }
   }
