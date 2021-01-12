@@ -3,7 +3,7 @@
 #include "Configuration.hpp"
 #include "Utilities.hpp"
 #include "TVirtualFFT.h"
-
+#include "PulseFinding.hpp"
 #include "TH2D.h"
 
 #include <iostream>
