@@ -1,4 +1,3 @@
-#include "WaveformFitResult.hpp"
 #include "ScanPoint.hpp"
 #include "Utilities.hpp"
 #include "FindCircle.hpp"

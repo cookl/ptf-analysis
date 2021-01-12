@@ -19,6 +19,7 @@
 #include "TStyle.h"
 #include "TColor.h"
 #include "TPad.h"
+#include "TMultiGraph.h"
 #include "TGraph.h"
 #include "TGraphErrors.h"
 #include "TVector2.h"
@@ -149,10 +150,10 @@ TStyle* SetPTFStyle(Int_t WhichStyle = 1, TString styleName = "PTF") {
   // - inbuilt color schemes -
   // ptfStyle->SetPalette(1); // use the rainbow color set
   //ptfStyle->SetPalette(kViridis); // use the viridis color set
-  //ptfStyle->SetPalette(kSunset); // use the sunset color set
+  ptfStyle->SetPalette(kSunset); // use the sunset color set
   //ptfStyle->SetPalette(kColorPrintableOnGrey); // use the colorPrintableOnGrey color set
   //ptfStyle->SetPalette(kCubehelix); // use the cubehelix color set
-  ptfStyle->SetPalette(kLightTemperature);
+  //ptfStyle->SetPalette(kLightTemperature);
   //TColor::InvertPalette(); // invert color palette
 
   return ptfStyle;
