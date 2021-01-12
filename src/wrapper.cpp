@@ -101,7 +101,7 @@ bool Wrapper::setDataPointers() {
   if (tree == nullptr || file == nullptr)
     return false;
   
-  // Set PMT branchess
+  // Set PMT branches
   char branchName[64];
   for (auto pmt : pmtData) {
     snprintf(branchName, 64, PMT_CHANNEL_FORMAT, pmt.second->channel);
@@ -116,7 +116,7 @@ bool Wrapper::setDataPointers() {
   // Set phidget branches
   for (auto phidget : phidgetData) {
     snprintf(branchName, 64, PHIDGET_FORMAT_X, phidget.first);
-    phidget.second->branchX = nullptr;//.second ?, number of branch to write somewhere ? name of the branch ?, what is the purpose of this line
+    phidget.second->branchX = nullptr;
     phidget.second->branchX = tree->GetBranch(branchName);
     phidget.second->branchX->SetAddress(&phidget.second->data.Bx);
 
@@ -133,7 +133,7 @@ bool Wrapper::setDataPointers() {
     if (phidget.second->branchX == nullptr
         || phidget.second->branchY == nullptr
         || phidget.second->branchZ == nullptr) {
-      return false
+      return false;
     }
   }
 

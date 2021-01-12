@@ -104,9 +104,6 @@ $(EXECUTABLE7): $(OBJECTS) $(OBJ7)
 $(EXECUTABLE8): $(OBJECTS) $(OBJ8)
 	$(CXX) $^ -o $@ $(LDFLAGS)
 
-$(EXECUTABLE8): $(OBJECTS) $(OBJ8)
-	$(CXX) $^ -o $@ $(LDFLAGS)
-
 $(EXECUTABLE9): $(OBJECTS) $(OBJ9)
 	$(CXX) $^ -o $@ $(LDFLAGS)
 
@@ -117,6 +114,9 @@ $(EXECUTABLE11): $(OBJECTS) $(OBJ11)
 	$(CXX) $^ -o $@ $(LDFLAGS)
 
 $(EXECUTABLE12): $(OBJECTS) $(OBJ12)
+	$(CXX) $^ -o $@ $(LDFLAGS)
+
+$(EXECUTABLE13): $(OBJECTS) $(OBJ13)
 	$(CXX) $^ -o $@ $(LDFLAGS)
 
 $(OBJDIR)/%.o: %.cpp
