@@ -21,7 +21,7 @@ std::ostream& operator << ( std::ostream& os, const MeanRMSCalc & calc );
 class ErrorBarAnalysis {
 
 public:
-  ErrorBarAnalysis( TFile * outfile, PTF::Wrapper & ptf, PTF::PMTChannel & channel );
+  ErrorBarAnalysis( TFile * outfile, PTF::Wrapper & ptf, PTF::PMT & pmt );
   double get_errorbar( ) const { return hdiff->GetRMS(); }
 
 private:
