@@ -112,7 +112,7 @@ PTFQEAnalysis::PTFQEAnalysis( TFile *fout, PTFAnalysis *ptfanalysis0, PTFAnalysi
   //First calculate average from histogram
   double pmt1_qe_av = 0.0;
   int n_filled = 0;
-  for(int ix=1 ix<=pmt1_qe->GetNbinsX(); ix++){
+  for(int ix=1; ix<=pmt1_qe->GetNbinsX(); ix++){
     for(int iy=1; iy<=pmt1_qe->GetNbinsY(); iy++){
       if( pmt1_qe->GetBinContent(ix, iy) < 1e-10 ) continue;
       pmt1_qe_av += pmt1_qe->GetBinContent(ix, iy);
