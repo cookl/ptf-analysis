@@ -194,6 +194,7 @@ typedef struct Digitizer {
 ```
 
 A structure to store the digitizer settings. Units are MS/s (mega samples per second) for the sampling rate, Vpp (Voltage peak-to-peak) for the full scale range, and bits for the resolution.
+
 # How to use install the wrapper : 
 This is a simple C++ library for reading the ROOT files produced from the PTF. It handles loading the files and provides a simple way to access the data.
 
@@ -255,6 +256,8 @@ int main(void) {
   // wrapper is automatically deallocated when it goes out of scope here, and its destructor cleans up memory
 }
 ```
+=======
+
 
 ## Methods of `PTF::Wrapper`
 
@@ -293,3 +296,4 @@ Here are the methods of `PTF::Wrapper`:
     - Gets the phidget data for the given phidget and current entry. Throws `InvalidPhidget` if the phidget wasn't registered, and `NoFileIsOpen` if no file is open.
 - `Digitizer getDigitizerSettings() const`
     - Gets the digitizer settings.
+

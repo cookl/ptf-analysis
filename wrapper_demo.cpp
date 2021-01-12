@@ -7,20 +7,25 @@ using namespace std;
 
 
 int main(void) {
-  // decide which channels we'd like
-  vector<PTF::PMTChannel> channels = {
-    {1, 3} // this is saying we want pmt #1, which is on channel 3.
+  // decide which PMTs we'd like
+  vector<PTF::PMT> activePMTs = {
+    {0,0,PTF::Hamamatsu_R3600_PMT} // this is saying we want pmt #0, which is on channel 0 and is the SK PMT.
   };
 
   // decide which phidgets we'd like to read
   vector<int> phidgets = {1, 2, 5};
 
+  // decide which gantries we'd like to include
+  vector<PTF::Gantry> gantries = {PTF::Gantry0, PTF::Gantry1};
+
   // initialize the wrapper
   auto wrapper = PTF::Wrapper(
-    16384, // the maximum number of samples
-    34, // the size of one sample
-    channels,
-    phidgets
+    6000, // the maximum number of samples
+    70, // the size of one sample
+    activePMTs,
+    phidgets,
+    gantries,
+    PTF::PTF_CAEN_V1730 // which digitizer to use
   );
 
   // now we can open our file
@@ -37,7 +42,7 @@ int main(void) {
     PhidgetReading phidgetReading = wrapper.getReadingForPhidget(3);// looking at which phidget will be use int 
 
     // get data from gantry 1
-    GantryPos gantryData = wrapper.getDataForCurrentEntry(PTF::Gantry1);
+    GantryData gantryData = wrapper.getDataForCurrentEntry(PTF::Gantry1);
 
     // see how many samples there are for the current entry
     auto numSamples = wrapper.getNumSamples();

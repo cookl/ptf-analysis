@@ -26,7 +26,8 @@
 ///    has one entry per scan-point
 /// 3. The now filled TTree of fitted waveform parameters is analyzed to make histograms
 ///     
-/// Author: Blair Jamieson (Sep. 2019) 
+/// Author: Blair Jamieson (Sep. 2019)
+/// Update by T. Lindner (June 2020) for mPMT analysis
 
 
 #include "wrapper.hpp"
@@ -68,6 +69,7 @@ int main(int argc, char** argv) {
     return 0;
   }
 
+  std::cout << "Creating utilities " << std::endl;
   // Get utilities
   Utilities utils;
 
@@ -75,42 +77,37 @@ int main(int argc, char** argv) {
   utils.set_style();
 
   // Opening the output root file
-  string outname = string("ptf_analysis_run0") + argv[2] + ".root";
+  string outname = string("mpmt_Analysis_run0") + argv[2] + ".root";
   TFile * outFile = new TFile(outname.c_str(), "NEW");
   //TFile * outFile = new TFile("ptf_analysis.root", "NEW");
 
   // Set up PTF Wrapper
   vector<int> phidgets = {0, 1, 3};
-  PTF::PMT PMT0 = {0,0,PTF::Hamamatsu_R3600_PMT}; // only looking at one PMT at a time
-  PTF::PMT PMT1 = {1,5,PTF::PTF_Monitor_PMT}; // only looking at one PMT at a time
-  PTF::PMT REF = {2,1,PTF::Reference}; // only looking at one PMT at a time
-  vector<PTF::PMT> activePMTs = { PMT0, PMT1, REF }; // must be ordered {main,monitor}
+  PTF::PMT PMT0 = {0,0,PTF::mPMT_REV0_PMT}; // only looking at one pmt at a time
+  PTF::PMT PMT1 = {1,1,PTF::mPMT_REV0_PMT}; // only looking at one pmt at a time
+  vector<PTF::PMT> activePMTs = { PMT0, PMT1 }; // must be ordered {main,monitor}
   vector<PTF::Gantry> gantries = {PTF::Gantry0, PTF::Gantry1};
-  PTF::Wrapper wrapper = PTF::Wrapper(6000, 70, activePMTs, phidgets, gantries, PTF::PTF_CAEN_V1730);
+  PTF::Wrapper wrapper = PTF::Wrapper(1, 1024, activePMTs, phidgets, gantries, PTF::mPMT_DIGITIZER);
+  std::cout << "Open file: " << std::endl;
   wrapper.openFile( string(argv[1]), "scan_tree");
   cerr << "Num entries: " << wrapper.getNumEntries() << endl << endl;
 
   // Determine error bars to use on waveforms
-  // Commented to save time
-  // Approximate error bars for waveforms are sufficient for fitting
+  // Commented out for the time being because it causes a seg fault once PTFAnalysis tries to fit the first waveform
+  // Very strange behaviour!
+  // Spent ages trying to work out what was going wrong but never got to the bottom of it
   //ErrorBarAnalysis * errbars0 = new ErrorBarAnalysis( outFile, wrapper, PMT0 );
-  //std::cout << "Using PMT0 errorbar size " << errbars0->get_errorbar() << std::endl;
-  //ErrorBarAnalysis * errbars1 = new ErrorBarAnalysis( outFile, wrapper, PMT1 );
-  //std::cout << "Using PMT1 errorbar size " << errbars1->get_errorbar() << std::endl;
+
+  //std::cout << "Using errorbar size " << errbars0->get_errorbar() << std::endl;
   
   // Do analysis of waveforms for each scanpoint
-  PTFAnalysis *analysis0 = new PTFAnalysis( outFile, wrapper, 4.4/*errbars0->get_errorbar()*/, PMT0, string(argv[3]), true );
+  PTFAnalysis *analysis0 = new PTFAnalysis( outFile, wrapper, 2.1e-3/*errbars0->get_errorbar()*/, PMT0, string(argv[3]), true );
   analysis0->write_scanpoints();
 
   // Switch PMT to monitor PMT
   
   // Do analysis of waveforms for each scanpoint
-  PTFAnalysis *analysis1 = new PTFAnalysis( outFile, wrapper, 4.4/*errbars1->get_errorbar()*/, PMT1, string(argv[3]), true );
-
-  // Switch to reference waveform
-  
-  // Do analysis of waveforms for each scanpoint
-  PTFAnalysis *analysis2 = new PTFAnalysis( outFile, wrapper, 4.4/*errbars2->get_errorbar()*/, REF, string(argv[3]), true );
+  PTFAnalysis *analysis1 = new PTFAnalysis( outFile, wrapper, 2.1e-3/*errbars1->get_errorbar()*/, PMT1, string(argv[3]), true );
   
   // Do quantum efficiency analysis
   // This is now also done in a separate analysis script (including temperature corrections)
