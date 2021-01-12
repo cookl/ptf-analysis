@@ -47,7 +47,7 @@ void WriteScanPoints( const std::vector< ScanPoint > & scanpoints ){
 	
     Entry=sp.get_entry();
     Entries=sp.nentries();
-    std::cout<<"Filling TTree with "<<sp<<std::endl;
+    //    std::cout<<"Filling TTree with "<<sp<<std::endl;
     tt->Fill();
   }
   tt->Write();

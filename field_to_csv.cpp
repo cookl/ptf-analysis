@@ -20,17 +20,11 @@ int main(int argc, char** argv) {
   string csv_f  = "/neut/datasrv2a/jmgwalker/ptf/ptf-analysis-2/develop/ptf-analysis-2/field_to_csv/out_run0" + run_no + ".csv";
 
   vector<int> phidgets = {0, 1, 3, 4};
-  vector<PTF::PMTChannel> activeChannels = {};
-  //   {0, 3},
-  //   {1, 4},
-  //   {2, 5},
-  //   {3, 6},
-  //   {4, 7}, 
-  //   {5, 8},
-  //   {6, 9},
-  //   {7, 10}
-  // };
-  PTF::Wrapper wrapper = PTF::Wrapper(16384, 70, activeChannels, phidgets);
+  vector<PTF::PMT> activePMTs = {};
+
+  vector<PTF::Gantry> gantries = {PTF::Gantry0, PTF::Gantry1};
+
+  PTF::Wrapper wrapper = PTF::Wrapper(16384, 70, activePMTs, phidgets, gantries, PTF::PTF_CAEN_V1730);
 
   unordered_set<int> skipLines = {};// {962,1923,2884,5240,6201,9611,10572,11533,12494,13455,15811,16771};
 
