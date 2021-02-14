@@ -45,7 +45,6 @@
 
 namespace PTF {
 
-
 enum Gantry {
   Gantry0 = 0,
   Gantry1 = 1
@@ -62,7 +61,9 @@ enum PMTType {
 };
 
 
+
 struct PMT {
+
   int pmt;
   int channel;
   PMTType type;
@@ -73,10 +74,29 @@ struct PhidgetReading {
   double Bx[150];
   double By[150];
   double Bz[150];
+  double accx[150];
+  double accy[150];
+  double accz[150];
 };
 
 
+
+
+  struct PhidgetSet {
+    PhidgetReading data;
+    TBranch*       branchX{nullptr};
+    TBranch*       branchY{nullptr};
+    TBranch*       branchZ{nullptr};
+    TBranch*       branchaccx{nullptr};
+    TBranch*       branchaccy{nullptr};
+    TBranch*       branchaccz{nullptr};
+  };
+}
+
+
+
 struct GantryData {
+
   double x;
   double y;
   double z;
@@ -84,6 +104,22 @@ struct GantryData {
   double phi;
 };
 
+struct Temperature_r {
+  //double int_1;
+  //double ext_1;
+  double ext_2;
+};
+
+struct Phidget_acce00 
+  *double acc_x;
+  *double acc_y;
+  *double acc_z;
+};
+
+
+struct Timing {
+   Double_t time_c;
+};
 
 struct PMTSet {
   int      channel;
@@ -123,6 +159,7 @@ struct Digitizer {
   double fullScaleRange;
   int resolution;
 };
+
 
 
 struct Wrapper {
@@ -168,6 +205,12 @@ public:
   GantryData getDataForCurrentEntry(Gantry whichGantry) const;
 
   PhidgetReading getReadingForPhidget(int phidget) const;
+  
+  Temperature_r getReadingTemperature() const;
+  
+  *Phidget_acce00 getReadingAcceleration() const;
+  
+  Timing getReadingTime() const;
 
   Digitizer getDigitizerSettings() const {return digiData;}
 
@@ -183,6 +226,11 @@ private:
   std::unordered_map<int, PhidgetSet*> phidgetData;
   std::unordered_map<int, GantrySet*>  gantryData;
   Digitizer digiData;
+  
+
+  Temperature_r Temp;
+  Timing ti;
+  *Phidget_acce00 ACC;
   
   unsigned long long    numEntries;
   unsigned long long    numSamples;

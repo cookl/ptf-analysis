@@ -190,12 +190,12 @@ void ratio_plot(){
   gStyle->SetPadGridX(0);
   gStyle->SetPadGridY(0);
 
-  TFile *f_on = new TFile("ptf_qe_analysis_run04581.root"); //4551 or 4581
+  TFile *f_on = new TFile("ptf_qe_analysis_run04551.root");
   TH2D *h_ratio_plot = (TH2D*)f_on->Get("pmt0_qe_corr");
   
   //Translate plot down 7 bins in y
-  //int offset = 4; // for 4562 vs 4551
-  int offset = 0;
+  int offset = 4; // for 4562 vs 4551
+  //int offset = 0;
   for( int i=1; i<=h_ratio_plot->GetNbinsX(); i++ ){
     for( int j=1; j<=h_ratio_plot->GetNbinsY(); j++ ){
       if( j<=h_ratio_plot->GetNbinsY()-offset ){
@@ -207,7 +207,7 @@ void ratio_plot(){
     }
   }
 
-  TFile *f_off = new TFile("ptf_qe_analysis_run04584.root"); //4562 or 4584
+  TFile *f_off = new TFile("ptf_qe_analysis_run04562.root");
   TH2D *h_pmt0_cover_off = (TH2D*)f_off->Get("pmt0_qe_corr");
   //h_ratio_plot->Divide(h_pmt0_cover_off);
   

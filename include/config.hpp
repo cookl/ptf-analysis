@@ -6,6 +6,10 @@
 #define PHIDGET_FORMAT_X "phidg%i_Bx"
 #define PHIDGET_FORMAT_Y "phidg%i_By"
 #define PHIDGET_FORMAT_Z "phidg%i_Bz"
+#define PHIDGET_FORMAT_ACCX "phidg%i_Ax"
+#define PHIDGET_FORMAT_ACCY "phidg%i_Ay"
+#define PHIDGET_FORMAT_ACCZ "phidg%i_Az"
+
 #define GANTRY_FORMAT_X "gantry%i_x"
 #define GANTRY_FORMAT_Y "gantry%i_y"
 #define GANTRY_FORMAT_Z "gantry%i_z"
@@ -17,6 +21,5 @@
 #define mPMT_DIGITIZER_SAMPLE_RATE 125 // MS/s
 #define mPMT_DIGITIZER_FULL_SCALE_RANGE 2.0 // Vpp
 #define mPMT_DIGITIZER_RESOLUTION 12 // bits
-
 
 #endif
