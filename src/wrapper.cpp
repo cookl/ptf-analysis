@@ -5,7 +5,11 @@ using namespace std;
 using namespace PTF;
 
 
+//constructor of the class
+
+
 Wrapper::Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, const vector<PMT>& activePMTs, const vector<int>& phidgets, const vector<Gantry>& gantries, DigitizerModel digi)
+
   : maxSamples(maxSamples), sampleSize(sampleSize)
 {
   for (auto pmt : activePMTs) {
@@ -133,6 +137,7 @@ bool Wrapper::setDataPointers() {
     }
   }
 
+
   // Set gantry branches
   for (auto gantry : gantryData) {
     snprintf(branchName, 64, GANTRY_FORMAT_X, (int)gantry.second->gantry);
@@ -169,9 +174,29 @@ bool Wrapper::setDataPointers() {
     }
   }
 
+
   TBranch* brNumSamples = tree->GetBranch("num_points");
 
   brNumSamples->SetAddress(&numSamples);
+  TBranch
+    //*T_int = tree->GetBranch("int_temp"),//, *T_ext1 = tree->GetBranch("ext1_temp")
+    *T_ext2 = tree->GetBranch("ext2_temp");
+    
+   // *braNumSamples = tree->GetBranch("num_points");
+  //T_int->SetAddress(&Temp.int_1);
+  //T_ext1->SetAddress(&Temp.ext_1);
+  T_ext2->SetAddress(&Temp.ext_2);
+  //braNumSamples->SetAddress(&numSamples);
+  TBranch
+    *Time_1=tree->GetBranch("timestamp");
+    Time_1->SetAddress(&ti.time_c);
+	
+	
+    TBranch
+      *ACC_x= tree->GetBranch("gantry0_x"), *g0Y = tree->GetBranch("gantry0_y"), *g0Z = tree->GetBranch("gantry0_z"),
+        *ACC_y = tree->GetBranch("gantry0_rot"), *g0Phi = tree->GetBranch("gantry0_tilt"),
+      *ACC_z = tree->GetBranch("gantry1_x"), *g1Y = tree->GetBranch("gantry1_y"), *g1Z = tree->GetBranch("gantry1_z"),
+        *g1Theta = tree->GetBranch("gantry1_rot"), *g1Phi = tree->GetBranch("gantry1_tilt"),
 
   return true;
 }
@@ -332,7 +357,9 @@ int Wrapper::getSampleLength() const {
 }
 
 
+<
 GantryData Wrapper::getDataForCurrentEntry(Gantry whichGantry) const {
+
   if (!isFileOpen()) {
     throw new Exceptions::NoFileIsOpen();
   }
@@ -358,3 +385,19 @@ PhidgetReading Wrapper::getReadingForPhidget(int phidget) const {
     return res->second->data;
   }
 }
+
+Temperature_r Wrapper::getReadingTemperature() const {
+  if (!isFileOpen()) {
+    throw new Exceptions::NoFileIsOpen();
+  }
+  return Temp;
+}
+Timing Wrapper::getReadingTime() const {
+ if (!isFileOpen()) {
+    throw new Exceptions::NoFileIsOpen();
+  }
+  return ti;
+
+}
+
+ 
