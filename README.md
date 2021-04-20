@@ -195,6 +195,69 @@ typedef struct Digitizer {
 
 A structure to store the digitizer settings. Units are MS/s (mega samples per second) for the sampling rate, Vpp (Voltage peak-to-peak) for the full scale range, and bits for the resolution.
 
+# How to use install the wrapper : 
+This is a simple C++ library for reading the ROOT files produced from the PTF. It handles loading the files and provides a simple way to access the data.
+
+It can be build with make wrapper.o for a debug build (uses -g3 -Og), or with make wrapper.o RELEASE=TRUE for an optimized build (uses -g -O2). You can then link your program with g++ -o myprog myprog.cpp wrapper.o {flags here} -I$(ROOTSYS)/include/root -L$(ROOTSYS)/lib/root -lCore -lHist -lRIO -lTree -lGpad. clang++ works as well, but make sure that ROOT, wrapper.o and your program are all compiled with the same compiler.
+
+```c++
+#include <vector>
+
+#include "wrapper.hpp"
+
+
+using namespace std;
+
+
+int main(void) {
+  // decide which channels we'd like
+  vector<PTF::PMTChannel> channels = {
+    {1, 3} // this is saying we want pmt #1, which is on channel 3.
+  };
+
+  // decide which phidgets we'd like to read
+  vector<int> phidgets = {1, 3, 4};
+
+  // initialize the wrapper
+  auto wrapper = PTF::Wrapper(
+    16384, // the maximum number of samples
+    34, // the size of one sample
+    channels,
+    phidgets
+  );
+
+  // now we can open our file
+  wrapper.openFile("/path/to/file.root");
+
+  cout << "There are " << wrapper.getNumEntries() << " entries." << endl;
+
+  // we can iterate over all the entries
+
+  for (size_t i = 0; i < wrapper.getNumEntries(); i++) {
+    wrapper.setCurrentEntry(i);
+
+    // get data from phidget 3
+    PhidgetReading phidgetReading = wrapper.getReadingForPhidget(3);
+
+    // get data from gantry 1
+    GantryPos gantryData = wrapper.getDataForCurrentEntry(PTF::Gantry1);
+
+    // see how many samples there are for the current entry
+    auto numSamples = wrapper.getNumSamples();
+
+    for (size_t sample = 0; sample < numSamples; sample++) {
+      // Gets a pointer to the data for PMT 1 for this sample
+      // It's an array with the length of one sample, set above, in this case 34.
+      double* data = getPmtSample(1, sample);
+      // do something with data
+    }
+  }
+
+  // wrapper is automatically deallocated when it goes out of scope here, and its destructor cleans up memory
+}
+```
+=======
+
 
 ## Methods of `PTF::Wrapper`
 
@@ -233,3 +296,4 @@ Here are the methods of `PTF::Wrapper`:
     - Gets the phidget data for the given phidget and current entry. Throws `InvalidPhidget` if the phidget wasn't registered, and `NoFileIsOpen` if no file is open.
 - `Digitizer getDigitizerSettings() const`
     - Gets the digitizer settings.
+
