@@ -1,9 +1,9 @@
+
 #include "PTFAnalysis.hpp"
 #include "Configuration.hpp"
 #include "Utilities.hpp"
 #include "TVirtualFFT.h"
 #include "PulseFinding.hpp"
-
 #include "TH2D.h"
 
 #include <iostream>
@@ -496,7 +496,7 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, PTF::Wrapper & wrapper, double errorba
   ptf_tree = new TTree(ptf_tree_name.c_str(), ptf_tree_name.c_str());
   fitresult = new WaveformFitResult();
   fitresult->MakeTTreeBranches( ptf_tree );
-
+  
   // Create output directories
   // Directories for waveforms
   string wfdir_name = "PMT" + std::to_string(pmt.pmt) + "_Waveforms";
@@ -509,7 +509,6 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, PTF::Wrapper & wrapper, double errorba
   if ( save_waveforms && wfdir_fft==nullptr ) wfdir_fft = outfile->mkdir(wfdir_fft_name.c_str());
   if ( save_waveforms && nowfdir_fft==nullptr ) nowfdir_fft = outfile->mkdir(nowfdir_fft_name.c_str());
   outfile->cd();
-  
   // Loop over scan points (index i)
   unsigned long long nfilled = 0;// number of TTree entries so far
   for (unsigned i = 2; i < wrapper.getNumEntries(); i++) {
@@ -524,9 +523,12 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, PTF::Wrapper & wrapper, double errorba
       }
     }
     wrapper.setCurrentEntry(i);
-    auto location = wrapper.getDataForCurrentEntry(PTF::Gantry1);
     
-    scanpoints.push_back( ScanPoint( location.x, location.y, location.z, nfilled ) );
+    auto location = wrapper.getDataForCurrentEntry(PTF::Gantry1);
+    auto T=wrapper.getReadingTemperature();
+    auto time_F=wrapper.getReadingTime();
+    scanpoints.push_back( ScanPoint( location.x, location.y, location.z,time_F.time_c, T.ext_2, nfilled ) );
+    
     ScanPoint& curscanpoint = scanpoints[ scanpoints.size()-1 ];
     
     // loop over the number of waveforms at this ScanPoint (index j)
@@ -609,7 +611,7 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, PTF::Wrapper & wrapper, double errorba
   }
   //cout << endl;
   // Done.
-
+  
 }
 
 const std::vector< double > PTFAnalysis::get_bins( char dim ){
@@ -662,3 +664,4 @@ const std::vector< double > PTFAnalysis::get_bins( char dim ){
 
   return bins;
 }
+ 
