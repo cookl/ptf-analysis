@@ -73,7 +73,7 @@ MESSAGE:
 	@echo '*   - ptf_ttree_analysis                                             *'
 	@echo '*   - ptf_qe_analysis                                                *'
 	@echo '*   - ptf_field_analysis                                             *'
-	@echo '*   - ptf_charge_analysis                                            *'  									*'
+	@echo '*   - ptf_charge_analysis                                            *' 
 	@echo '*   - temperature_reading analysis                                   *'
 	@echo '*   - ptf_timing_analysis                                            *'
 	@echo '*   - mpmt_analysis                                                  *'
@@ -100,7 +100,7 @@ $(EXECUTABLE6): $(OBJECTS) $(OBJ6)
 
 $(EXECUTABLE7): $(OBJECTS) $(OBJ7)
 	$(CXX) $^ -o $@ $(LDFLAGS)
-	
+
 $(EXECUTABLE8): $(OBJECTS) $(OBJ8)
 	$(CXX) $^ -o $@ $(LDFLAGS)
 
