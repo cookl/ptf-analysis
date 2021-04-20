@@ -54,6 +54,7 @@ private:
   static double pmt1_gaussian(double *x, double *par);
   static double funcEMG(double* x, double* p);
   static double pmt2_piecewise(double *x, double *par);
+  static double bessel(double *x, double *p);
   static bool comparison(double i, double j){ return (fabs( i-j ) < 1e-5); }
 
   std::vector< ScanPoint > scanpoints;
