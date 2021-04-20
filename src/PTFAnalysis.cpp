@@ -160,6 +160,23 @@ double PTFAnalysis::pmt2_piecewise(double *x, double *par) {
 
 }
 
+double PTFAnalysis::bessel(double *x, double *p){
+  //Exponential gaussian used for fitting
+  double xx = (x[0] - p[1]) * p[0];
+  //
+  double y;
+  if(x[0] < p[1]){
+    y = p[3];
+  }else{
+    //y = p[3] + p[2] * (TMath::Sin(xx) / (xx * xx) - TMath::Cos(xx)/xx);
+    y = p[3] + p[2] / pow(xx,p[4]) *
+      ((15/(xx*xx*xx) - 6/xx) * TMath::Sin(xx) / (xx) - ((15/(xx*xx) -1) *TMath::Cos(xx)/xx) );
+  }
+  
+  return y ;
+}
+  
+
 void PTFAnalysis::InitializeFitResult( int wavenum, int nwaves  ) {
   fitresult->Init();
   ScanPoint & scanpoint = scanpoints[ scanpoints.size()-1 ];
@@ -341,66 +358,147 @@ void PTFAnalysis::FitWaveform( int wavenum, int nwaves, PTF::PMT pmt) {
 
     double fit_minx = min_bin - 40.0;
     double fit_maxx = min_bin + 8.0*2.5;
-    
 
-    if( ffitfunc == nullptr ) ffitfunc = new TF1("mygauss",funcEMG,fit_minx-30,fit_maxx+30,5);
-    ffitfunc->SetParameters( fitresult->amp, fitresult->mean, 8.0, 1.0, fitresult->ped );
-    ffitfunc->SetParNames( "Amplitude", "Mean", "Sigma", "exp decay", "Offset" );
+    int fitstat;
+    double amplitude;
 
-    
-    ffitfunc->SetParameter(1, min_bin );
-    //ffitfunc->SetParameter(2, 13 );
-    //ffitfunc->SetParameter(3, 1 );    
-    ffitfunc->FixParameter(2, 13 );
-    ffitfunc->FixParameter(3, 1 );
-
+    // ellipitcall modified gaussian
     if(pmt.channel >= 16){
+      if( ffitfunc == nullptr ) ffitfunc = new TF1("mygauss",funcEMG,fit_minx-30,fit_maxx+30,5);
+      ffitfunc->SetParameters( fitresult->amp, fitresult->mean, 8.0, 1.0, fitresult->ped );
+      ffitfunc->SetParNames( "Amplitude", "Mean", "Sigma", "exp decay", "Offset" );
+      
+      
+      ffitfunc->SetParameter(1, min_bin );
+      //ffitfunc->SetParameter(2, 13 );
+      //ffitfunc->SetParameter(3, 1 );    
+      //ffitfunc->FixParameter(2, 13 );
+      //ffitfunc->FixParameter(3, 1 );
+      
+      
       ffitfunc->FixParameter(2, 9.6 );
-      ffitfunc->FixParameter(3, 15.8 );
+      	ffitfunc->SetParameter(3, 15.8 );
+      //ffitfunc->FixParameter(3, 6.0 );
+      
+      
+      double sbaseline = 0.9908;
+      //      if(pmt.channel == 1){sbaseline = 0.9961; }
+      if(pmt.channel == 1){sbaseline = 1.0034; }
+      if(pmt.channel == 16){sbaseline = 1.0015; }
+      //      if(pmt.channel == 17){sbaseline = 0.9932; }
+      if(pmt.channel == 17){sbaseline = 0.9975; }
+      if(pmt.channel == 18){sbaseline = 1.004; }   
+      if(pmt.channel == 19){sbaseline = 1.0025; } 
+      
+      amplitude = sbaseline - min_value;
+      ffitfunc->SetParameter(0, amplitude*-10.0);
+      if(pmt.channel >= 0){
+	ffitfunc->SetParameter(0, amplitude*-0.63);
+      }
+      ffitfunc->FixParameter(4, sbaseline);
+      ffitfunc->SetParLimits(0, -1000, 100);
+      ffitfunc->SetParLimits(1, 1800.0, 2600.0 );
+      //ffitfunc->SetParLimits(2, 10.56, 10.58 );
+      //ffitfunc->SetParLimits(3, 0.1, 0.9 );
+      //    ffitfunc->SetParLimits(4, 0.99, 1.01 );
+      
+      // then fit gaussian
+      fitstat = hwaveform->Fit( ffitfunc, "Q", "", fit_minx, fit_maxx);
+
+
+      
     }
 
-    double sbaseline = 0.9908;
-    if(pmt.channel == 1){sbaseline = 0.9961; }
-    if(pmt.channel == 16){sbaseline = 1.0015; }
-    if(pmt.channel == 17){sbaseline = 0.9932; }
-    if(pmt.channel == 18){sbaseline = 1.0044; }   
-    if(pmt.channel == 19){sbaseline = 1.0025; } 
- 
-    double amplitude = sbaseline - min_value;
-    ffitfunc->SetParameter(0, amplitude*-10.0);
-    if(pmt.channel >= 16){
-       ffitfunc->SetParameter(0, amplitude*-0.63);
+    // Bessel fit
+    if(pmt.channel < 16){
+
+      fit_minx = min_bin - 8*6.5;
+      //fit_maxx = min_bin + 8.0*3.5;
+      fit_maxx = min_bin + 8.0*0.5;
+      
+
+      if( ffitfunc == nullptr ) ffitfunc = new TF1("mygauss",bessel,fit_minx-32,fit_maxx+36,5);
+      ffitfunc->SetParameters( fitresult->amp, fitresult->mean, 8.0, fitresult->ped );
+      //      ffitfunc->SetParNames( "Amplitude", "Mean", "Sigma", "exp decay", "Offset" );
+      
+      
+      ffitfunc->SetParameter(1, min_bin - 28.0 );
+      //ffitfunc->SetParameter(2, 13 );
+      //ffitfunc->SetParameter(3, 1 );    
+      //ffitfunc->FixParameter(0, 0.113 );
+      //ffitfunc->FixParameter(4, 0.5 );
+      //      ffitfunc->SetParameter(0, 0.113 ); // 1PE
+      //ffitfunc->SetParameter(4, 0.5 ); // 1PE
+      ffitfunc->FixParameter(0, 0.113 ); // 32PE
+      ffitfunc->FixParameter(4, -0.3 ); // 32PE
+      
+      
+      double sbaseline = 0.9908;
+      if(pmt.channel == 1){sbaseline = 0.9961; }
+      //      if(pmt.channel == 1){sbaseline = 1.0034; }
+      if(pmt.channel == 16){sbaseline = 1.0015; }
+      if(pmt.channel == 17){sbaseline = 0.9932; }
+      if(pmt.channel == 18){sbaseline = 1.0044; }   
+      if(pmt.channel == 19){sbaseline = 1.0025; } 
+      
+      double basebase = 0;
+      int strt = min_bini - 16;
+      int stp = min_bini - 6;
+
+      for(int ii = strt; ii < stp; ii++){
+	basebase += hwaveform->GetBinContent(ii);
+      }
+      basebase /= 10.0;
+      sbaseline = basebase;
+
+      double amplitude = sbaseline - min_value;
+      //      ffitfunc->SetParameter(0, amplitude*-10.0);
+            ffitfunc->SetParameter(2, -5.6* amplitude );
+      //ffitfunc->SetParameter(2, -1.6* amplitude );
+
+      ffitfunc->FixParameter(3, sbaseline);
+      //      ffitfunc->SetParLimits(0, -100, 100);
+      ffitfunc->SetParLimits(1, 1900.0, 2600.0 );
+      //ffitfunc->SetParLimits(2, 10.56, 10.58 );
+      //ffitfunc->SetParLimits(3, 0.1, 0.9 );
+      //    ffitfunc->SetParLimits(4, 0.99, 1.01 );
+      
+      // then fit gaussian
+      int fitstat = hwaveform->Fit( ffitfunc, "Q", "", fit_minx, fit_maxx);
+      
+      if(pmt.channel == 1 && 1) std::cout  << "FF " << ffitfunc->GetParameter(0)<< " "
+				     << ffitfunc->GetParameter(1)<< " "
+				     << ffitfunc->GetParameter(2)<< " "
+				     << amplitude << " " 
+				     << ffitfunc->GetParameter(2)/amplitude << " " 
+				     << ffitfunc->GetParameter(3)<< " "
+				     << ffitfunc->GetParameter(4)<< "   |||||"
+				     << std::endl;
+
     }
-    ffitfunc->FixParameter(4, sbaseline);
-    ffitfunc->SetParLimits(0, -100, 0);
-    ffitfunc->SetParLimits(1, 1900.0, 2600.0 );
-    //ffitfunc->SetParLimits(2, 10.56, 10.58 );
-    //ffitfunc->SetParLimits(3, 0.1, 0.9 );
-    //    ffitfunc->SetParLimits(4, 0.99, 1.01 );
-
-    // then fit gaussian
-    int fitstat = hwaveform->Fit( ffitfunc, "Q", "", fit_minx, fit_maxx);
-
-     if(pmt.channel == 18 && 0)std::cout << "FF " << ffitfunc->GetParameter(0)<< " " 
-	      << ffitfunc->GetParameter(1)<< " " 
-	      << ffitfunc->GetParameter(2)<< " " 
-	      << ffitfunc->GetParameter(3)<< "   |||||" 
-	      << std::endl;
-  
+    
+    if(pmt.channel == 17 && 0)std::cout << "FF " << ffitfunc->GetParameter(0)<< " " 
+					<< ffitfunc->GetParameter(1)<< " " 
+					<< ffitfunc->GetParameter(2)<< " " 
+					<< ffitfunc->GetParameter(3)<< "   |||||" 
+					<< std::endl;
+    
     if(pmt.channel == 16 && 0){
       p2_top += ffitfunc->GetParameter(2);
       p2_bottom += 1.0;
       p3_top += ffitfunc->GetParameter(3);
       p3_bottom += 1.0;
-
+      
       std::cout << "Amp " << amplitude << " " << ffitfunc->GetParameter(0) 
 		<< " " << ffitfunc->GetParameter(0)/amplitude
 		<< " " << ffitfunc->GetParameter(2) 
 		<< " " << p2_top/p2_bottom 
-		<< " " << ffitfunc->GetParameter(3)
+		  << " " << ffitfunc->GetParameter(3)
 		<< " " << p3_top/p3_bottom << " "
 		<< std::endl;
     }
+  
+  
 
     // collect fit results
     fitresult->ped       = ffitfunc->GetParameter(4);
@@ -614,13 +712,13 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, PTF::Wrapper & wrapper, double errorba
       if(0)std::cout << "Check save waveform: " << save_waveforms << " " << savewf_count
 << " " << savenowf_count << " " << curscanpoint.x() << std::endl; 
       // check if we should clone waveform histograms
-      if ( save_waveforms && savewf_count<5000 && savenowf_count<5000 ){
+      if ( save_waveforms && savewf_count<1000 && savenowf_count<1000 ){
 	    if  ( fabs( curscanpoint.x() - 0.46 ) < 0.0005 && 
 	      fabs( curscanpoint.y() - 0.38 ) < 0.0005 ) {
            //   std::cout << "Success:" << std::endl;
           std::string hwfname = "hwf_" + std::to_string( nfilled );
           std::string hfftmname = "hfftm_" + std::to_string( nfilled );
-          if ( fitresult->haswf && savewf_count<5000 ) {
+          if ( fitresult->haswf && savewf_count<1000 ) {
             wfdir->cd();
             TH1D* hwf = (TH1D*) hwaveform->Clone( hwfname.c_str() );
             hwf->SetName( hwfname.c_str() );
@@ -632,7 +730,7 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, PTF::Wrapper & wrapper, double errorba
             hfftm_tmp->SetTitle("HAS a pulse; Frequency; Coefficient");
             hfftm_tmp->SetDirectory( wfdir_fft );
             ++savewf_count;	  
-          } else if ( !fitresult->haswf && savenowf_count<5000 ){
+          } else if ( !fitresult->haswf && savenowf_count<1000 ){
             nowfdir->cd();
             TH1D* hwf = (TH1D*) hwaveform->Clone( hwfname.c_str() );
             hwf->SetName( hwfname.c_str() );
