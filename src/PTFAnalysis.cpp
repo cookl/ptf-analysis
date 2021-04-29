@@ -712,7 +712,7 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, PTF::Wrapper & wrapper, double errorba
       if(0)std::cout << "Check save waveform: " << save_waveforms << " " << savewf_count
 << " " << savenowf_count << " " << curscanpoint.x() << std::endl; 
       // check if we should clone waveform histograms
-      if ( save_waveforms && savewf_count<1000 && savenowf_count<1000 ){
+      if ( save_waveforms && savewf_count<500 && savenowf_count<500 ){
 	    if  ( fabs( curscanpoint.x() - 0.46 ) < 0.0005 && 
 	      fabs( curscanpoint.y() - 0.38 ) < 0.0005 ) {
            //   std::cout << "Success:" << std::endl;
