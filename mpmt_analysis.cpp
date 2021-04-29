@@ -59,6 +59,7 @@
 #include "TFitter.h"
 #include "TMath.h"
 #include "TStyle.h"
+#include "Configuration.hpp"
 
 using namespace std;
 
@@ -81,48 +82,72 @@ int main(int argc, char** argv) {
   TFile * outFile = new TFile(outname.c_str(), "NEW");
   //TFile * outFile = new TFile("ptf_analysis.root", "NEW");
 
-  // Set up PTF Wrapper
+  std::cout << "Config file: " << string(argv[3]) << std::endl;
+  Configuration config;
+  config.Load(argv[3]);
+  std::vector<int> active_channels;
+  std::cout << "Opened config file." << std::endl;
+  if( !config.Get("mpmt_channel_list", active_channels) ){
+    cout << "Missing terminal_output parameter from config file." << endl;
+    exit( EXIT_FAILURE );
+  }
+
+  std::cout << "Number of active channels: " << active_channels.size() << "\nActive channels are: ";
+  for(unsigned int i = 0; i < active_channels.size(); i++){ std::cout << active_channels[i]<< " ";}
+  std::cout << std::endl;
+    
+
   vector<int> phidgets = {0, 1, 3};
-  PTF::PMT PMT0 = {0,0,PTF::mPMT_REV0_PMT}; // only looking at one pmt at a time
-  PTF::PMT PMT1 = {1,1,PTF::mPMT_REV0_PMT}; // only looking at one pmt at a time
-  //PTF::PMT PMT16 = {16,16,PTF::mPMT_REV0_PMT}; // only looking at one pmt at a time
-  PTF::PMT PMT17 = {17,17,PTF::mPMT_REV0_PMT}; // only looking at one pmt at a time
-  PTF::PMT PMT18 = {18,18,PTF::mPMT_REV0_PMT};
-  PTF::PMT PMT19 = {19,19,PTF::mPMT_REV0_PMT};
-  vector<PTF::PMT> activePMTs = { PMT0, PMT1, PMT17, PMT18, PMT19 }; // must be ordered {main,monitor}
+  vector<PTF::PMT> activePMTs;
+
+
+  // Loop over the active channels to do setup.
+
+  for(unsigned int i = 0; i < active_channels.size(); i++){ 
+    
+    int ch = active_channels[i];
+    
+    PTF::PMT PMT = {ch,ch,PTF::mPMT_REV0_PMT};
+
+    activePMTs.push_back(PMT);
+    //PTF::PMT PMT0 = {0,0,PTF::mPMT_REV0_PMT}; // only looking at one pmt at a time
+    //PTF::PMT PMT1 = {1,1,PTF::mPMT_REV0_PMT}; // only looking at one pmt at a time
+    ////PTF::PMT PMT16 = {16,16,PTF::mPMT_REV0_PMT}; // only looking at one pmt at a time
+    //PTF::PMT PMT17 = {17,17,PTF::mPMT_REV0_PMT}; // only looking at one pmt at a time
+    //PTF::PMT PMT18 = {18,18,PTF::mPMT_REV0_PMT};
+    //PTF::PMT PMT19 = {19,19,PTF::mPMT_REV0_PMT};
+  }
   vector<PTF::Gantry> gantries = {PTF::Gantry0, PTF::Gantry1};
   PTF::Wrapper wrapper = PTF::Wrapper(1, 1024, activePMTs, phidgets, gantries, PTF::mPMT_DIGITIZER);
   std::cout << "Open file: " << std::endl;
   wrapper.openFile( string(argv[1]), "scan_tree");
   cerr << "Num entries: " << wrapper.getNumEntries() << endl << endl;
   cout << "Points ready " << endl;
-  // Determine error bars to use on waveforms
-  // Commented out for the time being because it causes a seg fault once PTFAnalysis tries to fit the first waveform
-  // Very strange behaviour!
-  // Spent ages trying to work out what was going wrong but never got to the bottom of it
-  //ErrorBarAnalysis * errbars0 = new ErrorBarAnalysis( outFile, wrapper, PMT0 );
 
-  //std::cout << "Using errorbar size " << errbars0->get_errorbar() << std::endl;
-  
-  // Do analysis of waveforms for each scanpoint
-  PTFAnalysis *analysis0 = new PTFAnalysis( outFile, wrapper, 2.1e-3/*errbars0->get_errorbar()*/, PMT0, string(argv[3]), true );
-  analysis0->write_scanpoints();
+  for(unsigned int i = 0; i < active_channels.size(); i++){
+    PTF::PMT pmt = activePMTs[i];
+    PTFAnalysis *analysis = new PTFAnalysis( outFile, wrapper, 2.1e-3, pmt, string(argv[3]), true );
+    if(i == 0) analysis->write_scanpoints();
+
+  }
+    // Do analysis of waveforms for each scanpoint
+    //analysis0->write_scanpoints();
 
   // Switch PMT to monitor PMT
   
   // Do analysis of waveforms for each scanpoint
-  PTFAnalysis *analysis1 = new PTFAnalysis( outFile, wrapper, 2.1e-3/*errbars1->get_errorbar()*/, PMT1, string(argv[3]), true );
+  //PTFAnalysis *analysis1 = new PTFAnalysis( outFile, wrapper, 2.1e-3/*errbars1->get_errorbar()*/, PMT1, string(argv[3]), true );
   
  // Do analysis of waveforms for each scanpoint
   //PTFAnalysis *analysis16 = new PTFAnalysis( outFile, wrapper, 2.1e-3/*errbars1->get_errorbar()*/, PMT16, string(argv[3]), true );
   
  // Do analysis of waveforms for each scanpoint
-  PTFAnalysis *analysis17 = new PTFAnalysis( outFile, wrapper, 2.1e-3/*errbars1->get_errorbar()*/, PMT17, string(argv[3]), true );
+  //PTFAnalysis *analysis17 = new PTFAnalysis( outFile, wrapper, 2.1e-3/*errbars1->get_errorbar()*/, PMT17, string(argv[3]), true );
   
 
-  PTFAnalysis *analysis18 = new PTFAnalysis( outFile, wrapper, 2.1e-3/*errbars1->get_errorbar()*/, PMT18, string(argv[3]), true );
+  //PTFAnalysis *analysis18 = new PTFAnalysis( outFile, wrapper, 2.1e-3/*errbars1->get_errorbar()*/, PMT18, string(argv[3]), true );
 
- PTFAnalysis *analysis19 = new PTFAnalysis( outFile, wrapper, 2.1e-3/*errbars1->get_errorbar()*/, PMT19, string(argv[3]), true );
+  // PTFAnalysis *analysis19 = new PTFAnalysis( outFile, wrapper, 2.1e-3/*errbars1->get_errorbar()*/, PMT19, string(argv[3]), true );
   // Do quantum efficiency analysis
   // This is now also done in a separate analysis script (including temperature corrections)
   //PTFQEAnalysis *qeanalysis = new PTFQEAnalysis( outFile, analysis0, analysis1 );
