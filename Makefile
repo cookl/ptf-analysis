@@ -14,18 +14,20 @@ CFLAGS=-c -g -Wall `root-config --cflags` -I${INCDIR}
 LDFLAGS=`root-config --glibs` -lHistPainter -lMinuit -L${ROOTSYS}/lib
 
 TARGET1=field_to_csv.cpp
-TARGET2=ptf_analysis.cpp
-TARGET3=ptf_ttree_analysis.cpp
-TARGET4=ptf_qe_analysis.cpp
-TARGET5=ptf_field_analysis.cpp
-TARGET6=ptf_charge_analysis.cpp
-TARGET7=ptf_timing_analysis.cpp
+TARGET2=acc_to_csv.cpp
+TARGET3=ptf_analysis.cpp
+TARGET4=ptf_ttree_analysis.cpp
+TARGET5=ptf_qe_analysis.cpp
+TARGET6=ptf_field_analysis.cpp
+TARGET7=ptf_charge_analysis.cpp
+TARGET8=ptf_timing_analysis.cpp
 
-TARGET8=temperature_reading.cpp
-TARGET9=mpmt_analysis.cpp
-TARGET10=mpmt_ttree_analysis.cpp
-TARGET11=mpmt_afterpulse.cpp
-TARGET12=mpmt_afterpulse_auto.cpp
+TARGET9=temperature_reading.cpp
+TARGET10=mpmt_analysis.cpp
+TARGET11=mpmt_ttree_analysis.cpp
+TARGET12=mpmt_afterpulse.cpp
+TARGET13=mpmt_afterpulse_auto.cpp
+TARGET14=mpmt_timing_analysis.cpp
 
 
 EXECUTABLE1=$(TARGET1:%.cpp=$(BINDIR)/%.app)
@@ -40,7 +42,9 @@ EXECUTABLE9=$(TARGET9:%.cpp=$(BINDIR)/%.app)
 EXECUTABLE10=$(TARGET10:%.cpp=$(BINDIR)/%.app)
 EXECUTABLE11=$(TARGET11:%.cpp=$(BINDIR)/%.app)
 EXECUTABLE12=$(TARGET12:%.cpp=$(BINDIR)/%.app)
-
+EXECUTABLE13=$(TARGET13:%.cpp=$(BINDIR)/%.app)
+EXECUTABLE14=$(TARGET14:%.cpp=$(BINDIR)/%.app)
+	
 FILES= $(wildcard $(SRCDIR)/*.cpp)
 SOURCES=$(FILES)
 
@@ -58,14 +62,17 @@ OBJ9=$(TARGET9:%.cpp=${OBJDIR}/%.o) $(OBJECTS)
 OBJ10=$(TARGET10:%.cpp=${OBJDIR}/%.o) $(OBJECTS)
 OBJ11=$(TARGET11:%.cpp=${OBJDIR}/%.o) $(OBJECTS)
 OBJ12=$(TARGET12:%.cpp=${OBJDIR}/%.o) $(OBJECTS)
+OBJ13=$(TARGET13:%.cpp=${OBJDIR}/%.o) $(OBJECTS)
+OBJ14=$(TARGET14:%.cpp=${OBJDIR}/%.o) $(OBJECTS)
 
-all: MESSAGE $(EXECUTABLE1) $(EXECUTABLE2) $(EXECUTABLE3) $(EXECUTABLE4) $(EXECUTABLE5) $(EXECUTABLE6) $(EXECUTABLE7) $(EXECUTABLE8)  $(EXECUTABLE9) $(EXECUTABLE10) $(EXECUTABLE11) $(EXECUTABLE12)
+all: MESSAGE $(EXECUTABLE1) $(EXECUTABLE2) $(EXECUTABLE3) $(EXECUTABLE4) $(EXECUTABLE5) $(EXECUTABLE6) $(EXECUTABLE7) $(EXECUTABLE8)  $(EXECUTABLE9) $(EXECUTABLE10) $(EXECUTABLE11) $(EXECUTABLE12) $(EXECUTABLE13)
 
 
 MESSAGE:
 	@echo '**********************************************************************'
 	@echo '* Compiling ptf-analysis programs:                                   *'
 	@echo '*   - field_to_csv                                                   *'
+	@echo '*   - acc_to_csv                                                     *'
 	@echo '*   - ptf_analysis                                                   *'
 	@echo '*   - ptf_ttree_analysis                                             *'
 	@echo '*   - ptf_qe_analysis                                                *'
@@ -97,7 +104,7 @@ $(EXECUTABLE6): $(OBJECTS) $(OBJ6)
 
 $(EXECUTABLE7): $(OBJECTS) $(OBJ7)
 	$(CXX) $^ -o $@ $(LDFLAGS)
-
+	
 $(EXECUTABLE8): $(OBJECTS) $(OBJ8)
 	$(CXX) $^ -o $@ $(LDFLAGS)
 
@@ -111,6 +118,9 @@ $(EXECUTABLE11): $(OBJECTS) $(OBJ11)
 	$(CXX) $^ -o $@ $(LDFLAGS)
 
 $(EXECUTABLE12): $(OBJECTS) $(OBJ12)
+	$(CXX) $^ -o $@ $(LDFLAGS)
+
+$(EXECUTABLE13): $(OBJECTS) $(OBJ13)
 	$(CXX) $^ -o $@ $(LDFLAGS)
 
 $(OBJDIR)/%.o: %.cpp
