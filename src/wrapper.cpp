@@ -200,7 +200,7 @@ bool Wrapper::setDataPointers() {
       *ACC_x= tree->GetBranch("gantry0_x"), *g0Y = tree->GetBranch("gantry0_y"), *g0Z = tree->GetBranch("gantry0_z"),
         *ACC_y = tree->GetBranch("gantry0_rot"), *g0Phi = tree->GetBranch("gantry0_tilt"),
       *ACC_z = tree->GetBranch("gantry1_x"), *g1Y = tree->GetBranch("gantry1_y"), *g1Z = tree->GetBranch("gantry1_z"),
-        *g1Theta = tree->GetBranch("gantry1_rot"), *g1Phi = tree->GetBranch("gantry1_tilt"),
+        *g1Theta = tree->GetBranch("gantry1_rot"), *g1Phi = tree->GetBranch("gantry1_tilt");
 
   return true;
 }
@@ -361,7 +361,6 @@ int Wrapper::getSampleLength() const {
 }
 
 
-<
 GantryData Wrapper::getDataForCurrentEntry(Gantry whichGantry) const {
 
   if (!isFileOpen()) {

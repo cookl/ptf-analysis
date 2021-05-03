@@ -79,11 +79,11 @@ struct PhidgetReading {
   double accz[150];
 };
 
+}
 
 
-
-  struct PhidgetSet {
-    PhidgetReading data;
+struct PhidgetSet {
+    PTF::PhidgetReading data;
     TBranch*       branchX{nullptr};
     TBranch*       branchY{nullptr};
     TBranch*       branchZ{nullptr};
@@ -91,7 +91,7 @@ struct PhidgetReading {
     TBranch*       branchaccy{nullptr};
     TBranch*       branchaccz{nullptr};
   };
-}
+
 
 
 
@@ -123,21 +123,21 @@ struct Timing {
 
 struct PMTSet {
   int      channel;
-  //PMTType  type;
+  PTF::PMTType  type;
   double*  data{nullptr};
   TBranch* branch{nullptr};
 
 };
 
-struct PhidgetSet {
-  PTF::PhidgetReading data;
-  TBranch*       branchX{nullptr};
-  TBranch*       branchY{nullptr};
-  TBranch*       branchZ{nullptr};
-};
+//struct PhidgetSet {
+//  PTF::PhidgetReading data;
+//  TBranch*       branchX{nullptr};
+//  TBranch*       branchY{nullptr};
+//  TBranch*       branchZ{nullptr};
+//};
 
 struct GantrySet {
-  //Gantry     gantry;
+  PTF::Gantry     gantry;
   GantryData data;
   TBranch*   branchX{nullptr};
   TBranch*   branchY{nullptr};
