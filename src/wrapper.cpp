@@ -214,10 +214,8 @@ bool Wrapper::setDataPointers() {
 	 TBranch
      *ACC_x= tree->GetBranch("phidgACC_Ax");
 	 ACC_x->SetAddress(&ACC.acc_x);
-	 TBranch
      *ACC_y= tree->GetBranch("phidgACC_Ay");
 	 ACC_y->SetAddress(&ACC.acc_y);
-	 TBranch
      *ACC_z= tree->GetBranch("phidgACC_Az");
 	 ACC_z->SetAddress(&ACC.acc_z);
 	 // *g0Y = tree->GetBranch("gantry0_y"), *g0Z = tree->GetBranch("gantry0_z"),
@@ -418,13 +416,6 @@ Temperature_r Wrapper::getReadingTemperature() const {
   }
   return Temp;
 }
-  Phidget_acce00 Wrapper::getReadingAcceleration() const{
-  if (!isFileOpen()) {
-    throw new Exceptions::NoFileIsOpen();
-  }
-  return ACC;
-}
-
 Timing Wrapper::getReadingTime() const {
  if (!isFileOpen()) {
     throw new Exceptions::NoFileIsOpen();
