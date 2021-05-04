@@ -1,386 +1,516 @@
 #include "WaveformFitResult.hpp"
 #include "ScanPoint.hpp"
 #include "TFile.h"
+#include "TStyle.h"
 #include "TCanvas.h"
 #include "TH1.h"
+#include "TH2.h"
 #include "TF1.h"
 #include "TPad.h"
 #include "TLegend.h"
 #include "TGraph.h"
 #include "TGraphErrors.h"
-
+#include "TText.h"
 #include <iostream>
 #include <vector>
+#include <map>
 #include <fstream>
 #include <math.h>
+#include <string>
+
+//// This programs opens the ROOT file
+//   containing the waveforms' information,
+//   such as number, time position and 
+//   height of pulses.
+//   It outputs afterpulse rates and graphs, 
+//   and histograms with pulse height and time 
+//   distributions.
+
+void analysis(TTree* tt, WaveformFitResult* wf, const Double_t peHeight, const Double_t peDivision, const Double_t &afpTimeThreshold1, Double_t &afpTimeThreshold2, Double_t dcr, std::vector<Double_t> &vecT, std::vector<Double_t> &vecQ, std::vector<Double_t> &vecA, std::vector<Double_t> &vecDeltaT, std::vector<Double_t> &vecAlsr, std::vector<Double_t> &vecQlsr, std::vector<Double_t> &vecAafp, std::vector<Double_t> &vecQafp, std::map<Int_t, Double_t> &lsrCounts, std::map<Int_t, Double_t> &afpRate, std::map<Int_t, Double_t> &singleAfpRate, std::map<Int_t, Double_t> &multipleAfp_dcr);
+void rates(std::map<Int_t, Double_t> &lsrCounts, std::map<Int_t, Double_t> &singleCounts, std::map<Int_t, Double_t> &multipleCounts, std::map<Int_t, Double_t> afpCounter_corrected, std::map<Int_t, Double_t> &singleRates, std::map<Int_t, Double_t> &multipleRates, std::map<Int_t, Double_t> &multipleRates_corrected, std::map<Int_t, Double_t> &singleErrors, std::map<Int_t, Double_t> &multipleErrors, std::map<Int_t, Double_t> &multipleRates_corrected_errors);
+void dcr_estimate(TTree* tt, WaveformFitResult* wf, const Double_t early_threshold, const Double_t afpTimeThreshold1, Double_t &dcr_estimation, Double_t &dcr_error);
+void drawHistogram(std::vector<double> data, TH1F* histogram, const char runNumber[], const Int_t y1_in, const Int_t y2_in, const Double_t x1_in, const Double_t x2_in, const Double_t percentage_x, const Double_t percentage_y);
+// void draw2DHistogram();
 
 int main( int argc, char* argv[] ) {
 
-  if ( argc != 4 ){
-    std::cerr<<"Usage: ptf_ttree_analysis.app ptf_analysis.root run_number ptfanalysis0\n";
+  //// PRE-RUN TEST
+  //   Only run analysis if all arguments are provided.
+  if ( argc != 5 ){
+    std::cerr<<"Usage: ptf_ttree_analysis.app ptf_analysis.root run_number ptfanalysis0 channel_number\n";
     exit(0);
   }
-
-  // creating variables for afterpulse:  
-  int lsrTotal = 0, afpTotal = 0, singleAfpCount = 0;
-  int afpTimeThreshold, lsrHeightInt=0, lsrAreaInt=0, lsrInt = 0;
-  double wfValue, area;
-  bool afpCounted;
-
-  // creating histogram file names:
-  char fnmT[1024], fnmQ[1024], fnmQlsr[1024]; 
-  char fnmQafp[1024], fnmAfpRate[1024], fnmSingleAfpRate[1024];
-  char combinedPlot[1024], fnmAlsr[1024], fnmAafp[1024];
-  char fnmA[1024]; 
-  sprintf(fnmT, "../%s-%s-hist-time.png", argv[2], argv[3]);
-  sprintf(fnmQ, "../%s-%s-hist-amps-all.png", argv[2], argv[3]);
-  sprintf(fnmQlsr, "../%s-%s-hist-amps-lsr.png", argv[2], argv[3]);
-  sprintf(fnmQafp, "../%s-%s-hist-amps-afp.png", argv[2], argv[3]);
-  sprintf(fnmAfpRate, "../%s-%s-plot-amps-afpRate.png", argv[2], argv[3]);
-  sprintf(fnmSingleAfpRate, "../%s-%s-plot-amps-afpSingleRate.png", argv[2], argv[3]);
-  sprintf(combinedPlot, "../%s-%s-plot-amps-combined.png", argv[2], argv[3]);
-  sprintf(fnmA, "../%s-%s-hist-area-all.png", argv[2], argv[3]);
-  sprintf(fnmAlsr, "../%s-%s-hist-area-lsr.png", argv[2], argv[3]);
-  sprintf(fnmAafp, "../%s-%s-hist-area-afp.png", argv[2], argv[3]);
-
-  // creating output file:
-  char fnmOut[1024];
-  sprintf(fnmOut, "../mpmt-afp-%s.txt", argv[2]);
-  std::ofstream outFile;
+  ////
   
-  // arbritary values of a threshold and a time window
-  afpTimeThreshold   = 2300;
+  // Arbritary values of a time window:
+  double afpTimeThreshold1 = 2180; //< ns
+  double afpTimeThreshold2 = 2230; //< ns
 
-  // how many sigma under the gaussian should be integrated around the mean?
-  double spread = 2.0;
+  // P.E. values
+  double peDivision = 0.5;
+  double peHeight   = 8.0; //< mV 
+  double peArea     = 260.0; // mV.ns ?
 
-  // opening the root file
+  // DCR parameters
+  Double_t early_threshold = 20.;//<ns
+  
+  // Open ROOT file
   TFile * fin = new TFile( argv[1], "read" );
-
-  // adding two options of canvas size
-  auto canvas1 = new TCanvas("canvas1","",900,900);
-  auto canvas2 = new TCanvas("canvas6","",2500,1000);
-
-  // initializing all histograms and graphs
-  auto histT    = new TH1F("histT","",1000,0,8200*2.0*0.48828125);
-  auto histQ    = new TH1F("histQ","",500,0,1000*1.5*0.48828125);
-  auto histQlsr = new TH1F("histQlsr","",500,0.0,1000*1.5*0.48828125);
-  auto histQafp = new TH1F("histQafp","",500,0.0,1000*1.5*0.48828125);
-  auto histA    = new TH1F("histA","",500,0.0,1000*1.5*0.48828125);
-  auto histAlsr = new TH1F("histAlsr","",500,0.0,1000*1.5*0.48828125);
-  auto histAafp = new TH1F("histAafp","",500,0.0,1000*1.5*0.48828125);
-  auto afpGraph = new TGraphErrors();
-  auto afpSingleGraph = new TGraphErrors();
-
-  // get the waveform fit TTree
+  
+  // Get the waveform fit TTree
   TTree * tt = (TTree*)fin->Get(argv[3]);
   WaveformFitResult * wf = new WaveformFitResult;
   wf->SetBranchAddresses( tt );
   
-  std::vector<double> lsrPulses;
+  //// Vectors for storing pulse and afterpulse information
+  std::vector<Double_t> vecT, vecQ, vecA, vecDeltaT, vecAlsr, vecQlsr, vecAafp, vecQafp;
+  std::map<Int_t, Double_t> lsrCounts, afpCounts, singleAfpCounts, afpCounter_corrected;
+  std::map<Int_t, Double_t> singleRates, multipleRates, multipleRates_corrected, singleErrors, multipleErrors, multipleErrors_corrected, multipleRates_corrected_error;
 
-  std::cout << "\n" << std::endl;
-  std::cout << "LOOPING TREE, 1:" << std::endl;
-  std::cout << "Performing global calculations." <<std::endl;
-  for(int i = 0; i < tt->GetEntries(); i++){
-    tt->GetEvent(i );
-    // std::cout<<i<< ". number of found pulses="<<wf->numPulses << std::endl;
+  // Estimate and apply dark count rate (DCR)
+  Double_t dcr_estimation, dcr_estimation_error, dark_pulses_per_waveform;
+  dcr_estimate(tt, wf, early_threshold, afpTimeThreshold1, dcr_estimation, dcr_estimation_error);
+
+  // Find pulses, count and classify them according to p.e. level.
+  analysis(tt, wf, peHeight, peDivision, afpTimeThreshold1, afpTimeThreshold2, dcr_estimation, vecT, vecQ, vecA, vecDeltaT, vecAlsr, vecQlsr, vecAafp, vecQafp, lsrCounts, afpCounts, singleAfpCounts, afpCounter_corrected);
+
+  // Measure afterpulse rate according to p.e. level.
+  rates(lsrCounts,singleAfpCounts,afpCounts,afpCounter_corrected,singleRates,multipleRates,multipleRates_corrected,singleErrors,multipleErrors,multipleRates_corrected_error);
+  
+    // // Debugging
+  std::map<Int_t, Double_t>::iterator it_lsr;
+  for (it_lsr = lsrCounts.begin(); it_lsr != lsrCounts.end(); it_lsr++) {
+    std::cout<<it_lsr->first<<"  "<<multipleRates_corrected.find(it_lsr->first)->second<<"  "<<multipleRates_corrected_error.find(it_lsr->first)->second<<std::endl;
+  }
+
+  //
+  std::cout<<"DCR:       "<<dcr_estimation<<" Hz."<<std::endl;
+  std::cout<<"DCR error: "<<dcr_estimation_error<<" Hz."<<std::endl;
+  std::cout<<"Dark pulses:       "<<dcr_estimation*1024*8*1.e-9<<" per waveform."<<std::endl;
+  std::cout<<"Dark pulses error: "<<dcr_estimation_error*1024*8*1.e-9<<" per waveform."<<std::endl;
+
+  ////////////////////////////////////////////////////
+  // DRAWING STUFF
+  
+  // Useful variables:
+  Int_t ymin, ymax, dirInt;
+  Double_t xmin, xmax, titlex, titley;
+  char filename[1024];
+
+  auto canvas3 = new TCanvas("canvas3","",1200,800);
+
+  // Change margins (left, right, bottom, top)
+  canvas3->SetMargin(0.14, 0.03, 0.09, 0.04);
+        
+  
+  // // HISTOGRAMS
+  //    For the histograms, it was easy enough to split it
+  //    in a separate function.
+  canvas3->cd(0);
+  TH1F* histTimeDistance = new TH1F("histDeltaTime","", 155, -100., 6100.);
+  drawHistogram(vecDeltaT, histTimeDistance, argv[4], ymin = 0, ymax = 25000, xmin = 0., xmax = 0., titlex = 70., titley = 80.);
+  sprintf(filename, "../images/%s-%s-hist-DeltaTime.png", argv[2], argv[3] );
+  canvas3->SaveAs(filename);
+
+
+  // // AFTERPULSE GRAPHS
+  //
+  canvas3->cd(1);
+  TGraphErrors* graphSingle = new TGraphErrors();
+  TGraphErrors* graphMultiple = new TGraphErrors();
+  TGraphErrors* graphCorrected = new TGraphErrors();
+ 
+  // Find data
+  std::map<Int_t,Double_t>::iterator it;
+  graphSingle->Set(singleRates.size()-1);  
+  Int_t i = 0;
+  for (it = singleRates.begin(); it != singleRates.end(); ++it){
+    ++i;
+    graphSingle->SetPoint(i-1, it->first*0.5, it->second*100.);
+    graphSingle->SetPointError(i-1, 0., singleErrors.find(it->first)->second*100.);
+    graphMultiple->SetPoint(i-1, it->first*peDivision, multipleRates.find(it->first)->second*100.);
+    graphMultiple->SetPointError(i-1, 0., multipleErrors.find(it->first)->second*100.);
+    graphCorrected->SetPoint(i-1, it->first*peDivision, multipleRates_corrected.find(it->first)->second*100.);
+    graphCorrected->SetPointError(i-1, 0., multipleErrors_corrected.find(it->first)->second*100.);
+  }
+  
+  // Styles
+  graphSingle->GetXaxis()->SetTitle("Laser pulse (p.e.)");
+  graphSingle->GetYaxis()->SetTitle("Percentage (\%)");
+  graphSingle->SetMarkerStyle(8);
+  graphSingle->SetMarkerSize(1.4);
+  graphSingle->SetMarkerColor(8);
+  graphSingle->SetLineColor(1);
+  graphSingle->GetYaxis()->SetRangeUser(0, 100);
+  graphSingle->GetXaxis()->SetRangeUser(0, 5);
+  graphMultiple->SetMarkerColor(2);
+  graphMultiple->SetMarkerStyle(8);
+  graphMultiple->SetMarkerSize(1.4);
+  graphCorrected->SetMarkerColor(4);
+  graphCorrected->SetMarkerStyle(8);
+  graphCorrected->SetMarkerSize(1.4);
+
+  // Legend
+  TLegend *leg2 = new TLegend(0.16,0.7,0.6,0.85);
+  leg2->AddEntry(graphMultiple,  "All events");
+  // leg2->AddEntry(graphCorrected, "All events (corrected)");
+  leg2->AddEntry(graphSingle,    "Single event");
+  leg2->SetTextSize(0.036);
+  leg2->SetLineWidth(0);
+
+  // Draw
+  graphSingle->Draw("AP");
+  graphMultiple->Draw("P");
+  // graphCorrected->Draw("P");
+  leg2->Draw("SAME");
+
+  // Multiple rate fitting
+  std::cout<<"\nMultiple events:"<<std::endl;
+  TF1* multipleFitting = new TF1("linear_multiple","[0] + [1]*x",0.0,multipleRates.end()->first);
+  multipleFitting->SetParameters(1., 1., 1.);
+  multipleFitting->SetLineColor(46);
+  multipleFitting->SetLineStyle(2);
+  graphMultiple->Fit(multipleFitting, "", "", 0.0, multipleRates.end()->first);
+  Double_t intercept = multipleFitting->GetParameter(0);
+  Double_t slope     = multipleFitting->GetParameter(1);
+
+  // Multiple rate fitting
+  std::cout<<"\nSingle events:"<<std::endl;
+  TF1* singleFitting = new TF1("poly_single","[0] + [1]*x^[2]", 0.0, singleRates.end()->first);
+  singleFitting->SetParameters(1.,1.);
+  singleFitting->SetLineColor(30);
+  singleFitting->SetLineStyle(2);
+  graphSingle->Fit(singleFitting, "", "", 0.0, singleRates.end()->first);
+
+  // Corrected rate fitting
+  // std::cout<<"\nMultiple events corrected for DCR:"<<std::endl;
+  // TF1* correctedFitting = new TF1("linear_corrected","[0] + [1]*x", multipleRates_corrected.begin()->first*peDivision, multipleRates_corrected.end()->first*peDivision);
+  // correctedFitting->SetParameters(intercept-dcr_estimation*1024*1.e-9*100, slope);
+  // std::cout<<"Estimated intercept: "<<intercept-dcr_estimation*1024*1.e-9*100<<std::endl;
+  // // correctedFitting->SetParameters(0.0, 14.);
+  // correctedFitting->SetLineColor(38);
+  // correctedFitting->SetLineStyle(2);
+  // graphCorrected->Fit(correctedFitting, "", "", 0., 16);
+
+  // Add a title to the graph
+  char inGraphTitle[1024];
+  sprintf(inGraphTitle, "Channel %s", argv[4] );
+  auto *th1 = new TText(2,250,inGraphTitle);
+  th1->SetTextAlign(11); th1->SetTextSize(0.040);
+  th1->Draw();
+
+  // Save file
+  sprintf(filename, "../images/%s-%s-graph-afp-all.png", argv[2], argv[3] );
+  canvas3->SaveAs(filename);
+
+
+  // // 2D HISTOGRAMS
+  // 
+
+  // These are color properties sent to me by Patrick.
+  gStyle->SetPalette(1,0); 
+  const Int_t NRGBs = 5;
+  const Int_t NCont = 255;
+  Double_t stops[NRGBs] = { 0.00, 0.34, 0.61, 0.84, 1.00 }; // < Original
+  Double_t red[NRGBs]   = { 0.00, 0.00, 0.87, 1.00, 0.51 };
+  Double_t green[NRGBs] = { 0.00, 0.81, 1.00, 0.20, 0.00 };
+  Double_t blue[NRGBs]  = { 0.51, 1.00, 0.12, 0.00, 0.00 };
+  TColor::CreateGradientColorTable(NRGBs, stops, red, green, blue, NCont);
+  gStyle->SetNumberContours(NCont);
+
+  // // 2D HISTOGRAM
+  //
+  canvas3->cd(2);
+  canvas3->SetMargin(0.10, 0.11, 0.09, 0.04);
+  auto hist2D = new TH2F("hist2D","",500,1000,0,8300*2.0*0.48828125, 0,1000*0.08*0.48828125);
+  for (int i=0; i<vecQ.size(); i++) {
+    hist2D->Fill(vecT.at(i),vecQ.at(i));
+  }
+  
+  // Set style
+  hist2D->GetXaxis()->SetTitle("Time (ns)");
+  hist2D->GetYaxis()->SetTitle("Pulse height (p.e.)");
+  hist2D->SetFillColor(1);
+  // hist2D->Draw("box");
+  hist2D->SetStats(0);
+  hist2D->GetXaxis()->SetRangeUser(1000.,8000.);
+  // hist2D->GetYaxis()->SetRangeUser(0,20.);
+  gPad->SetLogz(); // </ Change COLZ to a logarithmic scale
+
+  hist2D->Draw("COLZ");
+  
+  // Save file
+  sprintf(filename, "../images/%s-%s-hist2D-all.png", argv[2], argv[3] );
+  canvas3->SaveAs(filename);
+ 
+  return 0;
+}
+
+void analysis(TTree* tt, WaveformFitResult* wf, const Double_t peHeight, const Double_t peDivision, const Double_t &afpTimeThreshold1, Double_t &afpTimeThreshold2, Double_t dcr, std::vector<Double_t> &vecT, std::vector<Double_t> &vecQ, std::vector<Double_t> &vecA, std::vector<Double_t> &vecDeltaT, std::vector<Double_t> &vecAlsr, std::vector<Double_t> &vecQlsr, std::vector<Double_t> &vecAafp, std::vector<Double_t> &vecQafp, std::map<Int_t, Double_t> &lsrCounts, std::map<Int_t, Double_t> &afpRate, std::map<Int_t, Double_t> &singleAfpRate, std::map<Int_t, Double_t> &multipleAfp_dcr) {
+
+  // Defining variables
+  bool afpCounter;
+  Int_t lsrPulseInt;
+
+  for(int k = 0; k < tt->GetEntries(); k++){
+      
+    // Get event information from tree.
+    tt->GetEvent(k);
+    
+    // If there are pulses on waveform
     if(wf->numPulses > 0){
-      afpCounted = false;
+
+      // Start afterpulse counter at zero for this waveform.
+      Int_t singleAfpCounter = 0, lsrCounter = 0;
+      Double_t afpCounter = 0, afpCounter_corrected = 0;
+
+      // Count number of pulses on the waveform,
+      // considering only the waveforms whose first pulses 
+      // are within the laser window.
+
+      if (wf->pulseTimes[0]<afpTimeThreshold2) { // < To consider all types of waveforms.
+      // if ((wf->pulseTimes[0]>=afpTimeThreshold1) && (wf->pulseTimes[0]<afpTimeThreshold2)) { //< To consider only waveform with laser pulse as first signal.
+        
+        // Count the laser and find its height
+        lsrCounter++;
+        lsrPulseInt = round(wf->pulseCharges[0]*1000.0/peHeight/peDivision);
+
+        // Count the number of afterpulses, if any
+        afpCounter_corrected -= (dcr)*(1024*8)*1.e-9;
+        if (wf->numPulses > 1) {
+          singleAfpCounter++;
+          afpCounter += Double_t(wf->numPulses)-1.;
+          afpCounter_corrected += Double_t(wf->numPulses)-1.;
+        }
+      }
+
+      // Add laser-count information to map
+      std::map<Int_t, Double_t>::iterator it_lsr = lsrCounts.find(lsrPulseInt);
+      if (it_lsr != lsrCounts.end()) {
+        it_lsr->second += (Double_t)lsrCounter;
+      } else {
+        lsrCounts.insert(std::make_pair(lsrPulseInt, (Double_t)lsrCounter));
+      }
+
+      // Add multiple-afterpulse information to a map
+      std::map<Int_t, Double_t>::iterator it_multiple = afpRate.find(lsrPulseInt);
+      if (it_multiple != afpRate.end()) {
+        it_multiple->second += (Double_t)afpCounter;
+      } else {
+        afpRate.insert(std::make_pair(lsrPulseInt, (Double_t)afpCounter));
+      }
+
+      // Add single-afterpulse information to a map
+      std::map<Int_t, Double_t>::iterator it_single   = singleAfpRate.find(lsrPulseInt);
+      if (it_single != singleAfpRate.end()) {
+        it_single->second += (Double_t)singleAfpCounter;
+      } else {
+        singleAfpRate.insert(std::make_pair(lsrPulseInt, (Double_t)singleAfpCounter));
+      }
+
+      // Adding pair or incrementing respective pair for DCR corrected waveforms
+      std::map<Int_t, Double_t>::iterator it_corrected = multipleAfp_dcr.find(lsrPulseInt);
+      if (it_corrected != multipleAfp_dcr.end()) {
+        it_corrected->second += (Double_t)afpCounter_corrected;
+      } else {
+        multipleAfp_dcr.insert(std::make_pair(lsrPulseInt, (Double_t)afpCounter_corrected));
+      }
+
+      // Data for the histograms.
       for(int i = 0; i < wf->numPulses; i++){
-        // filling up the histograms        
-        histT->Fill(wf->pulseTimes[i]);  // Time in ns
-        histQ->Fill(wf->pulseCharges[i]*1000.0); // < Multiply by 1000.0 to convert to mV
-        histA->Fill(wf->pulseArea); // Area in mV.ns
+
+        // Overall pulse distributions
+        vecT.push_back(wf->pulseTimes[i]);
+        vecQ.push_back(wf->pulseCharges[i]*1000./peHeight);
+        vecA.push_back(wf->pulseArea);  
+
+        // Collect pulse time with laser time at zero.
+        if (wf->pulseTimes[i]-afpTimeThreshold1 > 0) {
+          vecDeltaT.push_back(wf->pulseTimes[i]-afpTimeThreshold1);
+        }
         
         // check if it is laser pulse. 
-        // how many p.e. </to be implemented
-        if (wf->pulseTimes[i]<afpTimeThreshold){
-          histAlsr->Fill(wf->pulseArea);
-          histQlsr->Fill(wf->pulseCharges[i]*1000.0);
-          lsrTotal++;
-        } else if (wf->pulseTimes[i]>=afpTimeThreshold){
-          afpTotal++;
-          histAafp->Fill(wf->pulseArea);
-          histQafp->Fill(wf->pulseCharges[i]*1000.0);
-          if (afpCounted == false) {
-            singleAfpCount++;
-            afpCounted = true;
-          }
+        if (wf->pulseTimes[i]>=afpTimeThreshold1 && wf->pulseTimes[i]<afpTimeThreshold2){
+          vecAlsr.push_back(wf->pulseArea);
+          vecQlsr.push_back(wf->pulseCharges[i]*1000.0/peHeight);
+        
+        // otherwise it is afterpulse
+        } else if (wf->pulseTimes[i]>=afpTimeThreshold2){
+          vecAafp.push_back(wf->pulseArea);
+          vecQafp.push_back(wf->pulseCharges[i]*1000.0/peHeight);
         }
-      }             
-    }
+      }
+    }             
+  }
+  // // Debugging
+  // std::map<Int_t, Double_t>::iterator it_lsr = lsrCounts.find(lsrPulseInt);
+  // for (it_lsr = lsrCounts.begin(); it_lsr != lsrCounts.end(); it_lsr++) {
+  //   std::cout<<it_lsr->first<<" "<<multipleAfp_dcr.find(it_lsr->first)->second<<std::endl;
+  // }
+}
+
+void rates(std::map<Int_t, Double_t> &lsrCounts, std::map<Int_t, Double_t> &singleCounts, std::map<Int_t, Double_t> &multipleCounts, std::map<Int_t, Double_t> afpCounter_corrected, std::map<Int_t, Double_t> &singleRates, std::map<Int_t, Double_t> &multipleRates, std::map<Int_t, Double_t> &multipleRates_corrected, std::map<Int_t, Double_t> &singleErrors, std::map<Int_t, Double_t> &multipleErrors, std::map<Int_t, Double_t> &multipleRates_corrected_errors) {
+  
+  // Finding the "lsrInt" iterator from lsrCounts
+  std::map<Int_t, Double_t>::iterator it_lsr;
+
+  // Calculate the rates, 
+  // mapping their value to the lsrInt index.
+  for (it_lsr = lsrCounts.begin(); it_lsr != lsrCounts.end(); ++it_lsr) {
+    singleRates.insert(std::make_pair(it_lsr->first, (singleCounts.find(it_lsr->first)->second)/(it_lsr->second) ));
+    multipleRates.insert(std::make_pair(it_lsr->first, (multipleCounts.find(it_lsr->first)->second)/(it_lsr->second) ));
+    multipleRates_corrected.insert(std::make_pair(it_lsr->first, (afpCounter_corrected.find(it_lsr->first)->second)/(it_lsr->second) ));
+    // std::cout<<singleCounts.find(it_lsr->first)->second<<"  "<<it_lsr->second<<"  "<<singleRates.find(it_lsr->first)->second <<std::endl;
+    // std::cout<<it_lsr->first*0.5<<"  "<<100.*singleCounts.find(it_lsr->first)->second/(it_lsr->second)<<std::endl;
   }
 
+  // Doing the same for the errors.
+  for (it_lsr = lsrCounts.begin(); it_lsr != lsrCounts.end(); ++it_lsr) {
 
-  // finding the most populated bin for height
-  int maxYh = histQlsr->GetBinContent(histQlsr->GetMaximumBin());
-  double maxXh = histQlsr->GetXaxis()->GetBinCenter(histQlsr->GetMaximumBin());
+    // Errors in the count of pulses
+    Double_t lsrCount_error      = sqrt(it_lsr->second);
+    Double_t singleCount_error   = sqrt(singleCounts.find(it_lsr->first)->second);
+    Double_t multipleCount_error = sqrt(multipleCounts.find(it_lsr->first)->second);
+    Double_t afpCounter_corr_err = sqrt(afpCounter_corrected.find(it_lsr->first)->second);
 
-  int maxYc = histQlsr->GetBinContent(histAlsr->GetMaximumBin());
-  double maxXc = histQlsr->GetXaxis()->GetBinCenter(histAlsr->GetMaximumBin());
+    // The compound error of rates, in quadrature
+    Double_t singleError    = singleRates.find(it_lsr->first)->second*sqrt(pow(singleCount_error/singleCounts.find(it_lsr->first)->second, 2) + pow(lsrCount_error/it_lsr->second, 2)); 
+    Double_t multipleError  = multipleRates.find(it_lsr->first)->second*sqrt(pow(multipleCount_error/multipleCounts.find(it_lsr->first)->second, 2) + pow(lsrCount_error/it_lsr->second, 2)); 
+    Double_t correctedError = afpCounter_corrected.find(it_lsr->first)->second*sqrt(pow(afpCounter_corr_err/afpCounter_corrected.find(it_lsr->first)->second, 2) + pow(lsrCount_error/it_lsr->second, 2) );
 
-  std::cout<<"\nSUMMARY OF TOTAL HISTOGRAMS"<<std::endl;
-  std::cout<<"Bin with highest population (mV) at: "<<maxXh<<std::endl;
-  std::cout<<"Bin with highest population (mV.ns) at: "<<maxXc<<std::endl;
+    // Add the errors to their maps
+    singleErrors.insert(std::make_pair(it_lsr->first, singleError));
+    multipleErrors.insert(std::make_pair(it_lsr->first, multipleError));
+    multipleRates_corrected_errors.insert(std::make_pair(it_lsr->first, correctedError));
 
-
-  // calculating global afterpulse rates
-  std::cout<<"\nSUMMARY OF TOTALS"<<std::endl;
-  std::cout<<"Lsr pulses: "<< afpTotal << std::endl;
-  std::cout<<"Afp: "<< lsrTotal << std::endl;
-  std::cout<<"Waveforms w/ afp: " <<singleAfpCount << std::endl;
-  std::cout<<"Afp by lsr pulses: "<< double(afpTotal)/lsrTotal*100. << std::endl;
-  std::cout<<"Waveforms w/ afp by lsr pulses:"<< double(singleAfpCount)/lsrTotal*100<<std::endl;
-
-  // fixing the pe height and charge
-  double peHeight = 8.00; //< mV 
-  // double peHeight = maxXh;
-  // double peArea   = maxXc;
-  double peArea = 260.0;
-  std::cout<<"pe height used (mV): " << peHeight << std::endl;
-  std::cout<<"pe charge used (mv.ns): " <<peArea <<std::endl;
-
-  // i always starts at 0
-  // j always starts at 1
-
-  // defining all pe regions we are looking for
-  // and initializing the arrays
-  int lsrMax = 0, N = 5000;
-  double peDivision = 0.5;
-  double peRegions[N], afpRates[N], singleEventAfpRates[N];
-  bool autoLsrHappened[N];
-  int autoLsrCounter[N], autoAfpCounter[N], autoSingleAfpEventConter[N];
-  for (int j=1; j<=N; j++){
-    peRegions[j] = peDivision*j;
-    autoLsrHappened[j] = false;
-    autoLsrCounter[j] = 0;
-    autoAfpCounter[j] = 0;
-    autoSingleAfpEventConter[j] = 0;
   }
+}
 
-  std::cout << "\n" << std::endl;
-  std::cout << "LOOPING TREE, 2:" << std::endl;
-  std::cout << "Calculating afterpulse rates per pe." <<std::endl;
+void dcr_estimate(TTree* tt, WaveformFitResult* wf, const Double_t early_threshold, const Double_t afpTimeThreshold1, Double_t &dcr_estimation, Double_t &dcr_error){
 
-  std::vector<double> all_areas;
+  // Estimate the dark-count rate.
+  // Count all dark pulses, 
+  // the pulses in between early_threshold 
+  // and afpTimeThreshold1,
+  // divide it by a time window and 
+  // find average DCR.
 
-  for(int i = 0; i < tt->GetEntries(); i++){
-    tt->GetEvent(i );
+  Double_t timeWindow = afpTimeThreshold1*1.e-9;
+  std::vector<Double_t> waveformDCRs, waveformDCRs_errors;
+
+  // Analyze all waveforms and find the ones with dark pulses
+  for (int k = 0; k < tt->GetEntries(); k++){
+  
+    // Find event
+    tt->GetEvent(k);
+
+    if (wf->numPulses > 0) {
     
-    if(wf->numPulses > 0){
-      
-      bool foundAfpEvent = false;
-      for(int i = 0; i < wf->numPulses; i++){
-        if (wf->pulseTimes[i]<afpTimeThreshold){
-          
-          // setting all lsr booleans to false at the start of every loop.
-          for (int j=1; j<=N; j++) {
-            autoLsrHappened[j] = false;
-          }
+      Int_t darkPulse_counter = 0;
+      while (wf->pulseTimes[darkPulse_counter] >= 20. && wf->pulseTimes[darkPulse_counter] < afpTimeThreshold1) {
+        darkPulse_counter++;
+      }
 
-          // retrieve amplitude and area information and
-          // transform pulse values to multiples of p.e. height and p.e. area
-          lsrHeightInt = ceil(wf->pulseCharges[0]*1000.0/peHeight/peDivision);
-          lsrAreaInt = ceil(wf->pulseArea/peArea/peDivision);
-          all_areas.push_back(wf->pulseArea);
+      Double_t dcr_waveform = Double_t(darkPulse_counter)/timeWindow; 
+      waveformDCRs.push_back(dcr_waveform);
 
-
-          // CHOOSE ONE OF THE ABOVE
-          lsrInt = lsrAreaInt;          
-
-          // count the lsr pulse
-          autoLsrCounter[lsrInt] += 1;          
-          autoLsrHappened[lsrInt] = true;
-
-          // finding the maximum lsrInt
-          if (lsrMax < lsrInt) {
-            lsrMax = lsrInt;
-          }
-
-          // counting the afterpulses generated by
-          // each p.e. height
-        } else if (wf->pulseTimes[i]>=afpTimeThreshold){
-          for (int j=1;j<=N;j++) {
-            if (autoLsrHappened[j] == true) {
-
-               autoAfpCounter[j] += 1;
-               if (!foundAfpEvent) {
-  
-                autoSingleAfpEventConter[j]+=1;
-  
-              }
-
-              foundAfpEvent = true;
-            }
-          }
-        }
-      }             
+      if (darkPulse_counter != 0) {
+        Double_t dcr_waveform_error = dcr_waveform*sqrt(pow(8.e-9/timeWindow,2) + pow(sqrt(darkPulse_counter)/Double_t(darkPulse_counter),2));
+        waveformDCRs_errors.push_back(dcr_waveform_error);
+      } else if (darkPulse_counter == 0) {
+        Double_t dcr_waveform_error = dcr_waveform*sqrt(pow(8.e-9/timeWindow,2) );
+        waveformDCRs_errors.push_back(dcr_waveform_error);
+      }
     }
   }
 
-// calculating afterpulse rate.
-// as afp per lsr, and afp per total if necessary.
-int M = lsrMax+1;
-double errorAfpCounts[M], errorSingleAfpCounts[M], errorLsrCounts[M];
-double afpRatesError[M], afpSingleEventRatesError[M];
-for (int j=1; j<lsrMax; j++){
+  // Find sum of all elements
+  Double_t DCRsum = 0., DCRerrorsquared = 0.;
+  for (int i = 0; i < waveformDCRs.size(); i++ ) {
+    DCRsum += waveformDCRs.at(i);
+    DCRerrorsquared += pow(waveformDCRs_errors.at(i),2);
+  }  
 
-  // error on pulse counts:
-  errorAfpCounts[j] = sqrt(autoAfpCounter[j]);
-  errorSingleAfpCounts[j] = sqrt(autoSingleAfpEventConter[j]);
-  errorLsrCounts[j] = sqrt(autoLsrCounter[j]);
+  // Find average of DCR
+  dcr_estimation = DCRsum/waveformDCRs.size();
 
-  // afp rates:
-  afpRates[j] = double(autoAfpCounter[j])/double(autoLsrCounter[j]);
-  singleEventAfpRates[j] = double(autoSingleAfpEventConter[j])/double(autoLsrCounter[j]);
+  // Find dcr error
+  dcr_error = sqrt(DCRerrorsquared)/waveformDCRs_errors.size();
 
-  // error in afp rates, added in quadrature:
-  afpRatesError[j] = afpRates[j]*sqrt( pow(errorAfpCounts[j]/autoAfpCounter[j],2) + pow(errorLsrCounts[j]/autoLsrCounter[j],2)  );
-  afpSingleEventRatesError[j] = singleEventAfpRates[j]*sqrt( pow(errorSingleAfpCounts[j]/autoLsrCounter[j],2) + pow(errorLsrCounts[j]/autoLsrCounter[j],2)  );
-  
-  // printing the rate and error:
-  std::cout<<j<<": "<<peRegions[j]<<" p.e.: "<< afpRates[j]*100. << "+/- " <<afpRatesError[j]*100.<<std::endl; 
 }
 
-std::cout<<"\nROOT's output"<<std::endl;
+void drawHistogram(std::vector<double> data, TH1F* histogram, const char runNumber[], const Int_t y1_in, const Int_t y2_in, const Double_t x1_in, const Double_t x2_in, const Double_t percentage_x, const Double_t percentage_y) {
 
-// Drawing the graphs of afpRate by lsr height
-int upToWhatPoint=10;
+  // This function will save the histogram to a file, 
+  // following a same style, 
+  // but changing the histogram, canvas size, user ranges.
+  // The definition of the histogram is made at the start
+  // of the program. 
 
-canvas2->cd(1);
-char title1[1204];
-sprintf(title1, "Afterpulse rate, %s, %s", argv[2], argv[3]);
+  // THE USER RANGES ARE ONLY APPLIED IF x1 != x2 and y1 != y2, RESPECTIVELY. 
+  // IF THE PAIRS ARE EQUAL, THE DEFAULT RANGES WILL REMAIN.
+  Double_t x1, x2, y1, y2;
 
-afpGraph->Set(upToWhatPoint);  
-for (int i=0; i<upToWhatPoint; i++){
+  // Fill histogram with data
+  for (int i=0; i < data.size(); i++) {
+    histogram->Fill(data.at(i));
+  }
   
-  // all afp events:
-  afpGraph->SetPoint(i, peRegions[i+1], 100.*afpRates[i+1]);
-  afpGraph->SetPointError(i, 0.0, afpRatesError[i+1]*100.0);
+  // Bin width for y label
+  float binWidth = histogram->GetBinWidth(0);
+  std::cout<<binWidth<<std::endl;
   
-  // single afp event:
-  afpSingleGraph->SetPoint(i, peRegions[i+1], 100.0*singleEventAfpRates[i+1]);
-  afpSingleGraph->SetPointError(i, 0.0, afpSingleEventRatesError[i+1]*100.0);
-}
+  // Write y label
+  char yLabel[1024];
+  sprintf(yLabel, "No. of events/ %3.1f ns", binWidth);
 
-// afpGraph->SetTitle("Afterpulse rate");
-afpGraph->GetXaxis()->SetTitle("Laser pulse area (p.e.)");
-afpGraph->GetYaxis()->SetTitle("Percentage \%");
-afpGraph->SetMarkerStyle(20);
-afpGraph->SetLineColor(1);
-afpGraph->Draw("AP");
+  // Style
+  histogram->SetFillColor(0);
+  histogram->SetLineColor(1);
+  histogram->SetLineWidth(2);
+  
+  // Ranges
+  // If ranges are equal, the default value
+  // will be used for title positioning.
+  if (x1_in != x1_in) {
+    x1 = x1_in;
+    x2 = x2_in;
+    histogram->GetXaxis()->SetRangeUser(x1, x2);
+  } else {
+    x1 = histogram->GetXaxis()->GetXmin();
+    x2 = histogram->GetXaxis()->GetXmax();
+  }
+  if (y1 != y2) {
+    y1 = y1_in;
+    y2 = y2_in;
+    histogram->GetYaxis()->SetRangeUser(y1, y2);
+  } else {
+    y1 = histogram->GetMaximum();
+    y2 = histogram->GetMinimum();
+  }
 
-afpSingleGraph->SetMarkerStyle(21);
-afpSingleGraph->SetMarkerColor(3);
-afpSingleGraph->Draw("P");
+  // Change axes' labels
+  histogram->GetYaxis()->SetTitle(yLabel);
+  histogram->GetXaxis()->SetTitle("Time (ns)");
+  
+  // Remove stats box
+  histogram->SetStats(0);
 
-// TF1* polyFitting = new TF1("poly","[0] + [1]*x^[2]",0.0,peRegions[upToWhatPoint]);
-// polyFitting->SetParameters(1.,1.);
-// polyFitting->SetLineColor(11);
-// polyFitting->SetLineStyle(1);
-// afpGraph->Fit(polyFitting,"","",0.0,peRegions[upToWhatPoint+1]);
+  // Calculate position of in-graph title from percentage
+  Double_t position_x = percentage_x/100.*(x2-x1);
+  Double_t position_y = percentage_y/100.*(y2-y1);
 
-// TF1* polyFitting2 = new TF1("poly","[0] + [1]*x^[2]",0.0,peRegions[upToWhatPoint]);
-// polyFitting2->SetParameters(1.,1.);
-// polyFitting2->SetLineColor(11);
-// polyFitting2->SetLineStyle(2);
-// afpSingleGraph->Fit(polyFitting,"","",0.0,peRegions[upToWhatPoint+1]);
+  // Create in-ghaph text
+  char inGraphTitle[1024];
+  sprintf(inGraphTitle, "Channel %s", runNumber );
+  std::cout<<"\n"<<inGraphTitle<<std::endl;
+  // Add in-graph text to canvas
+  auto *th = new TText(position_x, position_y, inGraphTitle);
+  th->SetTextAlign(11); 
+  th->SetTextSize(0.04);
+  
+  // Draw
+  histogram->Draw();
+  th->Draw();
 
-TLegend *leg = new TLegend(0.2,0.7,0.4,0.79);
- leg->AddEntry(afpGraph,"All afterpulse hits");
- leg->AddEntry(afpSingleGraph,"Single afterpulse hit per event");
- leg->Draw("SAME");
-
-canvas2->SaveAs(combinedPlot);
-
-
-
-  // TIME histogram
-  canvas2->cd(2);
-  char title2[1024];
-  sprintf(title2, "Pulse times, %s, %s", argv[2], argv[3]);
-  histT->SetTitle(title2);
-  histT->GetXaxis()->SetTitle("Time (ns)");
-  histT->GetYaxis()->SetTitle("No. of events");
-  histT->SetMaximum(400);
-  histT->SetLineColor(1);
-  histT->Draw();
-  canvas2->SaveAs(fnmT);
-
-  // ALL PULSES histogram
-  canvas2->cd(3);
-  char title3[1024];
-  sprintf(title3, "All, amps, %s, %s", argv[2], argv[3]);  
-  histQ->SetTitle(title3);
-  histQ->GetXaxis()->SetTitle("Pulse height (mV)");
-  histQ->GetYaxis()->SetTitle("No. of events");
-  histQ->GetXaxis()->SetRange(0,100);
-  histQ->SetLineColor(1);
-  histQ->Draw();
-  canvas2->SaveAs(fnmQ);
-
-  // LASER PULSES histogram
-  canvas2->cd(4);
-  char title4[1024];
-  sprintf(title4, "Lsr, amps, %s, %s", argv[2], argv[3]);
-  histQlsr->SetTitle(title4);
-  histQlsr->GetXaxis()->SetTitle("Pulse height (mV)");
-  histQlsr->GetYaxis()->SetTitle("No. of events");
-  histQlsr->GetXaxis()->SetRangeUser(0,60);
-  histQlsr->SetLineColor(1);
-  histQlsr->SetLineWidth(2);
-  histQlsr->Draw();
-  canvas2->SaveAs(fnmQlsr);  
-
-  // AFTER PULSES histogram
-  canvas2->cd(5);
-  char title5[1024];
-  sprintf(title5, "Afp, amps, %s, %s", argv[2], argv[3]);
-  histQafp->SetTitle(title5);
-  histQafp->GetXaxis()->SetTitle("Pulse height (mV)");
-  histQafp->GetYaxis()->SetTitle("No. of events");
-  histQafp->GetXaxis()->SetRange(0,100);
-  histQafp->SetLineColor(1);
-  histQafp->Draw();
-  canvas2->SaveAs(fnmQafp);
-
-
-  // ALL PULSES histogram
-  canvas2->cd(6);
-  char title6[1024];
-  sprintf(title6, "All, area, %s, %s", argv[2], argv[3]);  
-  histA->SetTitle(title6);
-  histA->GetXaxis()->SetTitle("Pulse area (mV.ns)");
-  histA->GetYaxis()->SetTitle("No. of events");
-  histA->SetMaximum(4000);
-  histA->GetXaxis()->SetRangeUser(0,700);
-  histA->SetLineColor(1);
-  histA->Draw();
-  canvas2->SaveAs(fnmA);
-
-  // LASER PULSES histogram
-  canvas2->cd(7);
-  char title7[1024];
-  sprintf(title7, "Lsr, area, %s, %s", argv[2], argv[3]);
-  histAlsr->SetTitle(title7);
-  histAlsr->GetXaxis()->SetTitle("Pulse area (mV.ns)");
-  histAlsr->GetYaxis()->SetTitle("No. of events");
-  histAlsr->GetXaxis()->SetRange(0,700);
-  histAlsr->SetMaximum(2000);
-  histAlsr->SetLineColor(1);
-  histAlsr->Draw();
-  canvas2->SaveAs(fnmAlsr);  
-
-  // AFTER PULSES histogram
-  canvas2->cd(8);
-  char title8[1024];
-  sprintf(title8, "Afp, area, %s, %s", argv[2], argv[3]);
-  histAafp->SetTitle(title8);
-  histAafp->GetXaxis()->SetTitle("Pulse area (mV.ns)");
-  histAafp->GetYaxis()->SetTitle("No. of events");
-  histAafp->GetXaxis()->SetRange(0,700);
-  histAafp->Draw();
-  canvas2->SaveAs(fnmAafp);
-  return 0;
 }
