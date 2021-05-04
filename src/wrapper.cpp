@@ -132,6 +132,21 @@ bool Wrapper::setDataPointers() {
     phidget.second->branchZ = nullptr;
     phidget.second->branchZ = tree->GetBranch(branchName);
     phidget.second->branchZ->SetAddress(&phidget.second->data.Bz);
+	
+    snprintf(branchName, 64, PHIDGET_FORMAT_ACCX, phidget.first);
+    phidget.second->branchX = nullptr;
+    phidget.second->branchX = tree->GetBranch(branchName);
+    phidget.second->branchX->SetAddress(&phidget.second->data.Ax);
+
+    snprintf(branchName, 64, PHIDGET_FORMAT_ACCY, phidget.first);
+    phidget.second->branchY = nullptr;
+    phidget.second->branchY = tree->GetBranch(branchName);
+    phidget.second->branchY->SetAddress(&phidget.second->data.Ay);
+
+    snprintf(branchName, 64, PHIDGET_FORMAT_ACCZ, phidget.first);
+    phidget.second->branchZ = nullptr;
+    phidget.second->branchZ = tree->GetBranch(branchName);
+    phidget.second->branchZ->SetAddress(&phidget.second->data.Az);
 
     if (phidget.second->branchX == nullptr
         || phidget.second->branchY == nullptr
@@ -196,11 +211,11 @@ bool Wrapper::setDataPointers() {
     Time_1->SetAddress(&ti.time_c);
 	
 	
-    TBranch
-      *ACC_x= tree->GetBranch("gantry0_x"), *g0Y = tree->GetBranch("gantry0_y"), *g0Z = tree->GetBranch("gantry0_z"),
-        *ACC_y = tree->GetBranch("gantry0_rot"), *g0Phi = tree->GetBranch("gantry0_tilt"),
-      *ACC_z = tree->GetBranch("gantry1_x"), *g1Y = tree->GetBranch("gantry1_y"), *g1Z = tree->GetBranch("gantry1_z"),
-        *g1Theta = tree->GetBranch("gantry1_rot"), *g1Phi = tree->GetBranch("gantry1_tilt");
+   // TBranch
+   //   *ACC_x= tree->GetBranch("gantry0_x"), *g0Y = tree->GetBranch("gantry0_y"), *g0Z = tree->GetBranch("gantry0_z"),
+   //     *ACC_y = tree->GetBranch("gantry0_rot"), *g0Phi = tree->GetBranch("gantry0_tilt"),
+   //   *ACC_z = tree->GetBranch("gantry1_x"), *g1Y = tree->GetBranch("gantry1_y"), *g1Z = tree->GetBranch("gantry1_z"),
+    //    *g1Theta = tree->GetBranch("gantry1_rot"), *g1Phi = tree->GetBranch("gantry1_tilt");
 
   return true;
 }
