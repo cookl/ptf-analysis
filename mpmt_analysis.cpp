@@ -118,7 +118,7 @@ int main(int argc, char** argv) {
     //PTF::PMT PMT19 = {19,19,PTF::mPMT_REV0_PMT};
   }
   vector<PTF::Gantry> gantries = {PTF::Gantry0, PTF::Gantry1};
-  PTF::Wrapper wrapper = PTF::Wrapper(1, 1024, activePMTs, phidgets, gantries, PTF::mPMT_DIGITIZER);
+  Wrapper wrapper = Wrapper(1, 1024, activePMTs, phidgets, gantries,mPMT_DIGITIZER);
   std::cout << "Open file: " << std::endl;
   wrapper.openFile( string(argv[1]), "scan_tree");
   cerr << "Num entries: " << wrapper.getNumEntries() << endl << endl;
