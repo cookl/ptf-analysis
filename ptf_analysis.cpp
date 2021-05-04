@@ -86,7 +86,7 @@ int main(int argc, char** argv) {
   PTF::PMT REF = {2,1,PTF::Reference}; // only looking at one PMT at a time
   vector<PTF::PMT> activePMTs = { PMT0, PMT1, REF }; // must be ordered {main,monitor}
   vector<PTF::Gantry> gantries = {PTF::Gantry0, PTF::Gantry1};
-  PTF::Wrapper wrapper = PTF::Wrapper(6000, 70, activePMTs, phidgets, gantries, PTF::PTF_CAEN_V1730);
+  Wrapper wrapper = Wrapper(6000, 70, activePMTs, phidgets, gantries, PTF_CAEN_V1730);
   wrapper.openFile( string(argv[1]), "scan_tree");
   cerr << "Num entries: " << wrapper.getNumEntries() << endl << endl;
 
