@@ -162,10 +162,11 @@ struct Digitizer {
 
 
 
+
 struct Wrapper {
-  Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, const PTF::PMT& activePMTs, const std::vector<int>& phidgets, const PTF::Gantry& gantries, DigitizerModel digi);
-  Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, const PTF::PMT& activePMTs, const std::vector<int>& phidgets, const PTF::Gantry& gantries, DigitizerModel digi, const std::string& fileName, const std::string& treeName = "scan_tree");
-  ~Wrapper();
+	Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, const std::vector<PTF::PMT>& activePMTs, const std::vector<int>& phidgets, const std::vector<PTF::Gantry>& gantries, DigitizerModel digi);
+    Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, const std::vector<PTF::PMT>& activePMTs, const std::vector<int>& phidgets, const std::vector<PTF::Gantry>& gantries, DigitizerModel digi, const std::string& fileName, const std::string& treeName = "scan_tree");
+	~Wrapper();
 
 
 public:
