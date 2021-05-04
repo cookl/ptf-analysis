@@ -70,7 +70,7 @@ int main(int argc, char** argv) {
 
 	       auto reading  = wrapper.getReadingForPhidget(phidget);
 
-	       csv << reading.accx[0] << "," << reading.accy[0] << "," << reading.accz[0];
+	       csv << reading.Ax[0] << "," << reading.Ay[0] << "," << reading.Az[0];
 
 	       if (phidget != 100) {
 	 	csv << ",";
