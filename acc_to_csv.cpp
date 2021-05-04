@@ -80,7 +80,7 @@ int main(int argc, char** argv) {
 
 	       if (phidget == 100) {
 			   auto acceleration=wrapper.getReadingAcceleration();
-			    csv << acceleration.acc_x[0] << "," << reading.acc_y[0] << "," << reading.acc_z[0];
+			    csv << acceleration.acc_x << "," << acceleration.acc_y << "," << acceleration.acc_z;
 	       }
 	     }
 
