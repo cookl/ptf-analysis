@@ -74,9 +74,9 @@ struct PhidgetReading {
   double Bx[150];
   double By[150];
   double Bz[150];
-  double accx[150];
-  double accy[150];
-  double accz[150];
+  double Ax[150];
+  double Ay[150];
+  double Az[150];
 };
 
 }
@@ -209,7 +209,15 @@ public:
   
   Temperature_r getReadingTemperature() const;
   
+<<<<<<< Local Changes
+<<<<<<< Local Changes
+  Phidget_acce00 getReadingAcceleration() const;
+=======
+  *Phidget_acce00 getReadingAcceleration() const;
+>>>>>>> External Changes
+=======
   //Phidget_acce00 getReadingAcceleration() const;
+>>>>>>> External Changes
   
   Timing getReadingTime() const;
 
