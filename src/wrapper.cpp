@@ -204,12 +204,17 @@ bool Wrapper::setDataPointers() {
    // *braNumSamples = tree->GetBranch("num_points");
   //T_int->SetAddress(&Temp.int_1);
   //T_ext1->SetAddress(&Temp.ext_1);
-  T_ext2->SetAddress(&Temp.ext_2);
+
+  // Make sure this branch exists first
+  if(T_ext2) T_ext2->SetAddress(&Temp.ext_2);
+
+
   //braNumSamples->SetAddress(&numSamples);
   TBranch
     *Time_1=tree->GetBranch("timestamp");
-    Time_1->SetAddress(&ti.time_c);
-	
+
+  // Make sure this branch exists first
+  if(Time_1) Time_1->SetAddress(&ti.time_c);
 	
    // TBranch
    //   *ACC_x= tree->GetBranch("gantry0_x"), *g0Y = tree->GetBranch("gantry0_y"), *g0Z = tree->GetBranch("gantry0_z"),
@@ -254,6 +259,7 @@ void Wrapper::openFile(const string& fileName, const string& treeName) {
   file = new TFile(fileName.c_str(), "READ");
 
   if (!file->IsOpen()) {
+    
     delete file;
     file = nullptr;
     throw new Exceptions::FileDoesNotExist(fileName);
@@ -263,10 +269,12 @@ void Wrapper::openFile(const string& fileName, const string& treeName) {
   file->GetObject(treeName.c_str(), tree);
 
   if (!tree) {
+    std::cout << "Error, ttreename not valid: " << treeName.c_str() << std::endl;
     throw new Exceptions::InvalidTreeName(treeName);
   }
 
   auto res = setDataPointers();
+
 
   if (!res) {
     throw new Exceptions::DataPointerError();
