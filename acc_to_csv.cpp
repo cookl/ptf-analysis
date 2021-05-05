@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
   string root_f = "/neut/data19/vincent/ptf-analysis-2/out_run0" + run_no + ".root";
   string csv_f  = "/neut/data19/vincent/ptf-analysis-2/acc" + run_no + ".csv";
 
-  vector<int> phidgets = {0, 1, 100};
+  vector<int> phidgets = {0, 1};
   vector<PTF::PMT> activePMTs = {};
   //   {0, 3},                                                                                                                                                                                                                                
   //   {1, 4},                                                                                                                                                                                                                                
@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
 
   cerr << "Num entries: " << wrapper.getNumEntries() << endl << endl;
 
-  csv << "phid_0_accx,phid_0_accy,phid_0_accz,phid_1_accx,phid_1_accy,phid_1_accz,accx,accy,accz, " << endl;
+  csv << "time,phid_0_accx,phid_0_accy,phid_0_accz,phid_1_accx,phid_1_accy,phid_1_accz,accx,accy,accz, " << endl;
 
   uint32_t lines = 0;
   const uint32_t freq = 100;
@@ -71,11 +71,11 @@ int main(int argc, char** argv) {
 	       auto reading  = wrapper.getReadingForPhidget(phidget);
 
 	       csv << reading.Ax[0] << "," << reading.Ay[0] << "," << reading.Az[0];
+		   
+		   if (phidget != 100) {
+		   		csv << ",";
+		                  }
 
-	       if (phidget != 100) {
-	 	csv << ",";
-	       }
-	     }
 
 	     csv << endl;
 	   }
