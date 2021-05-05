@@ -17,7 +17,7 @@ int main(int argc, char** argv) {
 
   const string run_no = argv[1];
   string root_f = "/neut/data19/vincent/ptf-analysis-2/out_run0" + run_no + ".root";
-  string csv_f  = "/neut/data19/vincent/ptf-analysis-2/acc" + run_no + ".csv";
+ string csv_f  = "/neut/data19/vincent/ptf-analysis_test/ptf-analysis/acc" + run_no + ".csv";
 
   vector<int> phidgets = {0, 1};
   vector<PTF::PMT> activePMTs = {};
@@ -79,6 +79,10 @@ int main(int argc, char** argv) {
 		   if (phidget != 100) {
 		   		csv << ",";
 		                  }
+		   if (phidget == 100) {
+		       auto acceleration  = wrapper.getReadingAcceleration();
+			    csv <<  acceleration.acc_x << "," << reading.acc_y << "," << reading.acc_z;
+			   		                  }
 
 		}				  
 	     csv << endl;
