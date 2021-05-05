@@ -44,9 +44,8 @@ int main(int argc, char** argv) {
 
   uint32_t lines = 0;
   const uint32_t freq = 100;
-
-  for (int i = 0; i < wrapper.getNumEntries(); i++) {
-    // cerr << "Entry " << i;                                                                                                                                                                                                                 
+  for (unsigned int i = 0; i < wrapper.getNumEntries(); i++) {
+    // cerr << "Entry " << i;
     if (i % freq == 0 || i == wrapper.getNumEntries() - 1) {
       cerr << "Entry " << i << "/" << wrapper.getNumEntries() << "\u001b[34;1m (" << (((double)i)/wrapper.getNumEntries()*100) << "%)\u001b[0m\033[K";
       if (skipLines.find(i) != skipLines.end()) {
@@ -59,12 +58,17 @@ int main(int argc, char** argv) {
 
     if (skipLines.find(i) != skipLines.end()) continue;
 
-    lines++;
-    wrapper.setCurrentEntry(i);
+  lines++;
+  wrapper.setCurrentEntry(i);
+  
+  
+  auto time_before=wrapper.getReadingTime();
+  wrapper.setCurrentEntry(0);
+  auto time_after=wrapper.getReadingTime();
 
-    //auto location = wrapper.getDataForCurrentEntry(PTF::Gantry1);                                                                                                                                                                           
+  csv <<time_before.time_c-time_after.time_c << "," ;
 
-    //csv << location.x << "," << location.y << "," << location.z << ",";                                                                                                                                                                     
+  
 
     for (int phidget : phidgets) {
 
@@ -76,9 +80,10 @@ int main(int argc, char** argv) {
 		   		csv << ",";
 		                  }
 
-
+		}				  
 	     csv << endl;
 	   }
+   
 
 	   cerr << endl << "Done. WroteZEGOAL" << lines << " lines.";
 	   csv.close();

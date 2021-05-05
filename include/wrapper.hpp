@@ -209,15 +209,10 @@ public:
   
   Temperature_r getReadingTemperature() const;
   
-<<<<<<< Local Changes
-<<<<<<< Local Changes
-  Phidget_acce00 getReadingAcceleration() const;
-=======
-  *Phidget_acce00 getReadingAcceleration() const;
->>>>>>> External Changes
-=======
+
   //Phidget_acce00 getReadingAcceleration() const;
->>>>>>> External Changes
+
+
   
   Timing getReadingTime() const;
 
