@@ -209,7 +209,8 @@ public:
   
   Temperature_r getReadingTemperature() const;
   
-  Phidget_acce00 getReadingAcceleration() const;
+
+  //Phidget_acce00 getReadingAcceleration() const;
 
 
   
@@ -233,7 +234,7 @@ private:
 
   Temperature_r Temp;
   Timing ti;
-  Phidget_acce00 ACC;
+  //*Phidget_acce00 ACC;
   
   unsigned long long    numEntries;
   unsigned long long    numSamples;
