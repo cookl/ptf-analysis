@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
 
   cerr << "Num entries: " << wrapper.getNumEntries() << endl << endl;
 
-  csv << "time,phid_0_accx,phid_0_accy,phid_0_accz,phid_1_accx,phid_1_accy,phid_1_accz,accx,accy,accz, " << endl;
+  csv << "phid_0_accx,phid_0_accy,phid_0_accz,phid_1_accx,phid_1_accy,phid_1_accz,accx,accy,accz, " << endl;
 
   uint32_t lines = 0;
   const uint32_t freq = 100;
@@ -64,13 +64,7 @@ int main(int argc, char** argv) {
 
     //auto location = wrapper.getDataForCurrentEntry(PTF::Gantry1);                                                                                                                                                                           
 
-    //csv << location.x << "," << location.y << "," << location.z << ",";                                                                                                                         for (unsigned int i = 0; i < wrapper.getNumEntries(); i++) {
-     auto time_before=wrapper.getReadingTime();
-     wrapper.setCurrentEntry(0);
-     auto time_after=wrapper.getReadingTime();
-
-     csv <<time_before.time_c-time_after.time_c << "," ;
-      
+    //csv << location.x << "," << location.y << "," << location.z << ",";                                                                                                                                                                     
 
     for (int phidget : phidgets) {
 
@@ -78,9 +72,8 @@ int main(int argc, char** argv) {
 
 	       csv << reading.Ax[0] << "," << reading.Ay[0] << "," << reading.Az[0];
 
-	       if (phidget == 100) {
-			   auto acceleration=wrapper.getReadingAcceleration();
-			    csv << acceleration.acc_x[0] << "," << reading.acc_y[0] << "," << reading.acc_z[0];
+	       if (phidget != 100) {
+	 	csv << ",";
 	       }
 	     }
 
