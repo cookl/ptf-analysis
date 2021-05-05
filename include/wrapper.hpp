@@ -209,9 +209,15 @@ public:
   
   Temperature_r getReadingTemperature() const;
   
-
+<<<<<<< Local Changes
+<<<<<<< Local Changes
   Phidget_acce00 getReadingAcceleration() const;
-
+=======
+  *Phidget_acce00 getReadingAcceleration() const;
+>>>>>>> External Changes
+=======
+  //Phidget_acce00 getReadingAcceleration() const;
+>>>>>>> External Changes
   
   Timing getReadingTime() const;
 
@@ -233,7 +239,7 @@ private:
 
   Temperature_r Temp;
   Timing ti;
-  Phidget_acce00 ACC;
+  //*Phidget_acce00 ACC;
   
   unsigned long long    numEntries;
   unsigned long long    numSamples;
