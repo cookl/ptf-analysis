@@ -211,16 +211,8 @@ bool Wrapper::setDataPointers() {
     Time_1->SetAddress(&ti.time_c);
 	
 	
-	 TBranch
-     *ACC_x= tree->GetBranch("phidgACC_Ax");
-	 ACC_x->SetAddress(&ACC.acc_x);
-	 TBranch
-     *ACC_y= tree->GetBranch("phidgACC_Ay");
-	 ACC_y->SetAddress(&ACC.acc_y);
-	 TBranch
-     *ACC_z= tree->GetBranch("phidgACC_Az");
-	 ACC_z->SetAddress(&ACC.acc_z);
-	 // *g0Y = tree->GetBranch("gantry0_y"), *g0Z = tree->GetBranch("gantry0_z"),
+   // TBranch
+   //   *ACC_x= tree->GetBranch("gantry0_x"), *g0Y = tree->GetBranch("gantry0_y"), *g0Z = tree->GetBranch("gantry0_z"),
    //     *ACC_y = tree->GetBranch("gantry0_rot"), *g0Phi = tree->GetBranch("gantry0_tilt"),
    //   *ACC_z = tree->GetBranch("gantry1_x"), *g1Y = tree->GetBranch("gantry1_y"), *g1Z = tree->GetBranch("gantry1_z"),
     //    *g1Theta = tree->GetBranch("gantry1_rot"), *g1Phi = tree->GetBranch("gantry1_tilt");
@@ -424,13 +416,6 @@ Timing Wrapper::getReadingTime() const {
   }
   return ti;
 
-}
-
-Phidget_acce00 Wrapper::getReadingAcceleration() const {
-  if (!isFileOpen()) {
-    throw new Exceptions::NoFileIsOpen();
-  }
-  return ACC;
 }
 
  
