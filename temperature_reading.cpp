@@ -52,9 +52,9 @@ int main(int argc, char** argv) {
   //TFile * outFile = new TFile(outname.c_str(), "NEW");
 
   vector<int> phidgets = {0, 1, 3, 4};
-  vector<PTF::PMTChannel> activeChannels = {};
- 
-  PTF::Wrapper wrapper = PTF::Wrapper(16384, 70, activeChannels, phidgets);
+  vector<PTF::PMT> activePMTs = {};
+  vector<PTF::Gantry> gantries = {PTF::Gantry0, PTF::Gantry1}; 
+  Wrapper wrapper = Wrapper(16384, 70, activePMTs, phidgets, gantries, PTF_CAEN_V1730);
 
   wrapper.openFile(argv[1], "scan_tree");
 

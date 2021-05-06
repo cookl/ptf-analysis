@@ -132,6 +132,21 @@ bool Wrapper::setDataPointers() {
     phidget.second->branchZ = nullptr;
     phidget.second->branchZ = tree->GetBranch(branchName);
     phidget.second->branchZ->SetAddress(&phidget.second->data.Bz);
+	
+    snprintf(branchName, 64, PHIDGET_FORMAT_ACCX, phidget.first);
+    phidget.second->branchX = nullptr;
+    phidget.second->branchX = tree->GetBranch(branchName);
+    phidget.second->branchX->SetAddress(&phidget.second->data.Ax);
+
+    snprintf(branchName, 64, PHIDGET_FORMAT_ACCY, phidget.first);
+    phidget.second->branchY = nullptr;
+    phidget.second->branchY = tree->GetBranch(branchName);
+    phidget.second->branchY->SetAddress(&phidget.second->data.Ay);
+
+    snprintf(branchName, 64, PHIDGET_FORMAT_ACCZ, phidget.first);
+    phidget.second->branchZ = nullptr;
+    phidget.second->branchZ = tree->GetBranch(branchName);
+    phidget.second->branchZ->SetAddress(&phidget.second->data.Az);
 
     if (phidget.second->branchX == nullptr
         || phidget.second->branchY == nullptr
@@ -189,18 +204,23 @@ bool Wrapper::setDataPointers() {
    // *braNumSamples = tree->GetBranch("num_points");
   //T_int->SetAddress(&Temp.int_1);
   //T_ext1->SetAddress(&Temp.ext_1);
-  T_ext2->SetAddress(&Temp.ext_2);
+
+  // Make sure this branch exists first
+  if(T_ext2) T_ext2->SetAddress(&Temp.ext_2);
+
+
   //braNumSamples->SetAddress(&numSamples);
   TBranch
     *Time_1=tree->GetBranch("timestamp");
-    Time_1->SetAddress(&ti.time_c);
+
+  // Make sure this branch exists first
+  if(Time_1) Time_1->SetAddress(&ti.time_c);
 	
-	
-    TBranch
-      *ACC_x= tree->GetBranch("gantry0_x"), *g0Y = tree->GetBranch("gantry0_y"), *g0Z = tree->GetBranch("gantry0_z"),
-        *ACC_y = tree->GetBranch("gantry0_rot"), *g0Phi = tree->GetBranch("gantry0_tilt"),
-      *ACC_z = tree->GetBranch("gantry1_x"), *g1Y = tree->GetBranch("gantry1_y"), *g1Z = tree->GetBranch("gantry1_z"),
-        *g1Theta = tree->GetBranch("gantry1_rot"), *g1Phi = tree->GetBranch("gantry1_tilt"),
+   // TBranch
+   //   *ACC_x= tree->GetBranch("gantry0_x"), *g0Y = tree->GetBranch("gantry0_y"), *g0Z = tree->GetBranch("gantry0_z"),
+   //     *ACC_y = tree->GetBranch("gantry0_rot"), *g0Phi = tree->GetBranch("gantry0_tilt"),
+   //   *ACC_z = tree->GetBranch("gantry1_x"), *g1Y = tree->GetBranch("gantry1_y"), *g1Z = tree->GetBranch("gantry1_z"),
+    //    *g1Theta = tree->GetBranch("gantry1_rot"), *g1Phi = tree->GetBranch("gantry1_tilt");
 
   return true;
 }
@@ -239,6 +259,7 @@ void Wrapper::openFile(const string& fileName, const string& treeName) {
   file = new TFile(fileName.c_str(), "READ");
 
   if (!file->IsOpen()) {
+    
     delete file;
     file = nullptr;
     throw new Exceptions::FileDoesNotExist(fileName);
@@ -248,10 +269,12 @@ void Wrapper::openFile(const string& fileName, const string& treeName) {
   file->GetObject(treeName.c_str(), tree);
 
   if (!tree) {
+    std::cout << "Error, ttreename not valid: " << treeName.c_str() << std::endl;
     throw new Exceptions::InvalidTreeName(treeName);
   }
 
   auto res = setDataPointers();
+
 
   if (!res) {
     throw new Exceptions::DataPointerError();
@@ -361,7 +384,6 @@ int Wrapper::getSampleLength() const {
 }
 
 
-<
 GantryData Wrapper::getDataForCurrentEntry(Gantry whichGantry) const {
 
   if (!isFileOpen()) {
