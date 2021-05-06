@@ -74,16 +74,16 @@ struct PhidgetReading {
   double Bx[150];
   double By[150];
   double Bz[150];
-  double accx[150];
-  double accy[150];
-  double accz[150];
+  double Ax[150];
+  double Ay[150];
+  double Az[150];
 };
 
+}
 
 
-
-  struct PhidgetSet {
-    PhidgetReading data;
+struct PhidgetSet {
+    PTF::PhidgetReading data;
     TBranch*       branchX{nullptr};
     TBranch*       branchY{nullptr};
     TBranch*       branchZ{nullptr};
@@ -91,7 +91,7 @@ struct PhidgetReading {
     TBranch*       branchaccy{nullptr};
     TBranch*       branchaccz{nullptr};
   };
-}
+
 
 
 
@@ -110,10 +110,10 @@ struct Temperature_r {
   double ext_2;
 };
 
-struct Phidget_acce00 
-  *double acc_x;
-  *double acc_y;
-  *double acc_z;
+struct Phidget_acce00 {
+  double acc_x;
+  double acc_y;
+  double acc_z;
 };
 
 
@@ -123,21 +123,21 @@ struct Timing {
 
 struct PMTSet {
   int      channel;
-  PMTType  type;
+  PTF::PMTType  type;
   double*  data{nullptr};
   TBranch* branch{nullptr};
 
 };
 
-struct PhidgetSet {
-  PhidgetReading data;
-  TBranch*       branchX{nullptr};
-  TBranch*       branchY{nullptr};
-  TBranch*       branchZ{nullptr};
-};
+//struct PhidgetSet {
+//  PTF::PhidgetReading data;
+//  TBranch*       branchX{nullptr};
+//  TBranch*       branchY{nullptr};
+//  TBranch*       branchZ{nullptr};
+//};
 
 struct GantrySet {
-  Gantry     gantry;
+  PTF::Gantry     gantry;
   GantryData data;
   TBranch*   branchX{nullptr};
   TBranch*   branchY{nullptr};
@@ -162,10 +162,11 @@ struct Digitizer {
 
 
 
+
 struct Wrapper {
-  Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, const std::vector<PMT>& activePMTs, const std::vector<int>& phidgets, const std::vector<Gantry>& gantries, DigitizerModel digi);
-  Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, const std::vector<PMT>& activePMTs, const std::vector<int>& phidgets, const std::vector<Gantry>& gantries, DigitizerModel digi, const std::string& fileName, const std::string& treeName = "scan_tree");
-  ~Wrapper();
+	Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, const std::vector<PTF::PMT>& activePMTs, const std::vector<int>& phidgets, const std::vector<PTF::Gantry>& gantries, DigitizerModel digi);
+    Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, const std::vector<PTF::PMT>& activePMTs, const std::vector<int>& phidgets, const std::vector<PTF::Gantry>& gantries, DigitizerModel digi, const std::string& fileName, const std::string& treeName = "scan_tree");
+	~Wrapper();
 
 
 public:
@@ -202,13 +203,16 @@ public:
   // Returns the length of the samples
   int getSampleLength() const;
 
-  GantryData getDataForCurrentEntry(Gantry whichGantry) const;
+  GantryData getDataForCurrentEntry(PTF::Gantry whichGantry) const;
 
-  PhidgetReading getReadingForPhidget(int phidget) const;
+  PTF::PhidgetReading getReadingForPhidget(int phidget) const;
   
   Temperature_r getReadingTemperature() const;
   
-  *Phidget_acce00 getReadingAcceleration() const;
+
+  //Phidget_acce00 getReadingAcceleration() const;
+
+
   
   Timing getReadingTime() const;
 
@@ -230,7 +234,7 @@ private:
 
   Temperature_r Temp;
   Timing ti;
-  *Phidget_acce00 ACC;
+  //*Phidget_acce00 ACC;
   
   unsigned long long    numEntries;
   unsigned long long    numSamples;
@@ -305,7 +309,7 @@ namespace Exceptions {
 } // end namespace Exceptions
 
 
-} // end namespace PTF
+ // end namespace PTF
 
 
 // template <typename T, typename Ts>

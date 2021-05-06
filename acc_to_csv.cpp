@@ -19,8 +19,8 @@ int main(int argc, char** argv) {
   string root_f = "/neut/data19/vincent/ptf-analysis-2/out_run0" + run_no + ".root";
   string csv_f  = "/neut/data19/vincent/ptf-analysis-2/acc" + run_no + ".csv";
 
-  vector<int> phidgets = {0, 1, 100};
-  vector<PTF::PMTChannel> activeChannels = {};
+  vector<int> phidgets = {0, 1};
+  vector<PTF::PMT> activePMTs = {};
   //   {0, 3},                                                                                                                                                                                                                                
   //   {1, 4},                                                                                                                                                                                                                                
   //   {2, 5},                                                                                                                                                                                                                                
@@ -29,8 +29,9 @@ int main(int argc, char** argv) {
   //   {5, 8},                                                                                                                                                                                                                                
   //   {6, 9},                                                                                                                                                                                                                                
   //   {7, 10}                                                                                                                                                                                                                                
-  // ;                                                                                                                                                                                                                                       
-  PTF::Wrapper wrapper = PTF::Wrapper(16384, 34, activeChannels, phidgets);
+  // ;                                                                                                                                                                                                
+  vector<PTF::Gantry> gantries = {PTF::Gantry0, PTF::Gantry1};                                       
+  Wrapper wrapper = Wrapper(16384, 70, activePMTs, phidgets, gantries, PTF_CAEN_V1730);
 
   unordered_set<int> skipLines = {};// {962,1923,2884,5240,6201,9611,10572,11533,12494,13455,15811,16771};                                                                                                                                    
 
@@ -39,13 +40,12 @@ int main(int argc, char** argv) {
 
   cerr << "Num entries: " << wrapper.getNumEntries() << endl << endl;
 
-  csv << "phid_0_accx,phid_0_accy,phid_0_accz,phid_1_accx,phid_1_accy,phid_1_accz,accx,accy,accz, " << endl;
+  csv << "time,phid_0_accx,phid_0_accy,phid_0_accz,phid_1_accx,phid_1_accy,phid_1_accz,accx,accy,accz, " << endl;
 
   uint32_t lines = 0;
   const uint32_t freq = 100;
-
-  for (int i = 0; i < wrapper.getNumEntries(); i++) {
-    // cerr << "Entry " << i;                                                                                                                                                                                                                 
+  for (unsigned int i = 0; i < wrapper.getNumEntries(); i++) {
+    // cerr << "Entry " << i;
     if (i % freq == 0 || i == wrapper.getNumEntries() - 1) {
       cerr << "Entry " << i << "/" << wrapper.getNumEntries() << "\u001b[34;1m (" << (((double)i)/wrapper.getNumEntries()*100) << "%)\u001b[0m\033[K";
       if (skipLines.find(i) != skipLines.end()) {
@@ -58,26 +58,32 @@ int main(int argc, char** argv) {
 
     if (skipLines.find(i) != skipLines.end()) continue;
 
-    lines++;
-    wrapper.setCurrentEntry(i);
+  lines++;
+  wrapper.setCurrentEntry(i);
+  
+  
+  auto time_before=wrapper.getReadingTime();
+  wrapper.setCurrentEntry(0);
+  auto time_after=wrapper.getReadingTime();
 
-    //auto location = wrapper.getDataForCurrentEntry(PTF::Gantry1);                                                                                                                                                                           
+  csv <<time_before.time_c-time_after.time_c << "," ;
 
-    //csv << location.x << "," << location.y << "," << location.z << ",";                                                                                                                                                                     
+  
 
     for (int phidget : phidgets) {
 
 	       auto reading  = wrapper.getReadingForPhidget(phidget);
 
 	       csv << reading.Ax[0] << "," << reading.Ay[0] << "," << reading.Az[0];
+		   
+		   if (phidget != 100) {
+		   		csv << ",";
+		                  }
 
-	       if (phidget != 100) {
-	 	csv << ",";
-	       }
-	     }
-
+		}				  
 	     csv << endl;
 	   }
+   
 
 	   cerr << endl << "Done. WroteZEGOAL" << lines << " lines.";
 	   csv.close();

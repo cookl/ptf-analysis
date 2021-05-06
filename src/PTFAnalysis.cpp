@@ -576,7 +576,7 @@ void PTFAnalysis::FitWaveform( int wavenum, int nwaves, PTF::PMT pmt) {
   }
 }
 
-PTFAnalysis::PTFAnalysis( TFile* outfile, PTF::Wrapper & wrapper, double errorbar, PTF::PMT & pmt, string config_file, bool savewf ){
+PTFAnalysis::PTFAnalysis( TFile* outfile, Wrapper & wrapper, double errorbar, PTF::PMT & pmt, string config_file, bool savewf ){
 
   // Load config file
   Configuration config;
@@ -624,7 +624,7 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, PTF::Wrapper & wrapper, double errorba
   Utilities utils;
 
   // Get digitizer settings
-  PTF::Digitizer digi = wrapper.getDigitizerSettings();
+  Digitizer digi = wrapper.getDigitizerSettings();
   double digiCounts = pow(2.0, digi.resolution);
 
   // get length of waveforms
