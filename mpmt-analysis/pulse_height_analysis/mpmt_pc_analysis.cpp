@@ -41,21 +41,21 @@ int main( int argc, char* argv[] ) {
      END
      OF
      RANGE*/
-    TH1F *laser_pulse_charge    = new TH1F("pc","Laser Pulse Charge Scaled",224,-10,0.000488*224*1000);
+    TH1F *laser_pulse_charge    = new TH1F("pc","Laser Pulse Charge Scaled",200,-20*0.4883,180*0.4883);
 
     // Loop the first scan point and print something
     for(int i = 0; i < tt0->GetEntries()-1; i++){
         tt0->GetEvent(i );
-        
-        if (i<20) {
+//
+//        if (i<20) {
 //            std::cout << "i: " << i << ", charge: " << wf0->qsum << ", baseline: " << wf0->qped<<  std::endl;
-        }
+//        }
         
         laser_pulse_charge->Fill(wf0->qsum * 1000.0); // Convert to mV
   }
 
     TCanvas *c1 = new TCanvas("C1");
-    laser_pulse_charge->GetXaxis()->SetTitle("Pulse charge (mV)");
+    laser_pulse_charge->GetXaxis()->SetTitle("Pulse charge (mV * 8ns)");
     laser_pulse_charge->GetYaxis()->SetTitle("Number of events");
     gPad->SetLogy();
     laser_pulse_charge->Draw();
