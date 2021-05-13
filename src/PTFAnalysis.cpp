@@ -11,10 +11,11 @@
 #include <fstream>
 #include <math.h>
 
+// pulse charge (integrated pulse height over 2151ns to 2254ns)
 void PTFAnalysis::ChargeSum( float ped ){
   fitresult->qped = ped;
   float sum = 0.;
-  for( int ibin = 1; ibin<=hwaveform->GetNbinsX(); ibin++ ){
+  for( int ibin = 268; ibin<=282; ibin++ ){
     sum += ped - hwaveform->GetBinContent( ibin );
   }
   fitresult->qsum = sum;
@@ -700,7 +701,13 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, Wrapper & wrapper, double errorbar, PT
       }
         
       // Do simple charge sum calculation
-      if( pmt.pmt == 0 ) ChargeSum(0.9931);
+        if( pmt.pmt == 0 ) {
+            if (pmt.type == PTF::mPMT_REV0_PMT) {
+                ChargeSum(0.9985); //pedestal based on channel 0 (edited 2021 may)
+            } else {
+                ChargeSum(0.9931); //original function here
+            }
+        }
       // For main PMT do FFT and check if there is a waveform
       // If a waveform present then fit it
       if( dofit && pulse_location_cut && pmt.pmt == 0 ) dofit = PulseLocationCut(10);

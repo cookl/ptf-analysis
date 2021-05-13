@@ -25,7 +25,7 @@ void simple_threshold_technique(TH1D *hwaveform, WaveformFitResult *fitresult, P
   // Loop over waveform; look for every case of waveform going below fixed threshold
   
   double baseline = 1.0;
-  if(pmt.channel == 0){ baseline = 0.9915; }
+  if(pmt.channel == 0){ baseline = 0.9985; }
   if(pmt.channel == 1){ baseline = 0.9958; }
   if(pmt.channel == 16){ baseline = 1.0015; }
   if(pmt.channel == 17){ baseline = 0.9932; }
