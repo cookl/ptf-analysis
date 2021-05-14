@@ -43,7 +43,7 @@ public:
   const std::vector< double >      get_bins( char dim );
   
 private:
-  void ChargeSum( float ped ); // Charge sum relative to ped
+  void ChargeSum( float ped, int time_low=8, int time_high=0 ); // Charge sum relative to ped
   bool MonitorCut( float cut ); // Cut if no monitor PMT pulse
   bool FFTCut(); // Do FFT and check if waveform present
   bool PulseLocationCut( int cut ); // Cut on pulse in first or last bins
