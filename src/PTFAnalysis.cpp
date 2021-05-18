@@ -13,11 +13,11 @@
 
 // pulse charge (integrated pulse height over time_low ns to time_high ns)
 // Optionally arguments: time_low and time_high (otherwise checks entire range)
-void PTFAnalysis::ChargeSum( float ped, int time_low, int time_high ){
-  if (time_high==0) time_high=hwaveform->GetNbinsX()*8;
+void PTFAnalysis::ChargeSum( float ped, int bin_low, int bin_high ){
+  if (bin_high==0) bin_high=hwaveform->GetNbinsX();
   fitresult->qped = ped;
   float sum = 0.;
-  for( int ibin = time_low/8; ibin<=time_high/8; ibin++ ){
+  for( int ibin = bin_low; ibin<=bin_high; ibin++ ){
     sum += ped - hwaveform->GetBinContent( ibin );
   }
   fitresult->qsum = sum;
@@ -705,7 +705,7 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, Wrapper & wrapper, double errorbar, PT
       // Do simple charge sum calculation
         if( pmt.pmt == 0 ) {
             if (pmt.type == PTF::mPMT_REV0_PMT) {
-                ChargeSum(0.9985); //, 2150, 2260); //pedestal based on channel 0 (edited 2021 may)
+                ChargeSum(0.9985, 272, 290); //pedestal based on channel 0 (edited 2021 may)
             } else {
                 ChargeSum(0.9931); //original function here
             }
