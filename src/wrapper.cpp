@@ -1,5 +1,5 @@
 #include "wrapper.hpp"
-
+#include "BrbSettingsTree.hxx"
 
 using namespace std;
 using namespace PTF;
@@ -304,6 +304,13 @@ void Wrapper::closeFile() {
     file = nullptr;
   }
   entry = UINT32_MAX;
+}
+
+
+int Wrapper::LoadBrbSettingsTree(){
+
+  return BrbSettingsTree::Get()->LoadSettingsTree(file);
+  
 }
 
 
