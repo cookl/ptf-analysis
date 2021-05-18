@@ -58,9 +58,9 @@ int BrbSettingsTree::LoadSettingsTree(TFile *file){
   for(int i = 0; i < 20 ; i++){
 
     // convert baseline from counts to voltage
-    baselines.push_back(thisbaseline[i] * (2.0/4096.0));
+    fBaselines.push_back(thisbaseline[i] * (2.0/4096.0));
 
-    hv_setpoints.push_back(ihv[i]);
+    fHV_setpoints.push_back(ihv[i]);
     
   }
 
