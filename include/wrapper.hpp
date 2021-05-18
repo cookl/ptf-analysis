@@ -179,6 +179,9 @@ public:
   // Does nothing if the file is already closed 
   void closeFile();
 
+  // Load the BRB settings tree; returns -1 on failure
+  int LoadBrbSettingsTree();
+  
   // Returns -1 on not found
   int getChannelForPmt(int pmt) const;
   // Ditto
