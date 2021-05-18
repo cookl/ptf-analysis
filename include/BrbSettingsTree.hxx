@@ -15,14 +15,13 @@ class BrbSettingsTree
 protected:
   BrbSettingsTree()
   {
-    baselines = std::vector<double>(20,0);
   }
 
   static BrbSettingsTree* singleton_;
 
-  std::vector<double> baselines;
+  std::vector<double> fBaselines;
 
-  std::vector<double> hv_setpoints;
+  std::vector<double> fHV_setpoints;
 
   
 
@@ -36,14 +35,14 @@ public:
 
   // Return the baselines we stored
   double GetBaseline(int i){
-    if(i < 0 || i >= baselines.size()) return 0;
-    return baselines[i];
+    if(i < 0 || i >= fBaselines.size()) return 0;
+    return fBaselines[i];
   }
 
   // Return the HV setpoints
   double GetHV(int i){
-    if(i < 0 || i >= hv_setpoints.size()) return 0;
-    return hv_setpoints[i];
+    if(i < 0 || i >= fHV_setpoints.size()) return 0;
+    return fHV_setpoints[i];
   }
 
   // Load the settings tree from the ROOT TTree called 'Settings'
