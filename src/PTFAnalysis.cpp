@@ -5,6 +5,7 @@
 #include "TVirtualFFT.h"
 #include "PulseFinding.hpp"
 #include "TH2D.h"
+#include "BrbSettingsTree.hxx"
 
 #include <iostream>
 #include <ostream>
@@ -362,6 +363,9 @@ void PTFAnalysis::FitWaveform( int wavenum, int nwaves, PTF::PMT pmt) {
     int fitstat;
     double amplitude;
 
+    // Get baseline from the settings tree
+    double sbaseline = BrbSettingsTree::Get()->GetBaseline(pmt.channel);
+    
     // ellipitcall modified gaussian
     if(pmt.channel >= 16){
       if( ffitfunc == nullptr ) ffitfunc = new TF1("mygauss",funcEMG,fit_minx-30,fit_maxx+30,5);
@@ -380,15 +384,6 @@ void PTFAnalysis::FitWaveform( int wavenum, int nwaves, PTF::PMT pmt) {
       	ffitfunc->SetParameter(3, 15.8 );
       //ffitfunc->FixParameter(3, 6.0 );
       
-      
-      double sbaseline = 0.9908;
-      //      if(pmt.channel == 1){sbaseline = 0.9961; }
-      if(pmt.channel == 1){sbaseline = 1.0034; }
-      if(pmt.channel == 16){sbaseline = 1.0015; }
-      //      if(pmt.channel == 17){sbaseline = 0.9932; }
-      if(pmt.channel == 17){sbaseline = 0.9975; }
-      if(pmt.channel == 18){sbaseline = 1.004; }   
-      if(pmt.channel == 19){sbaseline = 1.0025; } 
       
       amplitude = sbaseline - min_value;
       ffitfunc->SetParameter(0, amplitude*-10.0);
@@ -431,16 +426,7 @@ void PTFAnalysis::FitWaveform( int wavenum, int nwaves, PTF::PMT pmt) {
       //ffitfunc->SetParameter(4, 0.5 ); // 1PE
       ffitfunc->FixParameter(0, 0.113 ); // 32PE
       ffitfunc->FixParameter(4, -0.3 ); // 32PE
-      
-      
-      double sbaseline = 0.9908;
-      if(pmt.channel == 1){sbaseline = 0.9961; }
-      //      if(pmt.channel == 1){sbaseline = 1.0034; }
-      if(pmt.channel == 16){sbaseline = 1.0015; }
-      if(pmt.channel == 17){sbaseline = 0.9932; }
-      if(pmt.channel == 18){sbaseline = 1.0044; }   
-      if(pmt.channel == 19){sbaseline = 1.0025; } 
-      
+            
       double basebase = 0;
       int strt = min_bini - 16;
       int stp = min_bini - 6;
@@ -466,7 +452,7 @@ void PTFAnalysis::FitWaveform( int wavenum, int nwaves, PTF::PMT pmt) {
       // then fit gaussian
       int fitstat = hwaveform->Fit( ffitfunc, "Q", "", fit_minx, fit_maxx);
       
-      if(pmt.channel == 1 && 1) std::cout  << "FF " << ffitfunc->GetParameter(0)<< " "
+      if(pmt.channel == 1 && 0) std::cout  << "FF " << ffitfunc->GetParameter(0)<< " "
 				     << ffitfunc->GetParameter(1)<< " "
 				     << ffitfunc->GetParameter(2)<< " "
 				     << amplitude << " " 
