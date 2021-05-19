@@ -34,16 +34,17 @@ int main( int argc, char* argv[] ) {
     
     // Create histograms
     // Note: bins quantized in units of 0.4883
-    TH1F *laser_pc    = new TH1F("pc","Laser Pulse Charge",200,-20*0.4883,180*0.4883);  //200 bins total
+    TH1F *laser_pc    = new TH1F("pc","Laser Pulse Charge",240,-60*0.4883,180*0.4883);  //200 bins total
     TH1F *laser_ph     = new TH1F("ph-laser","Laser Pulse Height",200,0,0.4883*200);
     TH1F *before_ph = new TH1F("ph-before","Pulse Height Before Laser",200,0,0.4883*200);
     TH1F *after_ph = new TH1F("ph-after", "Pulse Height After Laser",200,0,0.4883*200);
     TH1F *total_ph = new TH1F("ph-total", "Pulse Height", 200,0,0.4883*200);
     
-//    // Create variables to compare pulse height and charge
-//    double pc[];
-//    double ph[];
-//    int n=0;
+    // Init arrays and variables for scatterplots
+    double pc[150000];
+    double ph[150000];
+    int n=0;
+    TH2F *h2 = new TH2F("pc_ph_hist","Histogram of pulse height and pulse charge",100,0,100*0.4883,120,-40*0.4883*2,80*0.4883*2);
 
     // peak-to-valley calculation variables
     double min_amp = 10000;
@@ -72,9 +73,11 @@ int main( int argc, char* argv[] ) {
             }
             laser_ph->Fill(wf0->pulseCharges[k] * 1000.0);
             
-//            pc[n]=wf0->qsum*1000.0;
-//            ph[n]=wf0->pulseCharges[k]*1000.0;
-//            n++;
+            // plot ph vs pc
+            pc[n]=wf0->qsum*1000.0;
+            ph[n]=wf0->pulseCharges[k]*1000.0;
+            h2->Fill(wf0->pulseCharges[k]*1000.0,wf0->qsum*1000.0);
+            n++;
         }
   }
     
@@ -154,36 +157,49 @@ int main( int argc, char* argv[] ) {
     ps3->SetX1NDC(0.7); ps3->SetX2NDC(0.9);
     ps3->SetTextColor(kMagenta);
     pad3->Modified();
+
+////    Print pulse heights on an unscaled axis
+//    laser_ph->Draw();
+//    before_ph->SetLineColor(kRed);
+//    after_ph->SetLineColor(kMagenta);
+//    after_ph->Draw("][sames");
+//    before_ph->Draw("][sames");
+//    after_ph->GetXaxis()->SetTitle("Pulse height (mV)");
+//    after_ph->GetYaxis()->SetTitle("Number of events");
 //
-//    //    unscaled histograms
-//            laser_ph->Draw();
-//            before_ph->SetLineColor(kRed);
-//            after_ph->SetLineColor(kMagenta);
-//            after_ph->Draw("][sames");
-//            before_ph->Draw("][sames");
-//            after_ph->GetXaxis()->SetTitle("Pulse height (mV)");
-//            after_ph->GetYaxis()->SetTitle("Number of events");
-//
-//            TLegend *legend = new TLegend(0.5,0.5,0.9,0.7);
-//            legend->SetHeader("Legend","C");
-//            legend->AddEntry(laser_ph,"pulse height from laser","l");
-//            legend->AddEntry(before_ph,"pulse height before laser","l");
-//            legend->AddEntry(after_ph,"pulse height after laser");
-//            legend->Draw();
-    
+//    TLegend *legend = new TLegend(0.5,0.5,0.9,0.7);
+//    legend->SetHeader("Legend","C");
+//    legend->AddEntry(laser_ph,"pulse height from laser","l");
+//    legend->AddEntry(before_ph,"pulse height before laser","l");
+//    legend->AddEntry(after_ph,"pulse height after laser");
+//    legend->Draw();
+
     c2->SaveAs("mpmt_pulse_height_separated.png");
     
-    
+    // Print total pulse height
     TCanvas *c3 = new TCanvas("C3");
     total_ph->Draw();
     total_ph->GetXaxis()->SetTitle("Pulse height (mV)");
     total_ph->GetYaxis()->SetTitle("Number of events");
     c3->SaveAs("mpmt_pulse_height_total.png");
     
-//    TCanvas *c4 = new TCanvas("C4");
-//    TGraph *pc_ph = new TGraph(n,pc,ph);
-//    pc_ph->Draw();
-//    c4->SaveAs("mpmt_pc_vs_ph.png");
+    // Print pulse charge vs pulse height
+    TCanvas *c4 = new TCanvas("C4");
+    TGraph *pc_ph = new TGraph(n,ph,pc);
+    pc_ph->SetTitle("Pulse charge vs pulse height");
+    pc_ph->GetXaxis()->SetRangeUser(0,40);
+    pc_ph->GetYaxis()->SetRangeUser(-40,80);
+    pc_ph->GetXaxis()->SetTitle("Pulse height (mV)");
+    pc_ph->GetYaxis()->SetTitle("Pulse charge (mV * 8ns)");
+    pc_ph->Draw("ap");
+    c4->SaveAs("mpmt_pulse_charge_vs_height_scatter.png");
+    
+    TCanvas *c5 = new TCanvas("C5");
+    h2->GetXaxis()->SetTitle("Pulse height (mV)");
+    h2->GetYaxis()->SetTitle("Pulse charge (mV*ns)");
+    h2->Draw("COLZ");
+    c5->SaveAs("mpmt_pulse_charge_vs_height_hist.png");
+    
 
     fin->Close();
     return 0;

@@ -11,7 +11,7 @@
 #include <fstream>
 #include <math.h>
 
-// pulse charge (integrated pulse height over time_low ns to time_high ns)
+// pulse charge (integrated pulse height over bin range {bin_low,bin_high})
 // Optionally arguments: time_low and time_high (otherwise checks entire range)
 void PTFAnalysis::ChargeSum( float ped, int bin_low, int bin_high ){
   if (bin_high==0) bin_high=hwaveform->GetNbinsX();
@@ -705,7 +705,7 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, Wrapper & wrapper, double errorbar, PT
       // Do simple charge sum calculation
         if( pmt.pmt == 0 ) {
             if (pmt.type == PTF::mPMT_REV0_PMT) {
-                ChargeSum(0.9985, 272, 290); //pedestal based on channel 0 (edited 2021 may)
+                ChargeSum(0.9985, 262, 290); //pedestal based on channel 0 (edited 2021 may)
             } else {
                 ChargeSum(0.9931); //original function here
             }
