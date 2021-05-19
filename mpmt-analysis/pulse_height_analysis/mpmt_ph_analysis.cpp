@@ -34,7 +34,7 @@ int main( int argc, char* argv[] ) {
     
     // Create histograms
     // Note: bins quantized in units of 0.4883
-    TH1F *laser_pc    = new TH1F("pc","Laser Pulse Charge",240,-60*0.4883,180*0.4883);  //200 bins total
+    TH1F *laser_pc    = new TH1F("pc","Laser Pulse Charge",400,-200*0.4883*2,200*0.4883);  //200 bins total
     TH1F *laser_ph     = new TH1F("ph-laser","Laser Pulse Height",200,0,0.4883*200);
     TH1F *before_ph = new TH1F("ph-before","Pulse Height Before Laser",200,0,0.4883*200);
     TH1F *after_ph = new TH1F("ph-after", "Pulse Height After Laser",200,0,0.4883*200);
@@ -129,7 +129,7 @@ int main( int argc, char* argv[] ) {
     c2->cd();
 
     double ymin = 0;
-    double ymax = 1000; //550; //80;
+    double ymax = before_ph->GetBinContent(before_ph->GetMaximumBin())+10;
     double dy = (ymax-ymin)/0.8;
     double xmin = 0;
     double xmax = 100;
@@ -145,7 +145,7 @@ int main( int argc, char* argv[] ) {
     ps2->SetTextColor(kRed);
     pad2->Modified();
 
-    ymax = 3200; //6200; //600;
+    ymax = after_ph->GetBinContent(after_ph->GetMaximumBin())+10;
     dy = (ymax-ymin)/0.8;
     pad3->Range(xmin-0.1*dx,ymin-0.1*dy,xmax+0.1*dx,ymax+0.1*dy);
     pad3->Draw();
