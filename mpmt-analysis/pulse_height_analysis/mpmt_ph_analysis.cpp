@@ -34,7 +34,7 @@ int main( int argc, char* argv[] ) {
     
     // Create histograms
     // Note: bins quantized in units of 0.4883
-    TH1F *laser_pc    = new TH1F("pc","Laser Pulse Charge",400,-200*0.4883*2,200*0.4883);  //200 bins total
+    TH1F *laser_pc    = new TH1F("pc","Laser Pulse Charge",220,-40*0.4883,180*0.4883);  //200 bins total
     TH1F *laser_ph     = new TH1F("ph-laser","Laser Pulse Height",200,0,0.4883*200);
     TH1F *before_ph = new TH1F("ph-before","Pulse Height Before Laser",200,0,0.4883*200);
     TH1F *after_ph = new TH1F("ph-after", "Pulse Height After Laser",200,0,0.4883*200);
@@ -54,10 +54,13 @@ int main( int argc, char* argv[] ) {
     // Fill histograms
     for(int i = 0; i < tt0->GetEntries()-1; i++){
         tt0->GetEvent(i );
-                
+
         // pulse charges
         auto pulse_charge = wf0->qsum;
+//        if (pulse_charge != 100)
         laser_pc->Fill(pulse_charge * 1000.0); // Convert to mV
+        
+//        if (i==51 || i==30 || i==32) {std::cout<<"i=" << i << ": "<< pulse_charge<<std::endl;}
                 
         // pulse heights before, during, and after laser
         for(int k = 0; k < wf0->numPulses; k++){
@@ -84,7 +87,7 @@ int main( int argc, char* argv[] ) {
     // find peak-to-valley ratio
     // range depends on run : O
     for (auto pulse_charge=1.9532; pulse_charge<=22.4618; pulse_charge+=0.4883) {    // higher pulse  range: 2.4415-49.8066
-        auto bin_num = (20*0.4883 + pulse_charge)/0.4883;
+        auto bin_num = (40*0.4883 + pulse_charge)/0.4883;
         auto pc_count = laser_pc->GetBinContent(bin_num);
         if (pc_count<min_amp) {                 // find min amp
             min_amp=pc_count;
