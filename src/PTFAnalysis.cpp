@@ -14,20 +14,28 @@
 // pulse charge (integrated pulse height over bin range {bin_low,bin_high})
 // Optionally arguments: time_low and time_high (otherwise checks entire range)
 void PTFAnalysis::ChargeSum( float ped, int bin_low, int bin_high ){
-  if (bin_high==0) bin_high=hwaveform->GetNbinsX();
-  fitresult->qped = ped;
-  float sum = 0.;
-  bool is_shifted = false;
-  for( int ibin = bin_low; ibin<=bin_high; ibin++ ){
-      auto to_add = ped - hwaveform->GetBinContent( ibin );
-      if (to_add>0.0003) is_shifted=true;            // if none of the to_add is pos, let charge = 100
-      if (!is_shifted) {
-          sum = 100;
-          break;
-      }
-      sum += to_add;
-  }
-  fitresult->qsum = sum;
+    if (bin_high==0) bin_high=hwaveform->GetNbinsX();
+    fitresult->qped = ped;
+    float sum = 0.;
+    if (bin_high!=0) {
+        ped=0;
+        bin_low-=50;
+        for (int i=1; i<=bin_low; i++) {
+            ped+=hwaveform->GetBinContent(i);
+        }
+        ped = ped/bin_low;
+    }
+//  bool is_shifted = false;
+    for( int ibin = bin_low; ibin<=bin_high; ibin++ ){
+        auto to_add = ped - hwaveform->GetBinContent( ibin );
+//      if (to_add>0.0003) is_shifted=true;            // if none of the to_add is pos, let charge = 100
+//      if (!is_shifted) {
+//          sum = 100;
+//          break;
+//      }
+        sum += to_add;
+    }
+    fitresult->qsum = sum;
 }
 
 bool PTFAnalysis::MonitorCut( float cut ){
