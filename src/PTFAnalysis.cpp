@@ -19,11 +19,10 @@ void PTFAnalysis::ChargeSum( float ped, int bin_low, int bin_high ){
     float sum = 0.;
     if (bin_high!=0) {
         ped=0;
-        bin_low-=50;
-        for (int i=1; i<=bin_low; i++) {
+        for (int i=1; i<=bin_low-50; i++) {
             ped+=hwaveform->GetBinContent(i);
         }
-        ped = ped/bin_low;
+        ped = ped/(bin_low-50);
     }
 //  bool is_shifted = false;
     for( int ibin = bin_low; ibin<=bin_high; ibin++ ){
