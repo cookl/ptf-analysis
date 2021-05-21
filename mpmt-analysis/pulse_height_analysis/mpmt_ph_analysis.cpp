@@ -1,7 +1,8 @@
 #include "WaveformFitResult.hpp"
 #include "ScanPoint.hpp"
-#include "TFile.h"
 #include "TCanvas.h"
+#include "TFile.h"
+#include "TF1.h"
 #include "TH1D.h"
 #include "TH2F.h"
 #include "THStack.h"
@@ -86,8 +87,8 @@ int main( int argc, char* argv[] ) {
     
     // find peak-to-valley ratio
     // range depends on run : O
-    for (auto pulse_charge=1.9532; pulse_charge<=22.4618; pulse_charge+=0.4883) {    // higher pulse  range: 2.4415-49.8066
-        auto bin_num = (40*0.4883 + pulse_charge)/0.4883;
+    for (auto pulse_charge=6.8362; pulse_charge<=25.3916; pulse_charge+=0.4883) {    // higher pulse  range: 2.4415-49.8066
+        auto bin_num = (20*0.4883 + pulse_charge)/0.4883;
         auto pc_count = laser_pc->GetBinContent(bin_num);
         if (pc_count<min_amp) {                 // find min amp
             min_amp=pc_count;
@@ -101,10 +102,14 @@ int main( int argc, char* argv[] ) {
 
     // Print pulse charge histogram on a log-scale
     TCanvas *c1 = new TCanvas("C1");
+    TF1 *pc_fit = new TF1("pc_fit","gaus",-9,8);
+    pc_fit->SetLineWidth(1);
     laser_pc->GetXaxis()->SetTitle("Pulse charge (mV * 8ns)");
     laser_pc->GetYaxis()->SetTitle("Number of events");
     gPad->SetLogy();    // comment this line to view linear-scale histogram
-    laser_pc->Draw();
+    laser_pc->Fit("pc_fit");
+    laser_pc->SetMarkerStyle(6);
+    laser_pc->Draw("P");
     c1->SaveAs("mpmt_pulse_charge.png");
     
     // Print pulse height on a scaled axis
