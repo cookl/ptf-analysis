@@ -10,6 +10,7 @@
 #include "TGaxis.h"
 #include "TF1.h"
 #include "TStyle.h"
+#include "TLatex.h"
 #include "TLegend.h"
 #include "TPaveStats.h"
 #include "TProfile.h"
@@ -35,17 +36,19 @@ int main( int argc, char* argv[] ) {
     
     // Create histograms
     // Note: bins quantized in units of 0.4883
-    TH1F *laser_pc    = new TH1F("pc","Laser Pulse Charge",220,-40*0.4883,180*0.4883);  //200 bins total
+    double x_low = 20;
+    TH1F *laser_pc    = new TH1F("pc","Laser Pulse Charge",200,-1*x_low*0.4883,180*0.4883);  //200 bins total
     TH1F *laser_ph     = new TH1F("ph-laser","Laser Pulse Height",200,0,0.4883*200);
     TH1F *before_ph = new TH1F("ph-before","Pulse Height Before Laser",200,0,0.4883*200);
     TH1F *after_ph = new TH1F("ph-after", "Pulse Height After Laser",200,0,0.4883*200);
     TH1F *total_ph = new TH1F("ph-total", "Pulse Height", 200,0,0.4883*200);
+    TH1F *pulse_shift = new TH1F("pulse-shift", "Pulse height location per event",12,275*8,287*8);
     
     // Init arrays and variables for scatterplots
     double pc[150000];
     double ph[150000];
     int n=0;
-    TH2F *h2 = new TH2F("pc_ph_hist","Histogram of pulse height and pulse charge",100,0,100*0.4883,120,-40*0.4883*2,80*0.4883*2);
+    TH2F *h2 = new TH2F("pc_ph_hist","Histogram of pulse height and pulse charge",100,0,100*0.4883,120,-20*0.4883*2,100*0.4883*2);
 
     // peak-to-valley calculation variables
     double min_amp = 10000;
@@ -53,29 +56,31 @@ int main( int argc, char* argv[] ) {
     double peak_to_valley;
     
     // Fill histograms
+    // For each waveform:
     for(int i = 0; i < tt0->GetEntries()-1; i++){
         tt0->GetEvent(i );
 
-        // pulse charges
+        // pulse charge histogram
         auto pulse_charge = wf0->qsum;
-//        if (pulse_charge != 100)
         laser_pc->Fill(pulse_charge * 1000.0); // Convert to mV
-        
-//        if (i==51 || i==30 || i==32) {std::cout<<"i=" << i << ": "<< pulse_charge<<std::endl;}
-                
+                        
         // pulse heights before, during, and after laser
+        // For each pulse:
         for(int k = 0; k < wf0->numPulses; k++){
             auto pulse_time = wf0->pulseTimes[k];
             total_ph->Fill(wf0->pulseCharges[k]*1000.0);
-            if (pulse_time <= 2180) {
+            if (pulse_time <= 2100) {
                 before_ph->Fill(wf0->pulseCharges[k] * 1000.0);
                 continue;
             }
-            if (pulse_time >= 2320) {
+            if (pulse_time >= 3000) {
                 after_ph->Fill(wf0->pulseCharges[k] * 1000.0);
                 continue;
             }
             laser_ph->Fill(wf0->pulseCharges[k] * 1000.0);
+            
+            // plot time of pulse min amp
+            pulse_shift->Fill(pulse_time);
             
             // plot ph vs pc
             pc[n]=wf0->qsum*1000.0;
@@ -87,8 +92,8 @@ int main( int argc, char* argv[] ) {
     
     // find peak-to-valley ratio
     // range depends on run : O
-    for (auto pulse_charge=6.8362; pulse_charge<=25.3916; pulse_charge+=0.4883) {    // higher pulse  range: 2.4415-49.8066
-        auto bin_num = (20*0.4883 + pulse_charge)/0.4883;
+    for (auto pulse_charge=6.3479; pulse_charge<=34.6693; pulse_charge+=0.4883) {    // higher pulse  range: 6.8362-25.3916
+        auto bin_num = (x_low*0.4883 + pulse_charge)/0.4883;
         auto pc_count = laser_pc->GetBinContent(bin_num);
         if (pc_count<min_amp) {                 // find min amp
             min_amp=pc_count;
@@ -102,14 +107,27 @@ int main( int argc, char* argv[] ) {
 
     // Print pulse charge histogram on a log-scale
     TCanvas *c1 = new TCanvas("C1");
-    TF1 *pc_fit = new TF1("pc_fit","gaus",-9,8);
-    pc_fit->SetLineWidth(1);
     laser_pc->GetXaxis()->SetTitle("Pulse charge (mV * 8ns)");
     laser_pc->GetYaxis()->SetTitle("Number of events");
     gPad->SetLogy();    // comment this line to view linear-scale histogram
-    laser_pc->Fit("pc_fit");
+    laser_pc->Fit("gaus","Q","C",-4,4);     // noise fit
+//    laser_pc->Fit("gaus","Q","C",10,30);      // p.e. fit
+//    laser_pc->Fit("gaus","Q","C",10,40);
+    gStyle->SetOptFit(11);
     laser_pc->SetMarkerStyle(6);
+    gStyle->SetOptStat(11);
     laser_pc->Draw("P");
+    c1->Update();
+    
+    TPaveStats *ps = (TPaveStats*)c1->GetPrimitive("stats");
+    ps->SetName("peak-to-valley");
+    TList *listOfLines = ps->GetListOfLines();
+
+    TLatex *myt = new TLatex(0,0,"Peak-to-valley   2.82039");
+    listOfLines->Add(myt);
+    laser_pc->SetStats(0);
+    c1->Modified();
+    
     c1->SaveAs("mpmt_pulse_charge.png");
     
     // Print pulse height on a scaled axis
@@ -117,6 +135,8 @@ int main( int argc, char* argv[] ) {
     // pad2: ph before laser
     // pad3: ph after laser
     TCanvas *c2 = new TCanvas("C2");
+    gStyle->SetOptStat();
+    gStyle->SetOptFit(0);
     TPad *pad1 = new TPad("pad1", "", 0,0,1,1);
     TPad *pad2 = new TPad("pad2", "",0,0,1,1);
     TPad *pad3 = new TPad("pad3", "",0,0,1,1);
@@ -196,7 +216,7 @@ int main( int argc, char* argv[] ) {
     TGraph *pc_ph = new TGraph(n,ph,pc);
     pc_ph->SetTitle("Pulse charge vs pulse height");
     pc_ph->GetXaxis()->SetRangeUser(0,40);
-    pc_ph->GetYaxis()->SetRangeUser(-40,80);
+    pc_ph->GetYaxis()->SetRangeUser(-20,100);
     pc_ph->GetXaxis()->SetTitle("Pulse height (mV)");
     pc_ph->GetYaxis()->SetTitle("Pulse charge (mV * 8ns)");
     pc_ph->Draw("ap");
@@ -208,6 +228,11 @@ int main( int argc, char* argv[] ) {
     h2->Draw("COLZ");
     c5->SaveAs("mpmt_pulse_charge_vs_height_hist.png");
     
+    TCanvas *c6 = new TCanvas("C6");
+    pulse_shift->GetXaxis()->SetTitle("Time (ns)");
+    pulse_shift->GetYaxis()->SetTitle("Number of events");
+    pulse_shift->Draw();
+    c6->SaveAs("mpmt_pulse_shift.png");
 
     fin->Close();
     return 0;
