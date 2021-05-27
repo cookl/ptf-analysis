@@ -4,12 +4,15 @@
 #include "Utilities.hpp"
 #include "TVirtualFFT.h"
 #include "PulseFinding.hpp"
+#include "TCanvas.h"
+#include "TH1D.h"
 #include "TH2D.h"
 
 #include <iostream>
 #include <ostream>
 #include <fstream>
 #include <math.h>
+#include <TStyle.h>
 
 // pulse charge (integrated pulse height over bin range {bin_low,bin_high})
 // Optionally arguments: time_low and time_high (otherwise checks entire range)
@@ -17,21 +20,24 @@ void PTFAnalysis::ChargeSum( float ped, int bin_low, int bin_high ){
     if (bin_high==0) bin_high=hwaveform->GetNbinsX();
     fitresult->qped = ped;
     float sum = 0.;
+    
+    // Pedesetal histogram
     if (bin_high!=0) {
         ped=0;
-        for (int i=1; i<=bin_low-50; i++) {
-            ped+=hwaveform->GetBinContent(i);
+//        int num_lows = 0;
+        for (int i=1; i<=bin_low-62; i++) {
+            auto adc_value = hwaveform->GetBinContent(i);
+//            if (adc_value<0.9984) break;
+            ped+= adc_value;
+            pre_pulse->Fill(adc_value);
         }
-        ped = ped/(bin_low-50);
+        ped = ped/(bin_low-62);
+        pedestal->Fill(ped);
     }
-//  bool is_shifted = false;
+    
+    // Pulse charge calculation
     for( int ibin = bin_low; ibin<=bin_high; ibin++ ){
         auto to_add = ped - hwaveform->GetBinContent( ibin );
-//      if (to_add>0.0003) is_shifted=true;            // if none of the to_add is pos, let charge = 100
-//      if (!is_shifted) {
-//          sum = 100;
-//          break;
-//      }
         sum += to_add;
     }
     fitresult->qsum = sum;
@@ -673,6 +679,15 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, Wrapper & wrapper, double errorbar, PT
   if ( save_waveforms && wfdir_fft==nullptr ) wfdir_fft = outfile->mkdir(wfdir_fft_name.c_str());
   if ( save_waveforms && nowfdir_fft==nullptr ) nowfdir_fft = outfile->mkdir(nowfdir_fft_name.c_str());
   outfile->cd();
+    
+    
+    // YUKA PLOTTING ADC AND PEDESTAL VALUES
+    pre_pulse = new TH1F("pre-pulse","ADC Values Pre-Pulse",10,2040*0.0004883,2050*0.0004883);
+                         //10,0.9978,1.000);
+    pedestal = new TH1F("pedestal","Pedestal value per waveform",10,0.9982,0.9992);
+    // END
+    
+    
   // Loop over scan points (index i)
   unsigned long long nfilled = 0;// number of TTree entries so far
   for (unsigned i = 2; i < wrapper.getNumEntries(); i++) {
@@ -719,9 +734,9 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, Wrapper & wrapper, double errorbar, PT
       // Do simple charge sum calculation
         if( pmt.pmt == 0 ) {
             if (pmt.type == PTF::mPMT_REV0_PMT) {
-                ChargeSum(0.9985,262,290);   //2100ns to 2320ns
+                ChargeSum(0.9985,262,284);   //2100ns to 2270
             } else {
-                ChargeSum(0.9931); //original function here
+                ChargeSum(0.9931); //original PTF function call here
             }
         }
       // For main PMT do FFT and check if there is a waveform
@@ -781,7 +796,30 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, Wrapper & wrapper, double errorbar, PT
   }
   //cout << endl;
   // Done.
-  
+    Double_t w = 800;
+    Double_t h = 600;
+    TCanvas *c1 = new TCanvas("c1", "c1", w, h);
+    c1->SetWindowSize(w + (w - c1->GetWw()), h + (h - c1->GetWh()));
+//    TCanvas *c1 = new TCanvas("c1");
+    pre_pulse->SetStats(1);
+    gStyle->SetOptStat(1111);
+//    pre_pulse->Print("all");
+    pre_pulse->GetXaxis()->SetTitle("Voltage (V)");
+    pre_pulse->GetYaxis()->SetTitle("Number of events");
+    pre_pulse->Draw();
+    pre_pulse->Fit("gaus","Q", "C",0.997,1);
+    gStyle->SetOptFit(11);
+    c1->SaveAs("adc_pre_pulse.png");
+    
+    TCanvas *c2 = new TCanvas("c2", "c2", w, h);
+    c2->SetWindowSize(w + (w - c2->GetWw()), h + (h - c2->GetWh()));
+//    pedestal->Print("all");
+    pedestal->SetStats(1);
+    gStyle->SetOptStat(1111);
+    pedestal->GetXaxis()->SetTitle("Pedestal per waveform (V)");
+    pedestal->GetYaxis()->SetTitle("Number of events");
+    pedestal->Draw();
+    c2->SaveAs("pedestals.png");
 }
 
 const std::vector< double > PTFAnalysis::get_bins( char dim ){
