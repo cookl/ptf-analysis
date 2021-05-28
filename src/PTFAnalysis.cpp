@@ -747,7 +747,7 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, Wrapper & wrapper, double errorbar, PT
         
         if (pmt.type == PTF::mPMT_REV0_PMT) {
             if (pmt.pmt==1) ChargeSum(1.0034,260,271);    //2080 to 2170 ns
-            if (pmt.pmt==2) ChargeSum(1.00146,269,287);   //2152 to 2300 ns
+            if (pmt.pmt==2) ChargeSum(1.00146,272,287);   //2180 to 2300 ns
         }
         
         
@@ -833,6 +833,8 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, Wrapper & wrapper, double errorbar, PT
     pedestal->GetXaxis()->SetTitle("Pedestal per waveform (V)");
     pedestal->GetYaxis()->SetTitle("Number of events");
     pedestal->Draw();
+    pedestal->Fit("gaus");
+    gStyle->SetOptFit(11);
     if (pmt.pmt==1) c2->SaveAs("ch1_pedestals.png");
     if (pmt.pmt==2) c2->SaveAs("ch2_pedestals.png");
 }
