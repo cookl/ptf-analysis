@@ -18,6 +18,9 @@
 #include <iostream>
 #include <vector>
 
+double pc[1000000];
+double ph[1000000];
+
 int main( int argc, char* argv[] ) {
 
     if ( argc != 2 ){
@@ -29,9 +32,12 @@ int main( int argc, char* argv[] ) {
 
     // Get the waveform fit TTree
     std::cout << "TTree 0" << std::endl;
-    TTree * tt0 = (TTree*)fin->Get("ptfanalysis0");
-    WaveformFitResult * wf0 = new WaveformFitResult;
-    if(tt0) wf0->SetBranchAddresses( tt0 );
+    TTree * tt1 = (TTree*)fin->Get("ptfanalysis1");
+    TTree * tt2 = (TTree*)fin->Get("ptfanalysis2");
+    WaveformFitResult * wf1 = new WaveformFitResult;
+    WaveformFitResult * wf2 = new WaveformFitResult;
+    if(tt1) wf1->SetBranchAddresses( tt1 );
+    if(tt2) wf2->SetBranchAddresses( tt2 );
 
     
     // Create histograms
@@ -42,11 +48,9 @@ int main( int argc, char* argv[] ) {
     TH1F *before_ph = new TH1F("ph-before","Pulse Height Before Laser",200,0,0.4883*200);
     TH1F *after_ph = new TH1F("ph-after", "Pulse Height After Laser",200,0,0.4883*200);
     TH1F *total_ph = new TH1F("ph-total", "Pulse Height", 200,0,0.4883*200);
-    TH1F *pulse_shift = new TH1F("pulse-shift", "Pulse height location per event",12,275*8,287*8);
+    TH1F *pulse_shift = new TH1F("pulse-shift", "Pulse height location per event",13,262*8,275*8);//12,275*8,287*8);
     
     // Init arrays and variables for scatterplots
-    double pc[150000];
-    double ph[150000];
     int n=0;
     TH2F *h2 = new TH2F("pc_ph_hist","Histogram of pulse height and pulse charge",100,0,100*0.4883,120,-20*0.4883*2,100*0.4883*2);
 
@@ -57,42 +61,49 @@ int main( int argc, char* argv[] ) {
     
     // Fill histograms
     // For each waveform:
-    for(int i = 0; i < tt0->GetEntries()-1; i++){
-        tt0->GetEvent(i );
+    std::cout<< "ch1 num entries: " <<tt1->GetEntries()<< std::endl;
+    std::cout<< "ch2 num entries: " <<tt2->GetEntries()<< std::endl;
+    for(int i = 0; i < tt2->GetEntries()-1; i++){
+        tt1->GetEvent(i);
+        tt2->GetEvent(i );
 
         // pulse charge histogram
-        auto pulse_charge = wf0->qsum;
+        auto pulse_charge = wf2->qsum;
         laser_pc->Fill(pulse_charge * 1000.0); // Convert to mV
                         
         // pulse heights before, during, and after laser
         // For each pulse:
-        for(int k = 0; k < wf0->numPulses; k++){
-            auto pulse_time = wf0->pulseTimes[k];
-            total_ph->Fill(wf0->pulseCharges[k]*1000.0);
+        for(int k = 0; k < wf2->numPulses; k++){
+
+            auto pulse_time = wf2->pulseTimes[k];
+            total_ph->Fill(wf2->pulseCharges[k]*1000.0);
             if (pulse_time <= 2100) {
-                before_ph->Fill(wf0->pulseCharges[k] * 1000.0);
+                before_ph->Fill(wf2->pulseCharges[k] * 1000.0);
                 continue;
             }
             if (pulse_time >= 3000) {
-                after_ph->Fill(wf0->pulseCharges[k] * 1000.0);
+                after_ph->Fill(wf2->pulseCharges[k] * 1000.0);
                 continue;
             }
-            laser_ph->Fill(wf0->pulseCharges[k] * 1000.0);
+            laser_ph->Fill(wf2->pulseCharges[k] * 1000.0);
             
             // plot time of pulse min amp
             pulse_shift->Fill(pulse_time);
+//            pulse_shift->Fill(wf1->pulseTimes[0]);
             
             // plot ph vs pc
-            pc[n]=wf0->qsum*1000.0;
-            ph[n]=wf0->pulseCharges[k]*1000.0;
-            h2->Fill(wf0->pulseCharges[k]*1000.0,wf0->qsum*1000.0);
+            pc[n]=wf2->qsum*1000.0;
+            ph[n]=wf2->pulseCharges[k]*1000.0;
+            h2->Fill(wf2->pulseCharges[k]*1000.0,wf2->qsum*1000.0);
             n++;
+            
+//            std::cout<<"line96"<<std::endl;
         }
   }
     
     // find peak-to-valley ratio
     // range depends on run : O
-    for (auto pulse_charge=6.3479; pulse_charge<=34.6693; pulse_charge+=0.4883) {    // higher pulse  range: 6.8362-25.3916
+    for (auto pulse_charge=0.4883*12; pulse_charge<=50*0.4883; pulse_charge+=0.4883) {    // higher pulse  range: 6.8362-25.3916
         auto bin_num = (x_low*0.4883 + pulse_charge)/0.4883;
         auto pc_count = laser_pc->GetBinContent(bin_num);
         if (pc_count<min_amp) {                 // find min amp
@@ -123,7 +134,7 @@ int main( int argc, char* argv[] ) {
     ps->SetName("peak-to-valley");
     TList *listOfLines = ps->GetListOfLines();
 
-    TLatex *myt = new TLatex(0,0,"Peak-to-valley   2.82039");
+    TLatex *myt = new TLatex(0,0,"Peak-to-valley   2.29661");
     listOfLines->Add(myt);
     laser_pc->SetStats(0);
     c1->Modified();
