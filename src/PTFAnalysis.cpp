@@ -24,14 +24,12 @@ void PTFAnalysis::ChargeSum( float ped, int bin_low, int bin_high ){
     // Pedesetal histogram
     if (bin_high!=0) {
         ped=0;
-//        int num_lows = 0;
-        for (int i=1; i<=bin_low-62; i++) {
+        for (int i=1; i<=bin_low-50; i++) {
             auto adc_value = hwaveform->GetBinContent(i);
-//            if (adc_value<0.9984) break;
             ped+= adc_value;
             pre_pulse->Fill(adc_value);
         }
-        ped = ped/(bin_low-62);
+        ped = ped/(bin_low-50);
         pedestal->Fill(ped);
     }
     
@@ -682,14 +680,21 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, Wrapper & wrapper, double errorbar, PT
     
     
     // YUKA PLOTTING ADC AND PEDESTAL VALUES
-    pre_pulse = new TH1F("pre-pulse","ADC Values Pre-Pulse",10,2040*0.0004883,2050*0.0004883);
+    pre_pulse = new TH1F("pre-pulse","ADC Values Pre-Pulse",40,2040*0.0004883,2080*0.0004883);
                          //10,0.9978,1.000);
-    pedestal = new TH1F("pedestal","Pedestal value per waveform",10,0.9982,0.9992);
+    pedestal = new TH1F("pedestal","Pedestal value per waveform",60,0.9990,1.0050);
     // END
     
     
   // Loop over scan points (index i)
   unsigned long long nfilled = 0;// number of TTree entries so far
+    
+    
+    
+//    int n = 0;
+    
+    
+    
   for (unsigned i = 2; i < wrapper.getNumEntries(); i++) {
     //if ( i>2000 ) continue;
     if( terminal_output ){
@@ -709,7 +714,6 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, Wrapper & wrapper, double errorbar, PT
     scanpoints.push_back( ScanPoint( location.x, location.y, location.z,time_F.time_c, T.ext_2, nfilled ) );
     
     ScanPoint& curscanpoint = scanpoints[ scanpoints.size()-1 ];
-    
     // loop over the number of waveforms at this ScanPoint (index j)
     int numWaveforms = wrapper.getNumSamples();
     for ( int j=0; j<numWaveforms; j++) {
@@ -730,15 +734,24 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, Wrapper & wrapper, double errorbar, PT
       }else{
         fitresult->numPulses = 0;
       }
-        
-      // Do simple charge sum calculation
+    
+        //move out of if case
+//        if (n==0) std::cout << "pmt number" << pmt.pmt << std::endl;
+//        n++;
+//
+
+//       Do simple charge sum calculation
         if( pmt.pmt == 0 ) {
-            if (pmt.type == PTF::mPMT_REV0_PMT) {
-                ChargeSum(0.9985,262,284);   //2100ns to 2270
-            } else {
-                ChargeSum(0.9931); //original PTF function call here
-            }
+            ChargeSum(0.9931); //original PTF function call here
         }
+        
+        if (pmt.type == PTF::mPMT_REV0_PMT) {
+            if (pmt.pmt==1) ChargeSum(1.0034,260,271);    //2080 to 2170 ns
+            if (pmt.pmt==2) ChargeSum(1.00146,269,287);   //2152 to 2300 ns
+        }
+        
+        
+        
       // For main PMT do FFT and check if there is a waveform
       // If a waveform present then fit it
       if( dofit && pulse_location_cut && pmt.pmt == 0 ) dofit = PulseLocationCut(10);
@@ -807,9 +820,10 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, Wrapper & wrapper, double errorbar, PT
     pre_pulse->GetXaxis()->SetTitle("Voltage (V)");
     pre_pulse->GetYaxis()->SetTitle("Number of events");
     pre_pulse->Draw();
-    pre_pulse->Fit("gaus","Q", "C",0.997,1);
+    pre_pulse->Fit("gaus");
     gStyle->SetOptFit(11);
-    c1->SaveAs("adc_pre_pulse.png");
+    if (pmt.pmt==1) c1->SaveAs("ch1_adc_pre_pulse.png");
+    if (pmt.pmt==2) c1->SaveAs("ch2_adc_pre_pulse.png");
     
     TCanvas *c2 = new TCanvas("c2", "c2", w, h);
     c2->SetWindowSize(w + (w - c2->GetWw()), h + (h - c2->GetWh()));
@@ -819,7 +833,8 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, Wrapper & wrapper, double errorbar, PT
     pedestal->GetXaxis()->SetTitle("Pedestal per waveform (V)");
     pedestal->GetYaxis()->SetTitle("Number of events");
     pedestal->Draw();
-    c2->SaveAs("pedestals.png");
+    if (pmt.pmt==1) c2->SaveAs("ch1_pedestals.png");
+    if (pmt.pmt==2) c2->SaveAs("ch2_pedestals.png");
 }
 
 const std::vector< double > PTFAnalysis::get_bins( char dim ){
