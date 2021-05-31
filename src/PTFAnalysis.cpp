@@ -679,22 +679,14 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, Wrapper & wrapper, double errorbar, PT
   outfile->cd();
     
     
-    // YUKA PLOTTING ADC AND PEDESTAL VALUES
+// setup output histograms of adc values pre-pulse and pedestal values (yuka 2021 may)
     pre_pulse = new TH1F("pre-pulse","ADC Values Pre-Pulse",40,2040*0.0004883,2080*0.0004883);
                          //10,0.9978,1.000);
     pedestal = new TH1F("pedestal","Pedestal value per waveform",60,0.9990,1.0050);
-    // END
-    
     
   // Loop over scan points (index i)
   unsigned long long nfilled = 0;// number of TTree entries so far
-    
-    
-    
-//    int n = 0;
-    
-    
-    
+
   for (unsigned i = 2; i < wrapper.getNumEntries(); i++) {
     //if ( i>2000 ) continue;
     if( terminal_output ){
@@ -734,17 +726,11 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, Wrapper & wrapper, double errorbar, PT
       }else{
         fitresult->numPulses = 0;
       }
-    
-        //move out of if case
-//        if (n==0) std::cout << "pmt number" << pmt.pmt << std::endl;
-//        n++;
-//
 
 //       Do simple charge sum calculation
         if( pmt.pmt == 0 ) {
             ChargeSum(0.9931); //original PTF function call here
         }
-        
         if (pmt.type == PTF::mPMT_REV0_PMT) {
             if (pmt.pmt==1) ChargeSum(1.0034,260,271);    //2080 to 2170 ns
             if (pmt.pmt==2) ChargeSum(1.00146,272,287);   //2180 to 2300 ns
