@@ -17,9 +17,12 @@
 
 #include <iostream>
 #include <vector>
+#include <cstring>
 
 double pc[1000000];
 double ph[1000000];
+double input_pulse[100000];
+double pmt_pulse[1000000];
 
 int main( int argc, char* argv[] ) {
 
@@ -30,7 +33,7 @@ int main( int argc, char* argv[] ) {
 
     TFile * fin = new TFile( argv[1], "read" );
 
-    // Get the waveform fit TTree
+    // Get the waveform fit TTree for channel 1 and 2
     std::cout << "TTree 0" << std::endl;
     TTree * tt1 = (TTree*)fin->Get("ptfanalysis1");
     TTree * tt2 = (TTree*)fin->Get("ptfanalysis2");
@@ -38,21 +41,26 @@ int main( int argc, char* argv[] ) {
     WaveformFitResult * wf2 = new WaveformFitResult;
     if(tt1) wf1->SetBranchAddresses( tt1 );
     if(tt2) wf2->SetBranchAddresses( tt2 );
-
     
-    // Create histograms
+    // Histograms for PMT signals
     // Note: bins quantized in units of 0.4883
     double x_low = 20;
     TH1F *laser_pc    = new TH1F("pc","Laser Pulse Charge",200,-1*x_low*0.4883,180*0.4883);  //200 bins total
     TH1F *laser_ph     = new TH1F("ph-laser","Laser Pulse Height",200,0,0.4883*200);
     TH1F *before_ph = new TH1F("ph-before","Pulse Height Before Laser",200,0,0.4883*200);
     TH1F *after_ph = new TH1F("ph-after", "Pulse Height After Laser",200,0,0.4883*200);
-    TH1F *total_ph = new TH1F("ph-total", "Pulse Height", 200,0,0.4883*200);
-    TH1F *pulse_shift = new TH1F("pulse-shift", "Pulse height location per event",13,262*8,275*8);//12,275*8,287*8);
+    TH1F *total_ph = new TH1F("ph-total", "Pulse Height", 200,0,0.4883*200);//123,820*0.4883,943*0.4883);//
+    TH2F *pc_ph_hist = new TH2F("pc_ph_hist","Histogram of pulse height and pulse charge",100,0,100*0.4883,120,-20*0.4883*2,100*0.4883*2);
+    TH1F *pmt_shift = new TH1F("pmt-pulse-shift", "PMT: Pulse height spread",12,275*8,287*8);
     
-    // Init arrays and variables for scatterplots
+    // Histograms for input signal
+    TH1F *input_shift = new TH1F("inputed-pulse-shift", "Input signal: Pulse height spread",13,262*8,275*8);
+    TH2F *input_pmt_hist = new TH2F("input_pmt_hist", "Input vs PMT pulse time",13,262*8,275*8,12 ,275*8,287*8);//175,225*8,400*8,175,225*8,400*8);//,12,275*8,287*8);
+    
+    //test
+//    TH1F *h1 = new TH1F("test", "Test", 200,0,)
+    
     int n=0;
-    TH2F *h2 = new TH2F("pc_ph_hist","Histogram of pulse height and pulse charge",100,0,100*0.4883,120,-20*0.4883*2,100*0.4883*2);
 
     // peak-to-valley calculation variables
     double min_amp = 10000;
@@ -67,6 +75,9 @@ int main( int argc, char* argv[] ) {
         tt1->GetEvent(i);
         tt2->GetEvent(i );
 
+//        std::cout << "ch1 num pulses: " <<wf1->numPulses << std::endl;
+//        std::cout << "ch2 num pulses: " <<wf2->numPulses << std::endl;
+        
         // pulse charge histogram
         auto pulse_charge = wf2->qsum;
         laser_pc->Fill(pulse_charge * 1000.0); // Convert to mV
@@ -74,36 +85,47 @@ int main( int argc, char* argv[] ) {
         // pulse heights before, during, and after laser
         // For each pulse:
         for(int k = 0; k < wf2->numPulses; k++){
-
-            auto pulse_time = wf2->pulseTimes[k];
+            
+//            std::cout << "numPulses: " << wf2->numPulses << "ph: " << wf2->pulseCharges[0] << std::endl;
+            
+            auto pmt_pulse_time = wf2->pulseTimes[k];
             total_ph->Fill(wf2->pulseCharges[k]*1000.0);
-            if (pulse_time <= 2100) {
+            if (pmt_pulse_time <= 2230) {  //2100
                 before_ph->Fill(wf2->pulseCharges[k] * 1000.0);
                 continue;
             }
-            if (pulse_time >= 3000) {
+            if (pmt_pulse_time >= 2270) { //3000
                 after_ph->Fill(wf2->pulseCharges[k] * 1000.0);
                 continue;
             }
+            
             laser_ph->Fill(wf2->pulseCharges[k] * 1000.0);
             
-            // plot time of pulse min amp
-            pulse_shift->Fill(pulse_time);
-//            pulse_shift->Fill(wf1->pulseTimes[0]);
+            // pulse height spread/shift
+            pmt_shift->Fill(pmt_pulse_time);
+            input_shift->Fill(wf1->pulseTimes[0]);
+            
+            // plot time of pulse of input signal vs pmt signal
+            
+//            std::cout << "ch1 time: " << wf1->pulseTimes[0] << std::endl;
+//            std::cout << "ch2 time: " << wf2->pulseTimes[k] << std::endl;
+            
+            input_pulse[n]=wf1->pulseTimes[0];
+            pmt_pulse[n]=pmt_pulse_time;
+            input_pmt_hist->Fill(wf1->pulseTimes[0],pmt_pulse_time);
             
             // plot ph vs pc
             pc[n]=wf2->qsum*1000.0;
             ph[n]=wf2->pulseCharges[k]*1000.0;
-            h2->Fill(wf2->pulseCharges[k]*1000.0,wf2->qsum*1000.0);
+            pc_ph_hist->Fill(wf2->pulseCharges[k]*1000.0,wf2->qsum*1000.0);
             n++;
             
-//            std::cout<<"line96"<<std::endl;
         }
   }
     
     // find peak-to-valley ratio
     // range depends on run : O
-    for (auto pulse_charge=0.4883*12; pulse_charge<=50*0.4883; pulse_charge+=0.4883) {    // higher pulse  range: 6.8362-25.3916
+    for (auto pulse_charge=0.4883*8; pulse_charge<=50*0.4883; pulse_charge+=0.4883) {    // higher pulse  range: 6.8362-25.3916
         auto bin_num = (x_low*0.4883 + pulse_charge)/0.4883;
         auto pc_count = laser_pc->GetBinContent(bin_num);
         if (pc_count<min_amp) {                 // find min amp
@@ -121,8 +143,8 @@ int main( int argc, char* argv[] ) {
     laser_pc->GetXaxis()->SetTitle("Pulse charge (mV * 8ns)");
     laser_pc->GetYaxis()->SetTitle("Number of events");
     gPad->SetLogy();    // comment this line to view linear-scale histogram
-    laser_pc->Fit("gaus","Q","C",-4,4);     // noise fit
-//    laser_pc->Fit("gaus","Q","C",10,30);      // p.e. fit
+//    laser_pc->Fit("gaus","Q","C",-4,4);     // noise fit
+    laser_pc->Fit("gaus","Q","C",10,30);      // p.e. fit
 //    laser_pc->Fit("gaus","Q","C",10,40);
     gStyle->SetOptFit(11);
     laser_pc->SetMarkerStyle(6);
@@ -134,7 +156,8 @@ int main( int argc, char* argv[] ) {
     ps->SetName("peak-to-valley");
     TList *listOfLines = ps->GetListOfLines();
 
-    TLatex *myt = new TLatex(0,0,"Peak-to-valley   2.29661");
+    std::string text = "Peak-to-valley   " + std::to_string(peak_to_valley);
+    TLatex *myt = new TLatex(0,0, text.c_str());
     listOfLines->Add(myt);
     laser_pc->SetStats(0);
     c1->Modified();
@@ -224,26 +247,51 @@ int main( int argc, char* argv[] ) {
     
     // Print pulse charge vs pulse height
     TCanvas *c4 = new TCanvas("C4");
-    TGraph *pc_ph = new TGraph(n,ph,pc);
-    pc_ph->SetTitle("Pulse charge vs pulse height");
-    pc_ph->GetXaxis()->SetRangeUser(0,40);
-    pc_ph->GetYaxis()->SetRangeUser(-20,100);
-    pc_ph->GetXaxis()->SetTitle("Pulse height (mV)");
-    pc_ph->GetYaxis()->SetTitle("Pulse charge (mV * 8ns)");
-    pc_ph->Draw("ap");
+    TGraph *pc_ph_scatter = new TGraph(n,ph,pc);
+    pc_ph_scatter->SetTitle("Pulse charge vs pulse height");
+    pc_ph_scatter->GetXaxis()->SetRangeUser(0,40);
+    pc_ph_scatter->GetYaxis()->SetRangeUser(-20,100);
+    pc_ph_scatter->GetXaxis()->SetTitle("Pulse height (mV)");
+    pc_ph_scatter->GetYaxis()->SetTitle("Pulse charge (mV * 8ns)");
+    pc_ph_scatter->Draw("ap");
     c4->SaveAs("mpmt_pulse_charge_vs_height_scatter.png");
     
     TCanvas *c5 = new TCanvas("C5");
-    h2->GetXaxis()->SetTitle("Pulse height (mV)");
-    h2->GetYaxis()->SetTitle("Pulse charge (mV*ns)");
-    h2->Draw("COLZ");
+    pc_ph_hist->GetXaxis()->SetTitle("Pulse height (mV)");
+    pc_ph_hist->GetYaxis()->SetTitle("Pulse charge (mV*ns)");
+    pc_ph_hist->Draw("COLZ");
     c5->SaveAs("mpmt_pulse_charge_vs_height_hist.png");
     
     TCanvas *c6 = new TCanvas("C6");
-    pulse_shift->GetXaxis()->SetTitle("Time (ns)");
-    pulse_shift->GetYaxis()->SetTitle("Number of events");
-    pulse_shift->Draw();
+    pmt_shift->GetXaxis()->SetTitle("Time (ns)");
+    pmt_shift->GetYaxis()->SetTitle("Number of events");
+    pmt_shift->Draw();
     c6->SaveAs("mpmt_pulse_shift.png");
+    
+    TCanvas *c7 = new TCanvas("C7");
+    input_shift->GetXaxis()->SetTitle("Time (ns)");
+    input_shift->GetYaxis()->SetTitle("Number of events");
+    input_shift->Draw();
+    c7->SaveAs("input_pulse_shift.png");
+    
+    TCanvas *c8 = new TCanvas("C8");
+    input_pmt_hist->GetXaxis()->SetTitle("Input signal: time of minimum amplitude (ns)");
+    input_pmt_hist->GetYaxis()->SetTitle("PMT signal: time of minimum amplitude (ns)");
+    input_pmt_hist->Draw("COLZ");
+//    input_pmt_hist->Print("all");
+    c8->SaveAs("input_pmt_pulse_hist.png");
+    
+    TCanvas *c9 = new TCanvas("C9");
+    TGraph *input_pmt_scatter = new TGraph(n,input_pulse,pmt_pulse);
+    input_pmt_scatter->SetTitle("Input vs PMT pulse time");
+    input_pmt_scatter->GetXaxis()->SetRangeUser(2100,2200);  //1800,3200
+    input_pmt_scatter->GetYaxis()->SetRangeUser(2000,2600);
+    input_pmt_scatter->GetXaxis()->SetTitle("Input signal: time of minimum amplitude (ns)");
+    input_pmt_scatter->GetYaxis()->SetTitle("PMT signal: time of minimum amplitude (ns)");
+    input_pmt_scatter->Draw("ap");
+    input_pmt_scatter->Fit("pol1");
+    gStyle->SetOptFit(11);
+    c9->SaveAs("input_pmt_pulse_scatter.png");
 
     fin->Close();
     return 0;

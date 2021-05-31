@@ -27,11 +27,13 @@ void simple_threshold_technique(TH1D *hwaveform, WaveformFitResult *fitresult, P
   double baseline = 1.0;
   if(pmt.channel == 0){ baseline = 0.9985; }
   if(pmt.channel == 2){ baseline = 1.00146;}
-  if(pmt.channel == 1){ baseline = 0.9958; }
+  if(pmt.channel == 1){ baseline = 1.0034; }
   if(pmt.channel == 16){ baseline = 1.0015; }
   if(pmt.channel == 17){ baseline = 0.9932; }
 
   double threshold = baseline - 0.004;
+    
+    if (pmt.channel == 1) threshold = baseline - 0.2;
 
   int nsamples = hwaveform->GetNbinsX();
 
@@ -46,7 +48,7 @@ void simple_threshold_technique(TH1D *hwaveform, WaveformFitResult *fitresult, P
     }
     
     if(sample < threshold && !in_pulse){ // found a pulse
-      in_pulse = true;      
+      in_pulse = true;
     }
     
     if(sample >= threshold && in_pulse){ /// finished this pulse
@@ -57,7 +59,7 @@ void simple_threshold_technique(TH1D *hwaveform, WaveformFitResult *fitresult, P
 
         //if(0)std::cout << "Pulse found : " << fitresult->numPulses << " " << min_bin
         //          << " " << min_value << " " << std::endl;
-        fitresult->numPulses++;      
+        fitresult->numPulses++;
       }
       min_bin = 9999, min_value = 9999;
     }
