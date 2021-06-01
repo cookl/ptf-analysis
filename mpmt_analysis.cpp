@@ -123,13 +123,41 @@ int main(int argc, char** argv) {
   wrapper.openFile( string(argv[1]), "scan_tree");
   cerr << "Num entries: " << wrapper.getNumEntries() << endl << endl;
   cout << "Points ready " << endl;
+    
+  float* times;
+    
+//    ORIGINAL CODE
+    for(unsigned int i = 0; i < active_channels.size(); i++){
+        PTF::PMT pmt = activePMTs[i];
+        
+        if(i == 0) {
+            times = NULL;
+            PTFAnalysis *analysis = new PTFAnalysis( outFile, wrapper, 2.1e-3, pmt, string(argv[3]), true, times);
+            analysis->write_scanpoints();
+            times = analysis->getTimes();
+        }
+        if(i == 1) PTFAnalysis *analysis = new PTFAnalysis( outFile, wrapper, 2.1e-3, pmt, string(argv[3]), true, times);
+    }
+    
+    // for correct pulse charge analysis
 
-  for(unsigned int i = 0; i < active_channels.size(); i++){
-    PTF::PMT pmt = activePMTs[i];
-    PTFAnalysis *analysis = new PTFAnalysis( outFile, wrapper, 2.1e-3, pmt, string(argv[3]), true );
-    if(i == 0) analysis->write_scanpoints();
-
-  }
+    
+//    for(unsigned int i = 0; i < active_channels.size(); i++){
+//        PTF::PMT pmt = activePMTs[i];
+//        if (active_channels[i] == 1) {
+//            PTFAnalysis *analysis = new PTFAnalysis( outFile, wrapper, 2.1e-3, pmt, string(argv[3]), true );
+//            analysis->write_scanpoints();
+//            outFile->Write();
+//            outFile->Close();
+//            continue;
+//        }
+//        if (active_channels[i] == 2) {
+//            
+//            PTFAnalysis *analysis = new PTFAnalysis( outFile, wrapper, 2.1e-3, pmt, string(argv[3]),true, string(argv[2]));
+//        }
+//    }
+    
+    
     // Do analysis of waveforms for each scanpoint
     //analysis0->write_scanpoints();
 

@@ -13,10 +13,13 @@
 #include <fstream>
 #include <math.h>
 #include <TStyle.h>
+#include <string>
+#include <cstring>
 
 // pulse charge (integrated pulse height over bin range {bin_low,bin_high})
 // Optionally arguments: time_low and time_high (otherwise checks entire range)
 void PTFAnalysis::ChargeSum( float ped, int bin_low, int bin_high ){
+//    std::cout << "inside chargesum()" << std::endl;
     if (bin_high==0) bin_high=hwaveform->GetNbinsX();
     fitresult->qped = ped;
     float sum = 0.;
@@ -597,7 +600,7 @@ void PTFAnalysis::FitWaveform( int wavenum, int nwaves, PTF::PMT pmt) {
   }
 }
 
-PTFAnalysis::PTFAnalysis( TFile* outfile, Wrapper & wrapper, double errorbar, PTF::PMT & pmt, string config_file, bool savewf ){
+PTFAnalysis::PTFAnalysis( TFile* outfile, Wrapper & wrapper, double errorbar, PTF::PMT & pmt, string config_file, bool savewf, float* ch1_times ){
 
   // Load config file
   Configuration config;
@@ -684,10 +687,25 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, Wrapper & wrapper, double errorbar, PT
                          //10,0.9978,1.000);
     pedestal = new TH1F("pedestal","Pedestal value per waveform",60,0.9990,1.0050);
     
+//    TTree * tt1;
+//    if (pmt.channel == 2) {
+//        string fname = "mpmt_Analysis_run0" + to_string(run_number) + ".root";
+//        TFile * fin = new TFile( fname.c_str(), "read" );
+//        TTree * tt1 = (TTree*)fin->Get("ptfanalysis1");
+//        WaveformFitResult * wf1 = new WaveformFitResult;
+//        if(tt1) wf1->SetBranchAddresses( tt1 );
+//    }
+    
+    int low=272;
+    int high=288;
+    int channel_shift = 13;
+    
   // Loop over scan points (index i)
   unsigned long long nfilled = 0;// number of TTree entries so far
 
-  for (unsigned i = 2; i < wrapper.getNumEntries(); i++) {
+//    float times[wrapper.getNumEntries()];
+    
+  for (unsigned i = 2; i < wrapper.getNumEntries(); i++) {      // try smaller range (wrapper.getNumEntries())
     //if ( i>2000 ) continue;
     if( terminal_output ){
       cerr << "PTFAnalysis scan point " << i << " / " << wrapper.getNumEntries() << "\u001b[34;1m (" << (((double)i)/wrapper.getNumEntries()*100) << "%)\u001b[0m\033[K";
@@ -732,9 +750,28 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, Wrapper & wrapper, double errorbar, PT
             ChargeSum(0.9931); //original PTF function call here
         }
         if (pmt.type == PTF::mPMT_REV0_PMT) {
-            if (pmt.pmt==1) ChargeSum(1.0034,260,271);    //2080 to 2170 ns
-            if (pmt.pmt==2) ChargeSum(1.00146,272,287);   //2180 to 2300 ns
+//            if (pmt.channel==1) ch1_times = times[i];
+            //          Channel 1 doesn't really need pulse charge calculations
+//            if (pmt.channel==1) ChargeSum(1.0034,260,271);    //2080 to 2170 ns
+            if (pmt.channel==1) times[i]=fitresult->pulseTimes[0];  //times.push_back(fitresult->pulseTimes[0]);
+            if (pmt.channel==2) {
+                if (ch1_times[i]!=0) {
+                    low = (ch1_times[i]/8) + channel_shift - 4;
+                    high = (ch1_times[i]/8) + channel_shift + 5;
+                }
+                ChargeSum(1.00146,low,high);   //2180 to 2300 ns
+            }
         }
+//
+//        std::cout << "time: " << fitresult->pulseTimes[0] << std::endl;
+//        std::cout << "i: " << i << std::endl;
+//        if (pmt.channel==1) std::cout << "pulseTime: " << times[i] <<std::endl;
+//        if (pmt.channel==2) std::cout << "pulseTime: " << ch1_times[i] <<std::endl;
+//        std::cout << "low: " << low <<std::endl;
+//        std::cout << "high: " << high <<std::endl;
+//        std::cout << "PMT TYPE: " << pmt.type << std::endl;
+//        std::cout << "PMT.pmt: " << pmt.pmt << std::endl;
+//        std::cout << "PMT.channel: " << pmt.channel << std:: endl;
         
         
         

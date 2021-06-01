@@ -73,7 +73,7 @@ int main( int argc, char* argv[] ) {
     std::cout<< "ch2 num entries: " <<tt2->GetEntries()<< std::endl;
     for(int i = 0; i < tt2->GetEntries()-1; i++){
         tt1->GetEvent(i);
-        tt2->GetEvent(i );
+        tt2->GetEvent(i);
 
 //        std::cout << "ch1 num pulses: " <<wf1->numPulses << std::endl;
 //        std::cout << "ch2 num pulses: " <<wf2->numPulses << std::endl;
@@ -125,7 +125,7 @@ int main( int argc, char* argv[] ) {
     
     // find peak-to-valley ratio
     // range depends on run : O
-    for (auto pulse_charge=0.4883*8; pulse_charge<=50*0.4883; pulse_charge+=0.4883) {    // higher pulse  range: 6.8362-25.3916
+    for (auto pulse_charge=0.4883*6; pulse_charge<=54*0.4883; pulse_charge+=0.4883) {    // higher pulse  range: 6.8362-25.3916
         auto bin_num = (x_low*0.4883 + pulse_charge)/0.4883;
         auto pc_count = laser_pc->GetBinContent(bin_num);
         if (pc_count<min_amp) {                 // find min amp
@@ -143,8 +143,8 @@ int main( int argc, char* argv[] ) {
     laser_pc->GetXaxis()->SetTitle("Pulse charge (mV * 8ns)");
     laser_pc->GetYaxis()->SetTitle("Number of events");
     gPad->SetLogy();    // comment this line to view linear-scale histogram
-//    laser_pc->Fit("gaus","Q","C",-4,4);     // noise fit
-    laser_pc->Fit("gaus","Q","C",10,30);      // p.e. fit
+    laser_pc->Fit("gaus","Q","C",-4,4);     // noise fit
+//    laser_pc->Fit("gaus","Q","C",10,30);      // p.e. fit
 //    laser_pc->Fit("gaus","Q","C",10,40);
     gStyle->SetOptFit(11);
     laser_pc->SetMarkerStyle(6);

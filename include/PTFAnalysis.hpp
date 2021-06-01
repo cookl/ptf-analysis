@@ -23,7 +23,7 @@ using namespace std;
 /// Keeps track of number of Scan Points, and locations used find entries in TTree
 class PTFAnalysis {
 public:
-  PTFAnalysis( TFile * outfile,Wrapper & ptf, double errorbar, PTF::PMT & pmt, string config_file, bool savewf=false );
+  PTFAnalysis( TFile * outfile,Wrapper & ptf, double errorbar, PTF::PMT & pmt, string config_file, bool savewf=false, float* ch1_times=NULL );
   ~PTFAnalysis(){
     if ( fitresult ) delete fitresult;
   }
@@ -41,6 +41,9 @@ public:
 
   // Post-fitresult analysis
   const std::vector< double >      get_bins( char dim );
+    
+    //return pulse times of template waveform
+    float * getTimes() {return times;}
   
 private:
   void ChargeSum( float ped, int bin_low=1, int bin_high=0 ); // Charge sum relative to ped
@@ -75,7 +78,14 @@ private:
     
     TH1F *pre_pulse;
     TH1F *pedestal;
+
+    float times[1030000];
+//    std::vector<float> times;
     
+    //    int low=272;
+//    int high=288;
+//    int channel_shift = 13;
+//
 
 };
 
