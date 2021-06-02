@@ -19,7 +19,6 @@
 // pulse charge (integrated pulse height over bin range {bin_low,bin_high})
 // Optionally arguments: time_low and time_high (otherwise checks entire range)
 void PTFAnalysis::ChargeSum( float ped, int bin_low, int bin_high ){
-//    std::cout << "inside chargesum()" << std::endl;
     if (bin_high==0) bin_high=hwaveform->GetNbinsX();
     fitresult->qped = ped;
     float sum = 0.;
@@ -34,6 +33,7 @@ void PTFAnalysis::ChargeSum( float ped, int bin_low, int bin_high ){
         }
         ped = ped/(bin_low-50);
         pedestal->Fill(ped);
+        fitresult->qped = ped;
     }
     
     // Pulse charge calculation
