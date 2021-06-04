@@ -72,10 +72,6 @@ private:
   TDirectory* nowfdir{nullptr};
   TDirectory* wfdir_fft{nullptr};
   TDirectory* nowfdir_fft{nullptr};
-    
-    TH1F *pre_pulse;
-    TH1F *pedestal;
-    
 
 };
 

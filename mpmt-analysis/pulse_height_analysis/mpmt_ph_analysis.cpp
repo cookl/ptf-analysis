@@ -28,6 +28,7 @@ double ph[1000000];
 double input_pulse[100000];
 double pmt_pulse[1000000];
 
+TH1F *pedestal;
 TH1F *laser_pc;
 TH1F *laser_ph;
 TH1F *before_ph;
@@ -51,6 +52,7 @@ double ptv_max_amp;
 // Initialize histograms for output
 // Note: bins quantized in units of bin_unit
 void initHist(int pc_lower_range){
+    pedestal = new TH1F("pedestal","Pedestal value per waveform",60,0.9990,1.0050);
     laser_pc = new TH1F("pc","Laser Pulse Charge",200,-1*pc_lower_range*bin_unit,180*bin_unit);
     laser_ph = new TH1F("ph-laser","Laser Pulse Height",200,0,bin_unit*200);
     before_ph = new TH1F("ph-before","Pulse Height Before Laser",200,0,bin_unit*200);
@@ -259,6 +261,16 @@ void printPlots(string pc_fit_type, string ph_axis_type, int event_num) {
     input_pmt_scatter->GetYaxis()->SetTitle("PMT signal: time of minimum amplitude (ns)");
     input_pmt_scatter->Draw("ap");
     c9->SaveAs("input_pmt_pulse_scatter.png");
+    
+    TCanvas *c10 = new TCanvas("C10");
+    pedestal->SetStats(1);
+    gStyle->SetOptStat(1111);
+    pedestal->GetXaxis()->SetTitle("Pedestal per waveform (V)");
+    pedestal->GetYaxis()->SetTitle("Number of events");
+    pedestal->Draw();
+    pedestal->Fit("gaus");
+    gStyle->SetOptFit(11);
+    c10->SaveAs("pedestals.png");
 }
 
 int main( int argc, char* argv[] ) {
@@ -300,6 +312,9 @@ int main( int argc, char* argv[] ) {
         // Collect pulse charge
         auto pulse_charge = wf2->qsum;
         laser_pc->Fill(pulse_charge * 1000.0); // Convert to mV
+        
+        // Collect pedestal
+        pedestal->Fill(wf2->qped);
                         
         // For each pulse:
         for(int k = 0; k < wf2->numPulses; k++){

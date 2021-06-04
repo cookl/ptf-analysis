@@ -21,16 +21,11 @@ void PTFAnalysis::ChargeSum( float ped, int bin_low, int bin_high ){
     fitresult->qped = ped;
     float sum = 0.;
     
-    // Pedesetal histogram
+    // Recalculate pedestal per waveform
     if (bin_high!=0) {
         ped=0;
-        for (int i=1; i<=bin_low-50; i++) {
-            auto adc_value = hwaveform->GetBinContent(i);
-            ped+= adc_value;
-            pre_pulse->Fill(adc_value);
-        }
+        for (int i=1; i<=bin_low-50; i++) ped+= hwaveform->GetBinContent(i);
         ped = ped/(bin_low-50);
-        pedestal->Fill(ped);
         fitresult->qped = ped;
     }
     
@@ -679,14 +674,6 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, Wrapper & wrapper, double errorbar, PT
   if ( save_waveforms && nowfdir_fft==nullptr ) nowfdir_fft = outfile->mkdir(nowfdir_fft_name.c_str());
   outfile->cd();
     
-    
-// setup output histograms of adc values pre-pulse and pedestal values (yuka 2021 may)
-    if (pmt.type == PTF::mPMT_REV0_PMT) {
-        pre_pulse = new TH1F("pre-pulse","ADC Values Pre-Pulse",40,2040*0.0004883,2080*0.0004883);
-                             //10,0.9978,1.000);
-        pedestal = new TH1F("pedestal","Pedestal value per waveform",60,0.9990,1.0050);
-    }
-    
   // Loop over scan points (index i)
   unsigned long long nfilled = 0;// number of TTree entries so far
 
@@ -800,38 +787,6 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, Wrapper & wrapper, double errorbar, PT
   }
   //cout << endl;
   // Done.
-    
-    //Added by Yuka for PMT analysis
-    if (pmt.type == PTF::mPMT_REV0_PMT) {
-        Double_t w = 800;
-        Double_t h = 600;
-        TCanvas *c1 = new TCanvas("c1", "c1", w, h);
-        c1->SetWindowSize(w + (w - c1->GetWw()), h + (h - c1->GetWh()));
-    //    TCanvas *c1 = new TCanvas("c1");
-        pre_pulse->SetStats(1);
-        gStyle->SetOptStat(1111);
-    //    pre_pulse->Print("all");
-        pre_pulse->GetXaxis()->SetTitle("Voltage (V)");
-        pre_pulse->GetYaxis()->SetTitle("Number of events");
-        pre_pulse->Draw();
-        pre_pulse->Fit("gaus");
-        gStyle->SetOptFit(11);
-        if (pmt.pmt==1) c1->SaveAs("ch1_adc_pre_pulse.png");
-        if (pmt.pmt==2) c1->SaveAs("ch2_adc_pre_pulse.png");
-        
-        TCanvas *c2 = new TCanvas("c2", "c2", w, h);
-        c2->SetWindowSize(w + (w - c2->GetWw()), h + (h - c2->GetWh()));
-    //    pedestal->Print("all");
-        pedestal->SetStats(1);
-        gStyle->SetOptStat(1111);
-        pedestal->GetXaxis()->SetTitle("Pedestal per waveform (V)");
-        pedestal->GetYaxis()->SetTitle("Number of events");
-        pedestal->Draw();
-        pedestal->Fit("gaus");
-        gStyle->SetOptFit(11);
-        if (pmt.pmt==1) c2->SaveAs("ch1_pedestals.png");
-        if (pmt.pmt==2) c2->SaveAs("ch2_pedestals.png");
-    }
 }
 
 const std::vector< double > PTFAnalysis::get_bins( char dim ){
