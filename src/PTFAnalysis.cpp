@@ -4,15 +4,12 @@
 #include "Utilities.hpp"
 #include "TVirtualFFT.h"
 #include "PulseFinding.hpp"
-#include "TCanvas.h"
-#include "TH1D.h"
 #include "TH2D.h"
 
 #include <iostream>
 #include <ostream>
 #include <fstream>
 #include <math.h>
-#include <TStyle.h>
 
 // pulse charge (integrated pulse height over bin range {bin_low,bin_high})
 // Optionally arguments: time_low and time_high (otherwise checks entire range)
