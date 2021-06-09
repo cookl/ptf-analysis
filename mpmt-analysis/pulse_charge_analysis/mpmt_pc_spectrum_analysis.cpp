@@ -52,18 +52,19 @@ int main( int argc, char* argv[] ) {
     
     // Set up files
     TFile * files[5];
-    files[0] = new TFile( "../../mpmt_Analysis_run0844.root" , "read" );
-    files[1] = new TFile( "../../mpmt_Analysis_run0853.root" , "read" );
-    files[2] = new TFile( "../../mpmt_Analysis_run0854.root" , "read" );
-    files[3] = new TFile( "../../mpmt_Analysis_run0855.root" , "read" );
-    files[4] = new TFile( "../../mpmt_Analysis_run0856.root" , "read" );
+    files[0] = new TFile( "../../mpmt_Analysis_run0853.root" , "read" );
+    files[1] = new TFile( "../../mpmt_Analysis_run0854.root" , "read" );
+    files[2] = new TFile( "../../mpmt_Analysis_run0855.root" , "read" );
+    files[3] = new TFile( "../../mpmt_Analysis_run0856.root" , "read" );
+    files[4] = new TFile( "../../mpmt_Analysis_run0857.root" , "read" );
     
     // Set up voltages
-    int voltages[5] = {1258,1275,1234,1307,1331};
+    int voltages[5] = {1258,1234,1307,1331,1275};
     
     // Set up canvas
-    TCanvas *c1 = new TCanvas("C1");
+    TCanvas *c1 = new TCanvas("C1","C1",800,600);
     int color[5] = {1,800,632,616,600}; //black, orange, red, magenta, blue
+    int range_high[5] = {20,15,23,23,26};
     
     // For each file:
     for (int v=0; v<4; v++) {
@@ -85,7 +86,6 @@ int main( int argc, char* argv[] ) {
         // For each waveform:
         for(int i = 0; i < tt2->GetEntries()-1; i++){
             tt2->GetEvent(i);
-
             // Collect pulse charge
             auto pulse_charge = wf2->qsum;
             pc->Fill(pulse_charge * 1000.0); // Convert to mV
@@ -94,30 +94,35 @@ int main( int argc, char* argv[] ) {
         // Find peak-to-valley ratio
         // Range (mV*8ns) depends on run
         int range_low = 3;
-        int range_high = 26;
-        peakToValley(range_low, range_high, x_low,pc);
+        peakToValley(range_low, range_high[v], x_low,pc);
         std::cout << "HV: "<< voltages[v] <<"V. Peak-to-valley ratio: " << ptv_max_amp << "/" << ptv_min_amp << " = " << peak_to_valley << std::endl;;
         
         // Draw histogram
-        pc->SetLineColor(color[v]);
         gPad->SetLogy();
-        gStyle->SetOptStat(11);
-        pc->SetMarkerStyle(6);
         if(v==0) {
             pc->GetXaxis()->SetTitle("Pulse charge (mV * 8ns)");
             pc->GetYaxis()->SetTitle("Number of events");
         }
+        pc->SetLineColor(color[v]);
+        pc->SetMarkerStyle(6);
         pc->Draw("][sames");
+        pc->Fit("gaus","0Q","C",6,range_high[v]+4);
+        gStyle->SetOptStat(11);
+        gStyle->SetOptFit(11);
         c1->Update();
         
         // Print peak-to-valley ratio on histogram
-        TPaveStats *ps = (TPaveStats*)c1->GetPrimitive("stats");
+        TPaveStats *ps = (TPaveStats*)pc->GetListOfFunctions()->FindObject("stats");//c1->GetPrimitive("stats");
         ps->SetName("peak-to-valley");
         TList *listOfLines = ps->GetListOfLines();
-        std::string text = "Peak-to-valley   " + std::to_string(peak_to_valley);
+        string text = "Peak-to-valley   " + to_string(peak_to_valley).substr(0,4);
         TLatex *myt = new TLatex(0,0, text.c_str());
         listOfLines->Add(myt);
         pc->SetStats(0);
+        ps->SetX1NDC(0.25+v*0.15);ps->SetX2NDC(0.40+v*0.15);
+        ps->SetY1NDC(0.75);ps->SetY2NDC(0.95);
+        ps->SetTextColor(color[v]);
+    
         c1->Modified();
         
         files[v]->Close();
