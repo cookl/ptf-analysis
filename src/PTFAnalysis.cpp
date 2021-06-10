@@ -21,7 +21,9 @@ void PTFAnalysis::ChargeSum( float ped, int bin_low, int bin_high ){
     // Recalculate pedestal per waveform
     if (bin_high!=0) {
         ped=0;
-        for (int i=1; i<=bin_low-50; i++) ped+= hwaveform->GetBinContent(i);
+        int ped_range = bin_low-50;
+        if (ped_range<10) ped_range=10;
+        for (int i=1; i<=ped_range; i++) ped+= hwaveform->GetBinContent(i);
         ped = ped/(bin_low-50);
         fitresult->qped = ped;
     }
