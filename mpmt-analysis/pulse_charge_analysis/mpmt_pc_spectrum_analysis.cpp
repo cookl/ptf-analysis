@@ -26,7 +26,6 @@ const double bin_unit = 0.4883;
 TTree * tt2;
 WaveformFitResult * wf2;
 
-
 double peak_to_valley;
 double ptv_min_amp;
 double ptv_max_amp;
@@ -39,7 +38,7 @@ void peakToValley(int range_low, int range_high, int pc_lower_range, TH1F* pc) {
     for (auto pulse_charge=bin_unit*bin_low; pulse_charge<=bin_unit*bin_high; pulse_charge+=bin_unit) {
         auto bin_num = (pc_lower_range*bin_unit + pulse_charge)/bin_unit;
         auto pc_count = pc->GetBinContent(bin_num);
-        if (pc_count<ptv_min_amp) {                 // find min amp
+        if (pc_count<ptv_min_amp) {                     // find min amp
             ptv_min_amp=pc_count;
             continue;
         }
@@ -52,22 +51,23 @@ int main( int argc, char* argv[] ) {
     
     // Set up files
     TFile * files[5];
-    files[0] = new TFile( "../../mpmt_Analysis_run0853.root" , "read" );
-    files[1] = new TFile( "../../mpmt_Analysis_run0854.root" , "read" );
-    files[2] = new TFile( "../../mpmt_Analysis_run0855.root" , "read" );
-    files[3] = new TFile( "../../mpmt_Analysis_run0856.root" , "read" );
-    files[4] = new TFile( "../../mpmt_Analysis_run0857.root" , "read" );
+    files[0] = new TFile( "../../mpmt_Analysis_run0854.root" , "read" );
+    files[1] = new TFile( "../../mpmt_Analysis_run0853.root" , "read" );
+    files[2] = new TFile( "../../mpmt_Analysis_run0857.root" , "read" );
+    files[3] = new TFile( "../../mpmt_Analysis_run0855.root" , "read" );
+    files[4] = new TFile( "../../mpmt_Analysis_run0856.root" , "read" );
     
     // Set up voltages
-    int voltages[5] = {1258,1234,1307,1331,1275};
+    double voltages[5] = {1234,1258,1275,1307,1331};
+    double means[5];
     
     // Set up canvas
     TCanvas *c1 = new TCanvas("C1","C1",800,600);
     int color[5] = {1,800,632,616,600}; //black, orange, red, magenta, blue
-    int range_high[5] = {20,15,23,23,26};
+    int range_high[5] = {15,18,21,22,24};
     
     // For each file:
-    for (int v=0; v<4; v++) {
+    for (int v=0; v<5; v++) {
         
         // Get the waveform fit TTree
         tt2 = (TTree*)files[v]->Get("ptfanalysis2");
@@ -89,6 +89,8 @@ int main( int argc, char* argv[] ) {
             // Collect pulse charge
             auto pulse_charge = wf2->qsum;
             pc->Fill(pulse_charge * 1000.0); // Convert to mV
+            
+            if (i==961240) break;
         }
         
         // Find peak-to-valley ratio
@@ -105,14 +107,21 @@ int main( int argc, char* argv[] ) {
         }
         pc->SetLineColor(color[v]);
         pc->SetMarkerStyle(6);
-        pc->Draw("][sames");
+        if (v==0) {
+            pc->Draw();
+        } else {
+            pc->Draw("SAMES");
+        }
+        
         pc->Fit("gaus","0Q","C",6,range_high[v]+4);
         gStyle->SetOptStat(11);
         gStyle->SetOptFit(11);
+        TF1 *fit = (TF1*)pc->GetListOfFunctions()->FindObject("gaus");
+        means[v]=fit->GetParameter(1);
         c1->Update();
         
         // Print peak-to-valley ratio on histogram
-        TPaveStats *ps = (TPaveStats*)pc->GetListOfFunctions()->FindObject("stats");//c1->GetPrimitive("stats");
+        TPaveStats *ps = (TPaveStats*)pc->GetListOfFunctions()->FindObject("stats");
         ps->SetName("peak-to-valley");
         TList *listOfLines = ps->GetListOfLines();
         string text = "Peak-to-valley   " + to_string(peak_to_valley).substr(0,4);
@@ -120,14 +129,25 @@ int main( int argc, char* argv[] ) {
         listOfLines->Add(myt);
         pc->SetStats(0);
         ps->SetX1NDC(0.25+v*0.15);ps->SetX2NDC(0.40+v*0.15);
-        ps->SetY1NDC(0.75);ps->SetY2NDC(0.95);
+        ps->SetY1NDC(0.65);ps->SetY2NDC(0.85);
         ps->SetTextColor(color[v]);
     
         c1->Modified();
         
-        files[v]->Close();
+//        files[v]->Close();
     }
     
     c1->SaveAs("pc_spectrum.png");
+    
+    TCanvas *c2 = new TCanvas("C2");
+    TGraph *pc_mean = new TGraph(5,voltages,means);
+    pc_mean->SetTitle("Pulse charge p.e. peak mean at different HV");
+    pc_mean->GetXaxis()->SetRangeUser(1200,1400);
+    pc_mean->GetYaxis()->SetRangeUser(10,20);
+    pc_mean->GetXaxis()->SetTitle("HV (V)");
+    pc_mean->GetYaxis()->SetTitle("Mean of pulse charge p.e. peak (mV*8ns)");
+    pc_mean->Draw("a*");
+    c2->SaveAs("pc_spectrum_mean.png");
+    
     return 0;
 }
