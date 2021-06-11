@@ -50,24 +50,26 @@ void peakToValley(int range_low, int range_high, int pc_lower_range, TH1F* pc) {
 int main( int argc, char* argv[] ) {
     
     // Set up files
-    TFile * files[5];
-    files[0] = new TFile( "../../mpmt_Analysis_run0854.root" , "read" );
-    files[1] = new TFile( "../../mpmt_Analysis_run0853.root" , "read" );
-    files[2] = new TFile( "../../mpmt_Analysis_run0857.root" , "read" );
-    files[3] = new TFile( "../../mpmt_Analysis_run0855.root" , "read" );
-    files[4] = new TFile( "../../mpmt_Analysis_run0856.root" , "read" );
+    TFile * files[7];
+    files[0] = new TFile( "../../mpmt_Analysis_run0861.root" , "read" );
+    files[1] = new TFile( "../../mpmt_Analysis_run0854.root" , "read" );
+    files[2] = new TFile( "../../mpmt_Analysis_run0853.root" , "read" );
+    files[3] = new TFile( "../../mpmt_Analysis_run0857.root" , "read" );
+    files[4] = new TFile( "../../mpmt_Analysis_run0855.root" , "read" );
+    files[5] = new TFile( "../../mpmt_Analysis_run0856.root" , "read" );
+    files[6] = new TFile( "../../mpmt_Analysis_run0862.root" , "read" );
     
     // Set up voltages
-    double voltages[5] = {1234,1258,1275,1307,1331};
-    double means[5];
+    double voltages[7] = {1209,1234,1258,1275,1307,1331,1356};
+    double means[7];
     
     // Set up canvas
     TCanvas *c1 = new TCanvas("C1","C1",800,600);
-    int color[5] = {1,800,632,616,600}; //black, orange, red, magenta, blue
-    int range_high[5] = {15,18,21,22,24};
+    int color[7] = {1,810,632,616,600,882,417}; //black, orange, red, magenta, blue, violet, green
+    int range_high[7] = {13,15,18,21,22,24,26};
     
     // For each file:
-    for (int v=0; v<5; v++) {
+    for (int v=0; v<7; v++) {
         
         // Get the waveform fit TTree
         tt2 = (TTree*)files[v]->Get("ptfanalysis2");
@@ -76,7 +78,7 @@ int main( int argc, char* argv[] ) {
         
         // Initiliaze histograms
         double x_low = 20;
-        string hist_name = to_string(voltages[v]) + "V";
+        string hist_name = to_string((int)voltages[v]) + "V";
         TH1F *pc = new TH1F(hist_name.c_str(),"Laser Pulse Charge",x_low+180,-1*x_low*bin_unit,180*bin_unit);
         
         // Reset peak-to-valley calculation variables
@@ -106,7 +108,6 @@ int main( int argc, char* argv[] ) {
             pc->GetYaxis()->SetTitle("Number of events");
         }
         pc->SetLineColor(color[v]);
-        pc->SetMarkerStyle(6);
         if (v==0) {
             pc->Draw();
         } else {
@@ -130,23 +131,27 @@ int main( int argc, char* argv[] ) {
         pc->SetStats(0);
         ps->SetX1NDC(0.25+v*0.15);ps->SetX2NDC(0.40+v*0.15);
         ps->SetY1NDC(0.65);ps->SetY2NDC(0.85);
+        if (v>=5) {
+            ps->SetX1NDC(0.25+(v-2)*0.15);ps->SetX2NDC(0.40+(v-2)*0.15);
+            ps->SetY1NDC(0.45);ps->SetY2NDC(0.65);
+        }
         ps->SetTextColor(color[v]);
+        
     
         c1->Modified();
         
-//        files[v]->Close();
+//        files[v]->Close();            // including this deletes the histograms
     }
     
     c1->SaveAs("pc_spectrum.png");
     
     TCanvas *c2 = new TCanvas("C2");
-    TGraph *pc_mean = new TGraph(5,voltages,means);
+    TGraph *pc_mean = new TGraph(7,voltages,means);
     pc_mean->SetTitle("Pulse charge p.e. peak mean at different HV");
-    pc_mean->GetXaxis()->SetRangeUser(1200,1400);
-    pc_mean->GetYaxis()->SetRangeUser(10,20);
     pc_mean->GetXaxis()->SetTitle("HV (V)");
     pc_mean->GetYaxis()->SetTitle("Mean of pulse charge p.e. peak (mV*8ns)");
     pc_mean->Draw("a*");
+    pc_mean->Fit("pol1");
     c2->SaveAs("pc_spectrum_mean.png");
     
     return 0;
