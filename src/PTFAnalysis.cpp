@@ -11,8 +11,9 @@
 #include <fstream>
 #include <math.h>
 
-// pulse charge (integrated pulse height over bin range {bin_low,bin_high})
-// Optionally arguments: time_low and time_high (otherwise checks entire range)
+// Pulse charge calculation (integrated pulse height over bin range {bin_low,bin_high})
+// Optionally arguments: bin_low and bin_high (otherwise checks entire range from 0-8192ns)
+// Note that time in waveform = bin number * 8 ns
 void PTFAnalysis::ChargeSum( float ped, int bin_low, int bin_high ){
     if (bin_high==0) bin_high=hwaveform->GetNbinsX();
     fitresult->qped = ped;
