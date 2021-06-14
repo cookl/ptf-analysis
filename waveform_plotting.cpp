@@ -36,6 +36,7 @@
 #include "WaveformFitResult.hpp"
 #include "ScanPoint.hpp"
 #include "PTFAnalysis.hpp"
+#include "WaveformAnalysis.hpp"
 #include "PTFQEAnalysis.hpp"
 #include "Utilities.hpp"
 #include <string>
