@@ -288,35 +288,35 @@ double WaveformAnalysis::bessel(double *x, double *p){
   //  fitresult->ndof      = 30-4;
   //  fitresult->prob      = TMath::Prob( ffitfunc->GetChisquare(), 30-4 );
   //  fitresult->fitstat   = fitstat;
-  //}
-  else if( pmt.type == PTF::PTF_Monitor_PMT ){
-    float ped = 0.0;
-    int nbins = 20;
-    for( int ibin = 1; ibin<=nbins; ibin++ ){
-      ped += hwaveform->GetBinContent( ibin )/(float)nbins;
-    }
-    fitresult->ped = ped;
-    float amp = 0.0;
-    float mean = 0.0;
-    for( int ibin = 1; ibin<=hwaveform->GetNbinsX(); ibin++ ){
-      if( ped - hwaveform->GetBinContent( ibin ) > amp ){
-        amp = ped - hwaveform->GetBinContent( ibin );
-        mean = hwaveform->GetXaxis()->GetBinCenter(ibin);
-      }
-    }
-    fitresult->amp = amp;
-    fitresult->mean = mean;
-  }
-  else if( pmt.type == PTF::Reference ){
-    float mean = 0.0;
-    for( int ibin = 1; ibin<=hwaveform->GetNbinsX(); ibin++ ){
-      if( hwaveform->GetBinContent( ibin ) < 0.5 ){
-        mean = hwaveform->GetXaxis()->GetBinCenter(ibin);
-        break;
-      }
-    }
-    fitresult->mean = mean;
-  }
+  // }
+  // else if( pmt.type == PTF::PTF_Monitor_PMT ){
+  //   float ped = 0.0;
+  //   int nbins = 20;
+  //   for( int ibin = 1; ibin<=nbins; ibin++ ){
+  //     ped += hwaveform->GetBinContent( ibin )/(float)nbins;
+  //   }
+  //   fitresult->ped = ped;
+  //   float amp = 0.0;
+  //   float mean = 0.0;
+  //   for( int ibin = 1; ibin<=hwaveform->GetNbinsX(); ibin++ ){
+  //     if( ped - hwaveform->GetBinContent( ibin ) > amp ){
+  //       amp = ped - hwaveform->GetBinContent( ibin );
+  //       mean = hwaveform->GetXaxis()->GetBinCenter(ibin);
+  //     }
+  //   }
+  //   fitresult->amp = amp;
+  //   fitresult->mean = mean;
+  // }
+  // else if( pmt.type == PTF::Reference ){
+  //   float mean = 0.0;
+  //   for( int ibin = 1; ibin<=hwaveform->GetNbinsX(); ibin++ ){
+  //     if( hwaveform->GetBinContent( ibin ) < 0.5 ){
+  //       mean = hwaveform->GetXaxis()->GetBinCenter(ibin);
+  //       break;
+  //     }
+  //   }
+  //   fitresult->mean = mean;
+  // }
   //else if( pmt == PTF::Reference ){
   //  if( ffitfunc == nullptr ) ffitfunc = new TF1("mygauss",pmt2_piecewise,0,140,4);
   //  ffitfunc->SetParameters( 30.0, 40., 1.0, 0.1 );
@@ -340,241 +340,241 @@ double WaveformAnalysis::bessel(double *x, double *p){
   //  fitresult->prob      = TMath::Prob( ffitfunc->GetChisquare(), 30-5 );
   //  fitresult->fitstat   = fitstat;
   //}
-  else if( pmt.type == PTF::mPMT_REV0_PMT ){ /// Add a new PMT type for the mPMT analysis.
+//   else if( pmt.type == PTF::mPMT_REV0_PMT ){ /// Add a new PMT type for the mPMT analysis.
 
-    // Find the mininum bin between 2040.0ns (bin 255) and  2320.0ns (bin 290)
-    double min_bin = 2400;
-    double min_bini = 0;
-    double min_value = 1999.0;
-    //    for(int i = 280; i < 320; i++){
-    for(int i = 250; i < 320; i++){
-      double value = hwaveform->GetBinContent(i);
-      if(value < min_value){
-        min_value = value;
-        min_bin = hwaveform->GetBinCenter(i);
-	min_bini = i;
-      }
-    }
+//     // Find the mininum bin between 2040.0ns (bin 255) and  2320.0ns (bin 290)
+//     double min_bin = 2400;
+//     double min_bini = 0;
+//     double min_value = 1999.0;
+//     //    for(int i = 280; i < 320; i++){
+//     for(int i = 250; i < 320; i++){
+//       double value = hwaveform->GetBinContent(i);
+//       if(value < min_value){
+//         min_value = value;
+//         min_bin = hwaveform->GetBinCenter(i);
+// 	min_bini = i;
+//       }
+//     }
 
-    double fit_minx = min_bin - 40.0;
-    double fit_maxx = min_bin + 8.0*2.5;
+//     double fit_minx = min_bin - 40.0;
+//     double fit_maxx = min_bin + 8.0*2.5;
 
-    int fitstat;
-    double amplitude;
+//     int fitstat;
+//     double amplitude;
 
-    // ellipitcall modified gaussian
-    if(pmt.channel >= 16){
-      if( ffitfunc == nullptr ) ffitfunc = new TF1("mygauss",funcEMG,fit_minx-30,fit_maxx+30,5);
-      ffitfunc->SetParameters( fitresult->amp, fitresult->mean, 8.0, 1.0, fitresult->ped );
-      ffitfunc->SetParNames( "Amplitude", "Mean", "Sigma", "exp decay", "Offset" );
+//     // ellipitcall modified gaussian
+//     if(pmt.channel >= 16){
+//       if( ffitfunc == nullptr ) ffitfunc = new TF1("mygauss",funcEMG,fit_minx-30,fit_maxx+30,5);
+//       ffitfunc->SetParameters( fitresult->amp, fitresult->mean, 8.0, 1.0, fitresult->ped );
+//       ffitfunc->SetParNames( "Amplitude", "Mean", "Sigma", "exp decay", "Offset" );
       
       
-      ffitfunc->SetParameter(1, min_bin );
-      //ffitfunc->SetParameter(2, 13 );
-      //ffitfunc->SetParameter(3, 1 );    
-      //ffitfunc->FixParameter(2, 13 );
-      //ffitfunc->FixParameter(3, 1 );
+//       ffitfunc->SetParameter(1, min_bin );
+//       //ffitfunc->SetParameter(2, 13 );
+//       //ffitfunc->SetParameter(3, 1 );    
+//       //ffitfunc->FixParameter(2, 13 );
+//       //ffitfunc->FixParameter(3, 1 );
       
       
-      ffitfunc->FixParameter(2, 9.6 );
-      	ffitfunc->SetParameter(3, 15.8 );
-      //ffitfunc->FixParameter(3, 6.0 );
+//       ffitfunc->FixParameter(2, 9.6 );
+//       	ffitfunc->SetParameter(3, 15.8 );
+//       //ffitfunc->FixParameter(3, 6.0 );
       
       
-      double sbaseline = 0.9908;
-      //      if(pmt.channel == 1){sbaseline = 0.9961; }
-      if(pmt.channel == 1){sbaseline = 1.0034; }
-      if(pmt.channel == 16){sbaseline = 1.0015; }
-      //      if(pmt.channel == 17){sbaseline = 0.9932; }
-      if(pmt.channel == 17){sbaseline = 0.9975; }
-      if(pmt.channel == 18){sbaseline = 1.004; }   
-      if(pmt.channel == 19){sbaseline = 1.0025; } 
+//       double sbaseline = 0.9908;
+//       //      if(pmt.channel == 1){sbaseline = 0.9961; }
+//       if(pmt.channel == 1){sbaseline = 1.0034; }
+//       if(pmt.channel == 16){sbaseline = 1.0015; }
+//       //      if(pmt.channel == 17){sbaseline = 0.9932; }
+//       if(pmt.channel == 17){sbaseline = 0.9975; }
+//       if(pmt.channel == 18){sbaseline = 1.004; }   
+//       if(pmt.channel == 19){sbaseline = 1.0025; } 
       
-      amplitude = sbaseline - min_value;
-      ffitfunc->SetParameter(0, amplitude*-10.0);
-      if(pmt.channel >= 0){
-	ffitfunc->SetParameter(0, amplitude*-0.63);
-      }
-      ffitfunc->FixParameter(4, sbaseline);
-      ffitfunc->SetParLimits(0, -1000, 100);
-      ffitfunc->SetParLimits(1, 1800.0, 2600.0 );
-      //ffitfunc->SetParLimits(2, 10.56, 10.58 );
-      //ffitfunc->SetParLimits(3, 0.1, 0.9 );
-      //    ffitfunc->SetParLimits(4, 0.99, 1.01 );
+//       amplitude = sbaseline - min_value;
+//       ffitfunc->SetParameter(0, amplitude*-10.0);
+//       if(pmt.channel >= 0){
+// 	ffitfunc->SetParameter(0, amplitude*-0.63);
+//       }
+//       ffitfunc->FixParameter(4, sbaseline);
+//       ffitfunc->SetParLimits(0, -1000, 100);
+//       ffitfunc->SetParLimits(1, 1800.0, 2600.0 );
+//       //ffitfunc->SetParLimits(2, 10.56, 10.58 );
+//       //ffitfunc->SetParLimits(3, 0.1, 0.9 );
+//       //    ffitfunc->SetParLimits(4, 0.99, 1.01 );
       
-      // then fit gaussian
-      fitstat = hwaveform->Fit( ffitfunc, "Q", "", fit_minx, fit_maxx);
+//       // then fit gaussian
+//       fitstat = hwaveform->Fit( ffitfunc, "Q", "", fit_minx, fit_maxx);
 
 
       
-    }
+//     }
 
-    // Bessel fit
-    if(pmt.channel < 16){
+//     // Bessel fit
+//     if(pmt.channel < 16){
 
-      fit_minx = min_bin - 8*6.5;
-      //fit_maxx = min_bin + 8.0*3.5;
-      fit_maxx = min_bin + 8.0*0.5;
+//       fit_minx = min_bin - 8*6.5;
+//       //fit_maxx = min_bin + 8.0*3.5;
+//       fit_maxx = min_bin + 8.0*0.5;
       
 
-      if( ffitfunc == nullptr ) ffitfunc = new TF1("mygauss",bessel,fit_minx-32,fit_maxx+36,5);
-      ffitfunc->SetParameters( fitresult->amp, fitresult->mean, 8.0, fitresult->ped );
-      //      ffitfunc->SetParNames( "Amplitude", "Mean", "Sigma", "exp decay", "Offset" );
+//       if( ffitfunc == nullptr ) ffitfunc = new TF1("mygauss",bessel,fit_minx-32,fit_maxx+36,5);
+//       ffitfunc->SetParameters( fitresult->amp, fitresult->mean, 8.0, fitresult->ped );
+//       //      ffitfunc->SetParNames( "Amplitude", "Mean", "Sigma", "exp decay", "Offset" );
       
       
-      ffitfunc->SetParameter(1, min_bin - 28.0 );
-      //ffitfunc->SetParameter(2, 13 );
-      //ffitfunc->SetParameter(3, 1 );    
-      //ffitfunc->FixParameter(0, 0.113 );
-      //ffitfunc->FixParameter(4, 0.5 );
-      //      ffitfunc->SetParameter(0, 0.113 ); // 1PE
-      //ffitfunc->SetParameter(4, 0.5 ); // 1PE
-      ffitfunc->FixParameter(0, 0.113 ); // 32PE
-      ffitfunc->FixParameter(4, -0.3 ); // 32PE
+//       ffitfunc->SetParameter(1, min_bin - 28.0 );
+//       //ffitfunc->SetParameter(2, 13 );
+//       //ffitfunc->SetParameter(3, 1 );    
+//       //ffitfunc->FixParameter(0, 0.113 );
+//       //ffitfunc->FixParameter(4, 0.5 );
+//       //      ffitfunc->SetParameter(0, 0.113 ); // 1PE
+//       //ffitfunc->SetParameter(4, 0.5 ); // 1PE
+//       ffitfunc->FixParameter(0, 0.113 ); // 32PE
+//       ffitfunc->FixParameter(4, -0.3 ); // 32PE
       
       
-      double sbaseline = 0.9908;
-      if(pmt.channel == 1){sbaseline = 0.9961; }
-      //      if(pmt.channel == 1){sbaseline = 1.0034; }
-      if(pmt.channel == 16){sbaseline = 1.0015; }
-      if(pmt.channel == 17){sbaseline = 0.9932; }
-      if(pmt.channel == 18){sbaseline = 1.0044; }   
-      if(pmt.channel == 19){sbaseline = 1.0025; } 
+//       double sbaseline = 0.9908;
+//       if(pmt.channel == 1){sbaseline = 0.9961; }
+//       //      if(pmt.channel == 1){sbaseline = 1.0034; }
+//       if(pmt.channel == 16){sbaseline = 1.0015; }
+//       if(pmt.channel == 17){sbaseline = 0.9932; }
+//       if(pmt.channel == 18){sbaseline = 1.0044; }   
+//       if(pmt.channel == 19){sbaseline = 1.0025; } 
       
-      double basebase = 0;
-      int strt = min_bini - 16;
-      int stp = min_bini - 6;
+//       double basebase = 0;
+//       int strt = min_bini - 16;
+//       int stp = min_bini - 6;
 
-      for(int ii = strt; ii < stp; ii++){
-	basebase += hwaveform->GetBinContent(ii);
-      }
-      basebase /= 10.0;
-      sbaseline = basebase;
+//       for(int ii = strt; ii < stp; ii++){
+// 	basebase += hwaveform->GetBinContent(ii);
+//       }
+//       basebase /= 10.0;
+//       sbaseline = basebase;
 
-      double amplitude = sbaseline - min_value;
-      //      ffitfunc->SetParameter(0, amplitude*-10.0);
-            ffitfunc->SetParameter(2, -5.6* amplitude );
-      //ffitfunc->SetParameter(2, -1.6* amplitude );
+//       double amplitude = sbaseline - min_value;
+//       //      ffitfunc->SetParameter(0, amplitude*-10.0);
+//             ffitfunc->SetParameter(2, -5.6* amplitude );
+//       //ffitfunc->SetParameter(2, -1.6* amplitude );
 
-      ffitfunc->FixParameter(3, sbaseline);
-      //      ffitfunc->SetParLimits(0, -100, 100);
-      ffitfunc->SetParLimits(1, 1900.0, 2600.0 );
-      //ffitfunc->SetParLimits(2, 10.56, 10.58 );
-      //ffitfunc->SetParLimits(3, 0.1, 0.9 );
-      //    ffitfunc->SetParLimits(4, 0.99, 1.01 );
+//       ffitfunc->FixParameter(3, sbaseline);
+//       //      ffitfunc->SetParLimits(0, -100, 100);
+//       ffitfunc->SetParLimits(1, 1900.0, 2600.0 );
+//       //ffitfunc->SetParLimits(2, 10.56, 10.58 );
+//       //ffitfunc->SetParLimits(3, 0.1, 0.9 );
+//       //    ffitfunc->SetParLimits(4, 0.99, 1.01 );
       
-      // then fit gaussian
-      int fitstat = hwaveform->Fit( ffitfunc, "Q", "", fit_minx, fit_maxx);
+//       // then fit gaussian
+//       int fitstat = hwaveform->Fit( ffitfunc, "Q", "", fit_minx, fit_maxx);
       
-      if(pmt.channel == 1 && 1) std::cout  << "FF " << ffitfunc->GetParameter(0)<< " "
-				     << ffitfunc->GetParameter(1)<< " "
-				     << ffitfunc->GetParameter(2)<< " "
-				     << amplitude << " " 
-				     << ffitfunc->GetParameter(2)/amplitude << " " 
-				     << ffitfunc->GetParameter(3)<< " "
-				     << ffitfunc->GetParameter(4)<< "   |||||"
-				     << std::endl;
+//       if(pmt.channel == 1 && 1) std::cout  << "FF " << ffitfunc->GetParameter(0)<< " "
+// 				     << ffitfunc->GetParameter(1)<< " "
+// 				     << ffitfunc->GetParameter(2)<< " "
+// 				     << amplitude << " " 
+// 				     << ffitfunc->GetParameter(2)/amplitude << " " 
+// 				     << ffitfunc->GetParameter(3)<< " "
+// 				     << ffitfunc->GetParameter(4)<< "   |||||"
+// 				     << std::endl;
 
-    }
+//     }
     
-    if(pmt.channel == 17 && 0)std::cout << "FF " << ffitfunc->GetParameter(0)<< " " 
-					<< ffitfunc->GetParameter(1)<< " " 
-					<< ffitfunc->GetParameter(2)<< " " 
-					<< ffitfunc->GetParameter(3)<< "   |||||" 
-					<< std::endl;
+//     if(pmt.channel == 17 && 0)std::cout << "FF " << ffitfunc->GetParameter(0)<< " " 
+// 					<< ffitfunc->GetParameter(1)<< " " 
+// 					<< ffitfunc->GetParameter(2)<< " " 
+// 					<< ffitfunc->GetParameter(3)<< "   |||||" 
+// 					<< std::endl;
     
-    if(pmt.channel == 16 && 0){
-      p2_top += ffitfunc->GetParameter(2);
-      p2_bottom += 1.0;
-      p3_top += ffitfunc->GetParameter(3);
-      p3_bottom += 1.0;
+//     if(pmt.channel == 16 && 0){
+//       p2_top += ffitfunc->GetParameter(2);
+//       p2_bottom += 1.0;
+//       p3_top += ffitfunc->GetParameter(3);
+//       p3_bottom += 1.0;
       
-      std::cout << "Amp " << amplitude << " " << ffitfunc->GetParameter(0) 
-		<< " " << ffitfunc->GetParameter(0)/amplitude
-		<< " " << ffitfunc->GetParameter(2) 
-		<< " " << p2_top/p2_bottom 
-		  << " " << ffitfunc->GetParameter(3)
-		<< " " << p3_top/p3_bottom << " "
-		<< std::endl;
-    }
+//       std::cout << "Amp " << amplitude << " " << ffitfunc->GetParameter(0) 
+// 		<< " " << ffitfunc->GetParameter(0)/amplitude
+// 		<< " " << ffitfunc->GetParameter(2) 
+// 		<< " " << p2_top/p2_bottom 
+// 		  << " " << ffitfunc->GetParameter(3)
+// 		<< " " << p3_top/p3_bottom << " "
+// 		<< std::endl;
+//     }
   
   
 
-    // collect fit results
-    fitresult->ped       = ffitfunc->GetParameter(4);
-    fitresult->mean      = ffitfunc->GetParameter(1);
-    fitresult->sigma     = ffitfunc->GetParameter(2);
-    fitresult->amp       = ffitfunc->GetParameter(0);
-    fitresult->chi2      = ffitfunc->GetChisquare();
-    fitresult->ndof      = ffitfunc->GetParameter(3);
-    fitresult->prob      = TMath::Prob( ffitfunc->GetChisquare(), 30-4 );
+//     // collect fit results
+//     fitresult->ped       = ffitfunc->GetParameter(4);
+//     fitresult->mean      = ffitfunc->GetParameter(1);
+//     fitresult->sigma     = ffitfunc->GetParameter(2);
+//     fitresult->amp       = ffitfunc->GetParameter(0);
+//     fitresult->chi2      = ffitfunc->GetChisquare();
+//     fitresult->ndof      = ffitfunc->GetParameter(3);
+//     fitresult->prob      = TMath::Prob( ffitfunc->GetChisquare(), 30-4 );
 
-    fitresult->fitstat   = fitstat;
+//     fitresult->fitstat   = fitstat;
 
-    // Do CFD analysis on the fitted pulse
-    double baseline = ffitfunc->GetParameter(4);
-    if(pmt.channel == 0) baseline = 0.991;
-    if(pmt.channel == 1) baseline = 0.9966;
-    double pulse_amplitude = ffitfunc->GetParameter(0) / 3.3;   
-    pulse_amplitude = min_value-baseline;
+//     // Do CFD analysis on the fitted pulse
+//     double baseline = ffitfunc->GetParameter(4);
+//     if(pmt.channel == 0) baseline = 0.991;
+//     if(pmt.channel == 1) baseline = 0.9966;
+//     double pulse_amplitude = ffitfunc->GetParameter(0) / 3.3;   
+//     pulse_amplitude = min_value-baseline;
 
-    double cfd_threshold = baseline + pulse_amplitude/2.0;
-    if(0)std::cout << "amp " << pulse_amplitude << " " << baseline-min_value
-		   << " " << (baseline-min_value)/0.008 << " "
-		   << (baseline-min_value) / pulse_amplitude << " "
-		   << ffitfunc->GetParameter(2) << " " << ffitfunc->GetParameter(3)
-		   << " " << cfd_threshold 
-		   << " " << std::endl;
-    double crossing_time;
-    // Step back from min_bin
-    bool found_cfd = false;
-    int ii = min_bini;
-    double x1=0,x2=0,y1=0,y2=0;
-    double m=0, b=0;
-    while(!found_cfd){
+//     double cfd_threshold = baseline + pulse_amplitude/2.0;
+//     if(0)std::cout << "amp " << pulse_amplitude << " " << baseline-min_value
+// 		   << " " << (baseline-min_value)/0.008 << " "
+// 		   << (baseline-min_value) / pulse_amplitude << " "
+// 		   << ffitfunc->GetParameter(2) << " " << ffitfunc->GetParameter(3)
+// 		   << " " << cfd_threshold 
+// 		   << " " << std::endl;
+//     double crossing_time;
+//     // Step back from min_bin
+//     bool found_cfd = false;
+//     int ii = min_bini;
+//     double x1=0,x2=0,y1=0,y2=0;
+//     double m=0, b=0;
+//     while(!found_cfd){
       
-      // check if this bin is < CFD threshold and previous bin > CFD threshold
-      y2 = hwaveform->GetBinContent(ii);
-      y1 = hwaveform->GetBinContent(ii-1);
-      if(y2 < cfd_threshold && y1 > cfd_threshold){ // found cross-over
+//       // check if this bin is < CFD threshold and previous bin > CFD threshold
+//       y2 = hwaveform->GetBinContent(ii);
+//       y1 = hwaveform->GetBinContent(ii-1);
+//       if(y2 < cfd_threshold && y1 > cfd_threshold){ // found cross-over
 
-	x1 = hwaveform->GetBinCenter(ii-1);
-	x2 = hwaveform->GetBinCenter(ii);
+// 	x1 = hwaveform->GetBinCenter(ii-1);
+// 	x2 = hwaveform->GetBinCenter(ii);
 
-	b=y1;
-	m=(y2-y1)/(x2-x1);
+// 	b=y1;
+// 	m=(y2-y1)/(x2-x1);
 	  
-	// y = m * (x-x1) + b
-	// (y - b)/m + x1 = x
-	crossing_time = (cfd_threshold - b)/m + x1;
-	found_cfd = true;
-      }
+// 	// y = m * (x-x1) + b
+// 	// (y - b)/m + x1 = x
+// 	crossing_time = (cfd_threshold - b)/m + x1;
+// 	found_cfd = true;
+//       }
 
-      ii--;
-      if (ii < 200) found_cfd = true;
+//       ii--;
+//       if (ii < 200) found_cfd = true;
 
-    }
+//     }
 
-    fitresult->sinw = crossing_time;    
-    if(0)std::cout << "CFD: " << pulse_amplitude << " " << baseline << " " 
-	      << cfd_threshold << " " << ii << " " 
-	      << " X1/Y1: " << x1<<":"<<y1 
-	      << " X2/Y2: " << x2<<":"<<y2 
-	      << " crossing : " << m << " " << b << " " << crossing_time 
-	      << std::endl;
+//     fitresult->sinw = crossing_time;    
+//     if(0)std::cout << "CFD: " << pulse_amplitude << " " << baseline << " " 
+// 	      << cfd_threshold << " " << ii << " " 
+// 	      << " X1/Y1: " << x1<<":"<<y1 
+// 	      << " X2/Y2: " << x2<<":"<<y2 
+// 	      << " crossing : " << m << " " << b << " " << crossing_time 
+// 	      << std::endl;
     
     
 
 
-  }
+//   }
 
   
 
-  else{
-    cout << "WaveformAnalysis::FitWaveForm Error: No fit function for PMT type!" << endl;
-    exit( EXIT_FAILURE );
-  }
-}
+//   else{
+//     cout << "WaveformAnalysis::FitWaveForm Error: No fit function for PMT type!" << endl;
+//     exit( EXIT_FAILURE );
+//   }
+// }
 
 WaveformAnalysis::WaveformAnalysis( TFile* outfile, Wrapper & wrapper, double errorbar, PTF::PMT & pmt, string config_file, bool savewf ){
 
@@ -714,7 +714,7 @@ WaveformAnalysis::WaveformAnalysis( TFile* outfile, Wrapper & wrapper, double er
       if(0)std::cout << "Check save waveform: " << save_waveforms << " " << savewf_count
 << " " << savenowf_count << " " << curscanpoint.x() << std::endl; 
       // check if we should clone waveform histograms
-      if ( save_waveforms && savewf_count<500 && savenowf_count<500 ){
+      if ( save_waveforms) {// && savewf_count<500 && savenowf_count<500 ){
 	    if  ( fabs( curscanpoint.x() - 0.46 ) < 0.0005 && 
 	      fabs( curscanpoint.y() - 0.38 ) < 0.0005 ) {
            //   std::cout << "Success:" << std::endl;
