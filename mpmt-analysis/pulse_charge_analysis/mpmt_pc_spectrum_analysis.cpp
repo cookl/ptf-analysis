@@ -19,6 +19,7 @@
 #include <vector>
 #include <string>
 #include <cstring>
+#include <math.h> 
 using namespace std;
 
 const double bin_unit = 0.4883;
@@ -47,6 +48,24 @@ void peakToValley(int range_low, int range_high, int pc_lower_range, TH1F* pc) {
     peak_to_valley = ptv_max_amp/ptv_min_amp;           // find peak-to-valley ratio
 }
 
+// Define fit function for pulse charge distribution
+Double_t fitf(Double_t *x, Double_t *p) {
+    Double_t    Sped=0,
+                Snoise=0,
+                S1=0,
+                Sn=0;
+
+    Sped=(1-p[2])/(sqrt(2*M_PI)*p[1])*exp(-0.5*pow((x[0]-p[0])/(p[1]),2)-p[4]);
+    // if (x[0] > p[0]) Snoise=p[3]*p[2]*exp(-1*p[3]*(x[0]-p[0])-p[4]);
+    S1=1/(sqrt(2*M_PI)*p[5])*exp(-0.5*pow((x[0]-p[6]-(p[2]/p[3]))/(p[5]),2));
+
+    for (int n=2; n<=2; n++) {
+        Sn+=pow(p[4],n)*exp(-1*p[4])/(sqrt(2*M_PI*n)*p[5])*exp(-0.5*pow((x[0]-p[0]-(n*p[6])-(p[2]/p[3]))/(p[5]),2)/n);
+    }
+    
+    return p[7]*(Sped+Snoise+S1+Sn);
+}
+
 int main( int argc, char* argv[] ) {
     
     // Set up files
@@ -64,12 +83,12 @@ int main( int argc, char* argv[] ) {
     double means[7];
     
     // Set up canvas
-    TCanvas *c1 = new TCanvas("C1","C1",800,600);
+    TCanvas *c1 = new TCanvas("C1","C1",900,800);
     int color[7] = {1,810,632,616,600,882,417}; //black, orange, red, magenta, blue, violet, green
     int range_high[7] = {13,15,18,21,22,24,26};
     
     // For each file:
-    for (int v=0; v<7; v++) {
+    for (int v=0; v<7; v++) {       //7
         
         // Get the waveform fit TTree
         tt2 = (TTree*)files[v]->Get("ptfanalysis2");
@@ -114,11 +133,29 @@ int main( int argc, char* argv[] ) {
             pc->Draw("SAMES");
         }
         
-        pc->Fit("gaus","0Q","C",6,range_high[v]+4);
-        gStyle->SetOptStat(11);
-        gStyle->SetOptFit(11);
-        TF1 *fit = (TF1*)pc->GetListOfFunctions()->FindObject("gaus");
-        means[v]=fit->GetParameter(1);
+        TF1 *pe_fit = new TF1("pe_fit","gaus",6,range_high[v]+4);
+        pc->Fit("pe_fit","R");
+        TF1 *noise_fit = new TF1("noise_fit","gaus",-2,2);
+        pc->Fit("noise_fit","R");
+
+        TF1 *pc_f = new TF1("pc_f",fitf,-9.766,87.894,8);
+        pc_f->SetParNames("Q0","sig0","W","alpha","miu","sig1","Q1","N");
+        pc_f->SetParameters(noise_fit->GetParameter(1),
+                            noise_fit->GetParameter(2),
+                            0.35,
+                            0.06,
+                            1,
+                            pe_fit->GetParameter(2),
+                            pe_fit->GetParameter(1),
+                            2000);
+        pc_f->SetParLimits(6,pe_fit->GetParameter(1)-5,pe_fit->GetParameter(1)+5);
+        pc->Fit("pc_f","R");
+        
+        gStyle->SetOptStat(11);        
+        gStyle->SetOptFit();
+
+        means[v]=pc_f->GetParameter(6);
+       
         c1->Update();
         
         // Print peak-to-valley ratio on histogram
@@ -150,8 +187,8 @@ int main( int argc, char* argv[] ) {
     pc_mean->SetTitle("Pulse charge p.e. peak mean at different HV");
     pc_mean->GetXaxis()->SetTitle("HV (V)");
     pc_mean->GetYaxis()->SetTitle("Mean of pulse charge p.e. peak (mV*8ns)");
+    gPad->SetLogy();
     pc_mean->Draw("a*");
-    pc_mean->Fit("pol1");
     c2->SaveAs("pc_spectrum_mean.png");
     
     return 0;
