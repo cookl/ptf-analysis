@@ -14,7 +14,6 @@
 #include <cmath>
 
 #include "TH1D.h"
-// #include "TH2D.h"
 #include "TFile.h"
 #include "TF1.h"
 #include "TMath.h"
@@ -86,19 +85,17 @@ int main(int argc, char** argv) {
     outFile->cd();
     hwaveform = new TH1D( hname.c_str(), htitle.c_str(), numTimeBins, 0., float(numTimeBins)*1000/digi.samplingRate );
     outFile->cd();
+
     wrapper.setCurrentEntry(event_num);
-    
-    int numWaveforms = wrapper.getNumSamples();
-    // for ( int j=0; j<numWaveforms; j++) { 
-      double* pmtsample=wrapper.getPmtSample( pmt.pmt, 0 );
-      // set the contents of the histogram
-      hwaveform->Reset();
-      for ( int ibin=1; ibin <= numTimeBins; ++ibin ){
-        hwaveform->SetBinContent( ibin, pmtsample[ibin-1] );
-        hwaveform->SetBinError( ibin, 2.1e-3 );
-      }
-      hwaveform->Scale(digi.fullScaleRange/digiCounts);
-    // }
+    double* pmtsample=wrapper.getPmtSample( pmt.pmt, 0 );
+
+    // set the contents of the histogram
+    hwaveform->Reset();
+    for ( int ibin=1; ibin <= numTimeBins; ++ibin ){
+      hwaveform->SetBinContent( ibin, pmtsample[ibin-1] );
+      hwaveform->SetBinError( ibin, 2.1e-3 );
+    }
+    hwaveform->Scale(digi.fullScaleRange/digiCounts);
   }
 
   outFile->Write();
