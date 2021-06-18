@@ -56,7 +56,7 @@ Double_t fitf(Double_t *x, Double_t *p) {
                 Sn=0;
 
     Sped=(1-p[2])/(sqrt(2*M_PI)*p[1])*exp(-0.5*pow((x[0]-p[0])/(p[1]),2)-p[4]);
-    // if (x[0] > p[0]) Snoise=p[3]*p[2]*exp(-1*p[3]*(x[0]-p[0])-p[4]);
+    if (x[0] > p[0]) Snoise=p[3]*p[2]*exp(-1*p[3]*(x[0]-p[0])-p[4]);
     S1=1/(sqrt(2*M_PI)*p[5])*exp(-0.5*pow((x[0]-p[6]-(p[2]/p[3]))/(p[5]),2));
 
     for (int n=2; n<=2; n++) {
@@ -69,7 +69,7 @@ Double_t fitf(Double_t *x, Double_t *p) {
 int main( int argc, char* argv[] ) {
     
     // Set up files
-    TFile * files[7];
+    TFile * files[8];
     files[0] = new TFile( "../../mpmt_Analysis_run0861.root" , "read" );
     files[1] = new TFile( "../../mpmt_Analysis_run0854.root" , "read" );
     files[2] = new TFile( "../../mpmt_Analysis_run0853.root" , "read" );
@@ -77,15 +77,16 @@ int main( int argc, char* argv[] ) {
     files[4] = new TFile( "../../mpmt_Analysis_run0855.root" , "read" );
     files[5] = new TFile( "../../mpmt_Analysis_run0856.root" , "read" );
     files[6] = new TFile( "../../mpmt_Analysis_run0862.root" , "read" );
+    files[7] = new TFile( "../../mpmt_Analysis_run0863.root" , "read" );
     
     // Set up voltages
-    double voltages[7] = {1209,1234,1258,1275,1307,1331,1356};
-    double means[7];
+    double voltages[8] = {1209,1234,1258,1275,1307,1331,1356,1478};
+    double means[8];
     
     // Set up canvas
-    TCanvas *c1 = new TCanvas("C1","C1",900,800);
-    int color[7] = {1,810,632,616,600,882,417}; //black, orange, red, magenta, blue, violet, green
-    int range_high[7] = {13,15,18,21,22,24,26};
+    TCanvas *c1 = new TCanvas("C1","C1",1600,1300);
+    int color[8] = {1,810,632,616,600,882,417,861}; //black, orange, red, magenta, blue, violet, green
+    int range_high[8] = {13,15,18,21,22,24,26,28};
     
     // For each file:
     for (int v=0; v<7; v++) {       //7
@@ -148,7 +149,14 @@ int main( int argc, char* argv[] ) {
                             pe_fit->GetParameter(2),
                             pe_fit->GetParameter(1),
                             2000);
-        pc_f->SetParLimits(6,pe_fit->GetParameter(1)-5,pe_fit->GetParameter(1)+5);
+        // pc_f->FixParameter(0,noise_fit->GetParameter(1));
+        // pc_f->FixParameter(1,noise_fit->GetParameter(2));
+        // pc_f->SetParLimits(2,0,0.6);
+        // pc_f->SetParLimits(3,0,0.1);
+        // pc_f->SetParLimits(4,0,3);
+        // pc_f->FixParameter(5,pe_fit->GetParameter(2));
+        // pc_f->SetParLimits(6,pe_fit->GetParameter(1)-5,pe_fit->GetParameter(1)+5);
+        // pc_f->SetParLimits(7,1000,3000);
         pc->Fit("pc_f","R");
         
         gStyle->SetOptStat(11);        
