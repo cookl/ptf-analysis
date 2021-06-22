@@ -48,23 +48,63 @@ void peakToValley(int range_low, int range_high, int pc_lower_range, TH1F* pc) {
     peak_to_valley = ptv_max_amp/ptv_min_amp;           // find peak-to-valley ratio
 }
 
-// Define fit function for pulse charge distribution
-Double_t fitf(Double_t *x, Double_t *p) {
-    Double_t    Sped=0,
-                Snoise=0,
-                S1=0,
-                Sn=0;
+// // Define fit function for pulse charge distribution
+// Double_t fitf(Double_t *x, Double_t *p) {
+//     Double_t    Sped=0,
+//                 Snoise=0,
+//                 S1=0,
+//                 Sn=0;
 
-    Sped=(1-p[2])/(sqrt(2*M_PI)*p[1])*exp(-0.5*pow((x[0]-p[0])/(p[1]),2)-p[4]);
-    if (x[0] > p[0]) Snoise=p[3]*p[2]*exp(-1*p[3]*(x[0]-p[0])-p[4]);
-    S1=1/(sqrt(2*M_PI)*p[5])*exp(-0.5*pow((x[0]-p[6]-(p[2]/p[3]))/(p[5]),2));
+//     Sped=(1-p[2])/(sqrt(2*M_PI)*p[1])*exp(-0.5*pow((x[0]-p[0])/(p[1]),2)-p[4]);
+//     if (x[0] > p[0]) Snoise=p[3]*p[2]*exp(-1*p[3]*(x[0]-p[0])-p[4]);
+//     S1=p[4]/(sqrt(2*M_PI)*p[5])*exp(-0.5*pow((x[0]-p[6]-(p[2]/p[3]))/(p[5]),2)-p[4]);
 
-    for (int n=2; n<=2; n++) {
-        Sn+=pow(p[4],n)*exp(-1*p[4])/(sqrt(2*M_PI*n)*p[5])*exp(-0.5*pow((x[0]-p[0]-(n*p[6])-(p[2]/p[3]))/(p[5]),2)/n);
+//     for (int n=2; n<=4; n++) {
+//         Sn+=pow(p[4],n)*exp(-1*p[4])/(sqrt(2*M_PI*n)*p[5])*exp(-0.5*pow((x[0]-p[0]-(n*p[6])-(p[2]/p[3]))/(p[5]),2)/n);
+//     }
+    
+//     return p[7]*(Sped+Snoise+S1+Sn);
+// }
+
+Double_t Sped(Double_t *x, Double_t *p) {
+    Double_t Sped = p[4]*(1-p[0])/(sqrt(2*M_PI)*p[1])*exp(-0.5*pow((x[0]-p[2])/(p[1]),2)-p[3]);
+    return Sped;
+}
+
+Double_t Snoise(Double_t *x, Double_t *p) {
+    Double_t Snoise = 0;
+    if (x[0] > p[2]) Snoise=p[1]*p[0]*exp(-1*p[1]*(x[0]-p[2])-p[3]);    //p[4]*
+    return Snoise;
+}
+
+Double_t S1(Double_t *x, Double_t *p) {
+    // Double_t S1 = p[4]/(sqrt(2*M_PI)*p[2])*exp(-0.5*pow((x[0]-p[3]-(p[0]/p[1]))/p[2],2)-p[4]);
+    Double_t S1 = p[3]*p[2]/(sqrt(2*M_PI)*p[0])*exp(-0.5*pow((x[0]-p[1])/p[0],2)-p[2]);
+
+    return S1;
+}
+
+Double_t Sn(Double_t *x, Double_t *p) {
+    // Double_t Sn = p[3]*pow(p[2],2)/(sqrt(2*M_PI*2)*p[0]*2)*exp(-0.5*pow((x[0]-2*p[1])/p[0],2)-p[2])/2;
+    Double_t Sn = 0;
+    int fact = 1;
+    for (int n=2; n<=10; n++) {
+        fact*=n;
+        Sn += p[3]*pow(p[2],n)/(sqrt(2*M_PI*n)*p[0]*fact)*exp(-0.5*pow((x[0]-n*p[1])/p[0],2)-p[2])/n;
     }
     
-    return p[7]*(Sped+Snoise+S1+Sn);
+    return Sn;
 }
+
+Double_t S3(Double_t *x, Double_t *p) {
+    Double_t S3 = p[3]*pow(p[2],3)/(sqrt(2*M_PI*3)*p[0]*2*3)*exp(-0.5*pow((x[0]-3*p[1])/p[0],2)-p[2])/3;
+    return S3;
+}
+
+Double_t fitf(Double_t *x, Double_t *p) {
+    return Sped(x,p)+Snoise(x,&p[5])+S1(x,&p[10])+Sn(x,&p[14]);
+}
+
 
 int main( int argc, char* argv[] ) {
     
@@ -89,7 +129,7 @@ int main( int argc, char* argv[] ) {
     int range_high[8] = {13,15,18,21,22,24,26,28};
     
     // For each file:
-    for (int v=0; v<7; v++) {       //7
+    for (int v=0; v<1; v++) {       //7
         
         // Get the waveform fit TTree
         tt2 = (TTree*)files[v]->Get("ptfanalysis2");
@@ -127,42 +167,121 @@ int main( int argc, char* argv[] ) {
             pc->GetXaxis()->SetTitle("Pulse charge (mV * 8ns)");
             pc->GetYaxis()->SetTitle("Number of events");
         }
-        pc->SetLineColor(color[v]);
-        if (v==0) {
+        // pc->SetLineColor(color[v]);
+        // if (v==0) {
             pc->Draw();
-        } else {
-            pc->Draw("SAMES");
-        }
+        // } else {
+        //     pc->Draw("SAMES");
+        // }
         
-        TF1 *pe_fit = new TF1("pe_fit","gaus",6,range_high[v]+4);
-        pc->Fit("pe_fit","R");
+        TF1 *pe_fit = new TF1("pe_fit","gaus",5,range_high[v]+4);
+        pc->Fit("pe_fit","Q0R");
         TF1 *noise_fit = new TF1("noise_fit","gaus",-2,2);
-        pc->Fit("noise_fit","R");
+        pc->Fit("noise_fit","Q0R+");
 
-        TF1 *pc_f = new TF1("pc_f",fitf,-9.766,87.894,8);
-        pc_f->SetParNames("Q0","sig0","W","alpha","miu","sig1","Q1","N");
-        pc_f->SetParameters(noise_fit->GetParameter(1),
-                            noise_fit->GetParameter(2),
-                            0.35,
-                            0.06,
-                            1,
-                            pe_fit->GetParameter(2),
-                            pe_fit->GetParameter(1),
-                            2000);
+        // c1->Update();
+
+        // TF1 *pc_f = new TF1("pc_f",fitf,-3,35,8);       //87
+        // pc_f->SetParNames("Q0","sig0","W","alpha","miu","sig1","Q1","N");
+        // pc_f->SetParameters(noise_fit->GetParameter(1),
+        //                     noise_fit->GetParameter(2),
+        //                     0.35,
+        //                     0.06,
+        //                     1,
+        //                     pe_fit->GetParameter(2),
+        //                     pe_fit->GetParameter(1),
+        //                     2000);
         // pc_f->FixParameter(0,noise_fit->GetParameter(1));
         // pc_f->FixParameter(1,noise_fit->GetParameter(2));
         // pc_f->SetParLimits(2,0,0.6);
         // pc_f->SetParLimits(3,0,0.1);
-        // pc_f->SetParLimits(4,0,3);
+        // pc_f->FixParameter(4,1);
         // pc_f->FixParameter(5,pe_fit->GetParameter(2));
         // pc_f->SetParLimits(6,pe_fit->GetParameter(1)-5,pe_fit->GetParameter(1)+5);
         // pc_f->SetParLimits(7,1000,3000);
-        pc->Fit("pc_f","R");
+        // pc->Fit("pc_f","","",5,16);  
+
+
+        TF1 * S_ped = new TF1("Sped",Sped,-3,3,5);
+        S_ped->SetParNames("W","sig0","Q0","miu","N");
+        S_ped->SetParameter(0,-25);
+        S_ped->SetParameter(1,noise_fit->GetParameter(2));
+        S_ped->SetParameter(2,noise_fit->GetParameter(1));
+        S_ped->FixParameter(3,1.4);
+        S_ped->SetParameter(4,70000);
+        S_ped->SetLineColor(5);
+        pc->Fit("Sped","R+");
+
+        TF1 * S_noise = new TF1("Snoise",Snoise,-3,60,5);
+        S_noise->SetParNames("W","alpha","Q0","miu","N");   //,"N"
+        S_noise->SetParameter(0,S_ped->GetParameter("W"));
+        S_noise->SetParameter(1,0.04);
+        S_noise->FixParameter(2,S_ped->GetParameter("Q0"));
+        S_noise->SetParameter(3,-8.8);
+        S_noise->SetParameter(4,-0.46);  //,2000
+        S_noise->SetLineColor(3);
+        pc->Fit("Snoise","R+");
+
+        TF1 * S_1 = new TF1("S1",S1,4,20,4);      //range_high[v]+3
+        S_1->SetParNames("sig1","Q1","miu","N");
+        S_1->SetParameter(0,pe_fit->GetParameter(2));
+        S_1->SetParameter(1,pe_fit->GetParameter(1));
+        S_1->SetParameter(2,1.4);
+        S_1->SetParameter(3,70000);
+        S_1->SetLineColor(4);
+        pc->Fit("S1", "R+");
+
+        TF1 * S_n = new TF1("Sn",Sn,4,60,4);      //range_high[v]+3
+        S_n->SetParNames("sig1","Q1","miu","N");
+        S_n->SetParameter(0,S_1->GetParameter(0));
+        S_n->FixParameter(1,S_1->GetParameter(1));
+        S_n->SetParameter(2,1);
+        S_n->SetParameter(3,70000);
+        S_n->SetLineColor(6);
+        pc->Fit("Sn", "R+");
+
+        // TF1 * fitf = new TF1("total_fit", "Sped(0)+Snoise(5)+S1(10)+Sn(14)",-3,50);
+        TF1* fit_f = new TF1("fit_f",fitf,-3,80,18);
+        Double_t par[18];
+        S_ped->GetParameters(&par[0]);
+        S_noise->GetParameters(&par[5]);
+        S_1->GetParameters(&par[10]);
+        S_n->GetParameters(&par[14]);
+        fit_f->SetParameters(par);
+        pc->Fit("fit_f","R+");
+        
+
+        // S_ped->SetParNames("Q0","sig0","W","alpha","miu","sig1","Q1","N");
+        // S_noise->SetParNames("Q0","sig0","W","alpha","miu","sig1","Q1","N");
+        // S_ped->SetParameters(noise_fit->GetParameter(1),
+        //                     noise_fit->GetParameter(2),
+        //                     0.35,
+        //                     0.06,
+        //                     0.53,
+        //                     pe_fit->GetParameter(2),
+        //                     pe_fit->GetParameter(1),
+        //                     2000);
+        // // S_ped->SetParLimits(2,0,1);
+        // // S_ped->SetParLimits(4,0,2);
+        // S_noise->SetParameters(noise_fit->GetParameter(1),
+        //                     noise_fit->GetParameter(2),
+        //                     0.35,
+        //                     0.06,
+        //                     0.53,
+        //                     pe_fit->GetParameter(2),
+        //                     pe_fit->GetParameter(1),
+        //                     2000);
+            
+        // try minimizing range
         
         gStyle->SetOptStat(11);        
-        gStyle->SetOptFit();
+        // gStyle->SetOptFit();
+        // TPaveStats *fit_stats = (TPaveStats*)pc->GetListOfFunctions()->FindObject("stats");
+        // fit_stats->SetOptStat();
+        // pc->SetStats(1);
 
-        means[v]=pc_f->GetParameter(6);
+
+        // means[v]=pc_f->GetParameter(6);
        
         c1->Update();
         
