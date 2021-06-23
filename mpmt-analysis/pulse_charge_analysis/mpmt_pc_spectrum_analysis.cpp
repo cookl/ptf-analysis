@@ -85,25 +85,26 @@ Double_t S1(Double_t *x, Double_t *p) {
 }
 
 Double_t Sn(Double_t *x, Double_t *p) {
-    // Double_t Sn = p[3]*pow(p[2],2)/(sqrt(2*M_PI*2)*p[0]*2)*exp(-0.5*pow((x[0]-2*p[1])/p[0],2)-p[2])/2;
     Double_t Sn = 0;
     int fact = 1;
-    for (int n=2; n<=10; n++) {
-        fact*=n;
-        Sn += p[3]*pow(p[2],n)/(sqrt(2*M_PI*n)*p[0]*fact)*exp(-0.5*pow((x[0]-n*p[1])/p[0],2)-p[2])/n;
-    }
+    int scale = 10;
+    // for (int n=3; n<=4; n++) {
+    fact *= p[4];
+    scale = pow(scale,(p[4]-1));
+    Sn += p[3]*pow(p[2],p[4])/(sqrt(2*M_PI*p[4])*p[0]*fact*scale)*exp(pow((x[0]-p[4]*p[1])/p[0],2)/(-2*p[4])-p[2]);
+    // }
     
     return Sn;
 }
 
-Double_t S3(Double_t *x, Double_t *p) {
-    Double_t S3 = p[3]*pow(p[2],3)/(sqrt(2*M_PI*3)*p[0]*2*3)*exp(-0.5*pow((x[0]-3*p[1])/p[0],2)-p[2])/3;
-    return S3;
-}
+// Double_t S3(Double_t *x, Double_t *p) {
+//     Double_t S3 = p[3]*pow(p[2],3)/(sqrt(2*M_PI*3)*p[0]*2*3)*exp(-0.5*pow((x[0]-3*p[1])/p[0],2)-p[2])/3;
+//     return S3;
+// }
 
-Double_t fitf(Double_t *x, Double_t *p) {
-    return Sped(x,p)+Snoise(x,&p[5])+S1(x,&p[10])+Sn(x,&p[14]);
-}
+// Double_t fitf(Double_t *x, Double_t *p) {
+//     return Sped(x,p)+Snoise(x,&p[5])+S1(x,&p[10])+Sn(x,&p[14]);
+// }
 
 
 int main( int argc, char* argv[] ) {
@@ -167,12 +168,12 @@ int main( int argc, char* argv[] ) {
             pc->GetXaxis()->SetTitle("Pulse charge (mV * 8ns)");
             pc->GetYaxis()->SetTitle("Number of events");
         }
-        // pc->SetLineColor(color[v]);
-        // if (v==0) {
+        pc->SetLineColor(color[v]);
+        if (v==0) {
             pc->Draw();
-        // } else {
-        //     pc->Draw("SAMES");
-        // }
+        } else {
+            pc->Draw("SAMES");
+        }
         
         TF1 *pe_fit = new TF1("pe_fit","gaus",5,range_high[v]+4);
         pc->Fit("pe_fit","Q0R");
@@ -202,53 +203,59 @@ int main( int argc, char* argv[] ) {
         // pc->Fit("pc_f","","",5,16);  
 
 
-        TF1 * S_ped = new TF1("Sped",Sped,-3,3,5);
+        TF1 * S_ped = new TF1("Sped",Sped,-3,3.5,5);
         S_ped->SetParNames("W","sig0","Q0","miu","N");
-        S_ped->SetParameter(0,-25);
+        S_ped->SetParLimits(0,0,1);
         S_ped->SetParameter(1,noise_fit->GetParameter(2));
         S_ped->SetParameter(2,noise_fit->GetParameter(1));
-        S_ped->FixParameter(3,1.4);
-        S_ped->SetParameter(4,70000);
-        S_ped->SetLineColor(5);
+        S_ped->SetParameter(3,1.4);
+        S_ped->SetParameter(4,75000);
+        S_ped->SetLineColor(2);
         pc->Fit("Sped","R+");
 
-        TF1 * S_noise = new TF1("Snoise",Snoise,-3,60,5);
-        S_noise->SetParNames("W","alpha","Q0","miu","N");   //,"N"
-        S_noise->SetParameter(0,S_ped->GetParameter("W"));
-        S_noise->SetParameter(1,0.04);
-        S_noise->FixParameter(2,S_ped->GetParameter("Q0"));
-        S_noise->SetParameter(3,-8.8);
-        S_noise->SetParameter(4,-0.46);  //,2000
-        S_noise->SetLineColor(3);
-        pc->Fit("Snoise","R+");
+        // TF1 * S_noise = new TF1("Snoise",Snoise,-3,60,5);
+        // S_noise->SetParNames("W","alpha","Q0","miu","N");   //,"N"
+        // S_noise->SetParameter(0,S_ped->GetParameter("W"));
+        // S_noise->SetParameter(1,0.04);
+        // S_noise->FixParameter(2,S_ped->GetParameter("Q0"));
+        // S_noise->SetParameter(3,-8.8);
+        // S_noise->SetParameter(4,-0.46);  //,2000
+        // S_noise->SetLineColor(7);
+        // pc->Fit("Snoise","Q0R+");
 
-        TF1 * S_1 = new TF1("S1",S1,4,20,4);      //range_high[v]+3
+        TF1 * S_1 = new TF1("S1",S1,3.5,range_high[v]+10,4);      //range_high[v]+3
         S_1->SetParNames("sig1","Q1","miu","N");
         S_1->SetParameter(0,pe_fit->GetParameter(2));
         S_1->SetParameter(1,pe_fit->GetParameter(1));
-        S_1->SetParameter(2,1.4);
-        S_1->SetParameter(3,70000);
-        S_1->SetLineColor(4);
+        S_1->SetParameter(2,1.3);
+        S_1->SetParameter(3,75000);
+        S_1->SetLineColor(6);
         pc->Fit("S1", "R+");
 
-        TF1 * S_n = new TF1("Sn",Sn,4,60,4);      //range_high[v]+3
-        S_n->SetParNames("sig1","Q1","miu","N");
-        S_n->SetParameter(0,S_1->GetParameter(0));
-        S_n->FixParameter(1,S_1->GetParameter(1));
-        S_n->SetParameter(2,1);
-        S_n->SetParameter(3,70000);
-        S_n->SetLineColor(6);
-        pc->Fit("Sn", "R+");
+        TF1 * S_n[5];
+        for (int n=2; n<=4; n++) {
+            S_n[n] = new TF1("Sn",Sn,4,80,5);
+            S_n[n]->SetParNames("sig1","Q1","miu","N","n");
+            S_n[n]->SetParameter(0,S_1->GetParameter(0));
+            S_n[n]->FixParameter(1,S_1->GetParameter(1));
+            S_n[n]->SetParameter(2,1.3);
+            S_n[n]->FixParameter(3,75000);
+            S_n[n]->FixParameter(4,n);
+            S_n[n]->SetLineColor(3);
+            pc->Fit("Sn", "R+");
+        }
 
-        // TF1 * fitf = new TF1("total_fit", "Sped(0)+Snoise(5)+S1(10)+Sn(14)",-3,50);
-        TF1* fit_f = new TF1("fit_f",fitf,-3,80,18);
-        Double_t par[18];
-        S_ped->GetParameters(&par[0]);
-        S_noise->GetParameters(&par[5]);
-        S_1->GetParameters(&par[10]);
-        S_n->GetParameters(&par[14]);
-        fit_f->SetParameters(par);
-        pc->Fit("fit_f","R+");
+
+//how do i know for sure if the separate fits
+        // // TF1 * fitf = new TF1("total_fit", "Sped(0)+Snoise(5)+S1(10)+Sn(14)",-3,50);
+        // TF1* fit_f = new TF1("fit_f",fitf,-3,80,18);
+        // Double_t par[18];
+        // S_ped->GetParameters(&par[0]);
+        // S_noise->GetParameters(&par[5]);
+        // S_1->GetParameters(&par[10]);
+        // S_n->GetParameters(&par[14]);
+        // fit_f->SetParameters(par);
+        // pc->Fit("fit_f","R+");
         
 
         // S_ped->SetParNames("Q0","sig0","W","alpha","miu","sig1","Q1","N");
@@ -274,14 +281,15 @@ int main( int argc, char* argv[] ) {
             
         // try minimizing range
         
+        gPad->Update();
         gStyle->SetOptStat(11);        
-        // gStyle->SetOptFit();
+         gStyle->SetOptFit();
         // TPaveStats *fit_stats = (TPaveStats*)pc->GetListOfFunctions()->FindObject("stats");
         // fit_stats->SetOptStat();
         // pc->SetStats(1);
 
 
-        // means[v]=pc_f->GetParameter(6);
+        means[v]=S_1->GetParameter(1);
        
         c1->Update();
         
