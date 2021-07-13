@@ -55,7 +55,7 @@ void initHist(int pc_lower_range){
     laser_ph = new TH1F("ph-laser","Laser Pulse Height",200,0,bin_unit*200);
     before_ph = new TH1F("ph-before","Pulse Height Before Laser",200,0,bin_unit*200);
     after_ph = new TH1F("ph-after", "Pulse Height After Laser",200,0,bin_unit*200);
-    total_ph = new TH1F("ph-total", "Pulse Height", 200,0,bin_unit*200);        //123,820*bin_unit,943*bin_unit);
+    total_ph = new TH1F("ph-total", "Pulse Height", 100,0,bin_unit*100);        //123,820*bin_unit,943*bin_unit);
     pc_ph_hist = new TH2F("pc_ph_hist","Histogram of pulse height and pulse charge",100,0,100*bin_unit,120,-20*2*bin_unit,100*2*bin_unit);
     pmt_ph_shift = new TH1F("pmt-pulse-shift", "PMT: Pulse height spread",12,275*8,287*8);
     input_ph_shift = new TH1F("inputed-pulse-shift", "Input signal: Pulse height spread",13,262*8,275*8);
@@ -211,6 +211,8 @@ void printPlots(string pc_fit_type, string ph_axis_type, int event_num) {
     // Print total pulse height
     TCanvas *c3 = new TCanvas("C3");
     total_ph->Draw();
+    total_ph->Fit("gaus","Q","C",5,10);
+    gStyle->SetOptFit();
     total_ph->GetXaxis()->SetTitle("Pulse height (mV)");
     total_ph->GetYaxis()->SetTitle("Number of events");
     c3->SaveAs("mpmt_pulse_height_total.png");
