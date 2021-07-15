@@ -13,12 +13,12 @@ VPATH = $(SRCDIR)
 CFLAGS=-c -g -Wall `root-config --cflags` -I${INCDIR}
 LDFLAGS=`root-config --glibs` -lHistPainter -lMinuit -L${ROOTSYS}/lib 
 
-all: prev.exe
+all: mpmt_pc_spectrum_analysis.exe
 
-prev.exe: prev.o WaveformFitResult.o
+mpmt_pc_spectrum_analysis.exe: mpmt_pc_spectrum_analysis.o WaveformFitResult.o
 	CPATH=/usr/local/include $(CXX) $^ -o $@ $(LDFLAGS)
 
-prev.o: prev.cpp
+mpmt_pc_spectrum_analysis.o: mpmt_pc_spectrum_analysis.cpp
 	$(CXX) $(CFLAGS) $< -o $@
 
 WaveformFitResult.o: ${SRCDIR}/WaveformFitResult.cpp

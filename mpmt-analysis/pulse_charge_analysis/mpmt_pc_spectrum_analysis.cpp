@@ -56,17 +56,15 @@ Double_t fitf(Double_t *x, Double_t *p) {
                 Sn=0;
 
     Sped=(1-p[2])/(sqrt(2*M_PI)*p[1])*exp(-0.5*pow((x[0]-p[0])/(p[1]),2)-p[4]);
-    // if (x[0]>p[0])  Snoise=p[3]*p[2]*exp(-1*p[3]*(x[0]-p[0])-p[4]);
-    if (x[0]>4)     S1=p[4]/(sqrt(2*M_PI)*p[5])*exp(-0.5*pow((x[0]-p[6])/p[5],2)-p[4]);
-    // if (x[0]>4) { 
-    //     S1=p[4]/(sqrt(2*M_PI)*p[5])*exp(-0.5*pow((x[0]-p[6])/p[5],2)-p[4]);
-    //     for (int n=2; n<=5; n++) {
-    //         int fact = 1;
-    //         int scale = 1;//10*pow(5,n-2);
-    //         for (int i=n; i>1; i--) {fact *= i;}
-    //         Sn += pow(p[4],n)/(sqrt(2*M_PI*n)*p[5]*fact*scale)*exp(pow((x[0]-n*p[6])/p[5],2)/(-2*n)-p[4]);
-    //     }
-    // }
+    if (x[0] > p[0]) Snoise=p[3]*p[2]*exp(-1*p[3]*(x[0]-p[0])-p[4]);
+    S1=p[4]/(sqrt(2*M_PI)*p[5])*exp(-0.5*pow((x[0]-p[6]-p[0]-p[2]/p[3])/p[5],2)-p[4]);
+
+    for (int n=2; n<=3; n++) {
+        int fact = 1;
+        int scale = 1; //10*pow(5,n-2);
+        for (int i=n; i>1; i--) {fact *= i;}
+        Sn += 3*pow(p[4],n)/(sqrt(2*M_PI*n)*p[5]*fact*scale)*exp(pow((x[0]-n*p[6]-p[0]-p[2]/p[3])/p[5],2)/(-2*n)-p[4]);
+    }
     
     return p[7]*(Sped+Snoise+S1+Sn);
 }
@@ -78,17 +76,18 @@ Double_t Sped(Double_t *x, Double_t *p) {
 
 Double_t Snoise(Double_t *x, Double_t *p) {
     Double_t Snoise = 0;
-    if (x[0] > p[2]) Snoise=p[1]*p[0]*exp(-1*p[1]*(x[0]-p[2])-p[3]);    //p[4]*
+    if (x[0] > p[2]) Snoise=p[4]*p[1]*p[0]*exp(-1*p[1]*(x[0]-p[2])-p[3]);
     return Snoise;
 }
 
 Double_t S1(Double_t *x, Double_t *p) {
-    // Double_t S1 = p[4]/(sqrt(2*M_PI)*p[2])*exp(-0.5*pow((x[0]-p[3]-(p[0]/p[1]))/p[2],2)-p[4]);
-    Double_t S1 = p[3]*p[2]/(sqrt(2*M_PI)*p[0])*exp(-0.5*pow((x[0]-p[1])/p[0],2)-p[2]);
+    Double_t S1 = p[3]*p[2]/(sqrt(2*M_PI)*p[0])*exp(-0.5*pow((x[0]-p[1]-p[4]-p[5])/p[0],2)-p[2]);
 
     return S1;
 }
 
+// "sig1","Q1","miu","N","n","Q0","Qsh"
+// 0     ,1   ,2    ,3  ,4  ,5   ,6
 Double_t Sn(Double_t *x, Double_t *p) {
     Double_t Sn = 0;
     // double scale = 1;//pow(10,p[4]-1);;
@@ -97,10 +96,7 @@ Double_t Sn(Double_t *x, Double_t *p) {
     for (int i=p[4]; i>1; i--) {
         fact *= i;
     }
-    int scale = 10*pow(5,p[4]-2);
-    Sn += p[3]*pow(p[2],p[4])/(sqrt(2*M_PI*p[4])*p[0]*fact*scale)*exp(pow((x[0]-p[4]*p[1])/p[0],2)/(-2*p[4])-p[2]);
-    // }
-    // cout << "FACTORIAL IS " << fact << endl;
+    Sn += 3*p[3]*pow(p[2],p[4])/(sqrt(2*M_PI*p[4])*p[0]*fact)*exp(pow((x[0]-p[4]*p[1]-p[5]-p[6])/p[0],2)/(-2*p[4])-p[2]);
     return Sn;
 }
 
@@ -124,11 +120,11 @@ int main( int argc, char* argv[] ) {
     
     // Set up canvas
     TCanvas *c1 = new TCanvas("C1","C1",1600,1300);
-    int color[8] = {1,810,632,616,600,882,417,861}; //black, orange, red, magenta, blue, violet, green
+    int color[8] = {1,810,632,616,600,882,417,861}; //yellow, black, orange, red, magenta, blue, violet, green
     int range_high[8] = {13,15,18,21,22,24,26,28};
     
     // For each file:
-    for (int v=0; v<7; v++) {       //7
+    for (int v=0; v<7; v++) {
         
         // Get the waveform fit TTree
         tt2 = (TTree*)files[v]->Get("ptfanalysis2");
@@ -140,7 +136,7 @@ int main( int argc, char* argv[] ) {
         double x_hi = 250;
         string hist_name = to_string((int)voltages[v]) + "V";
         TH1F *pc = new TH1F(hist_name.c_str(),"Laser Pulse Charge",x_low+x_hi,-1*x_low*bin_unit,x_hi*bin_unit);
-
+        
         // Reset peak-to-valley calculation variables
         ptv_min_amp = 10000;
         ptv_max_amp = 0;
@@ -173,13 +169,12 @@ int main( int argc, char* argv[] ) {
         } else {
             pc->Draw("SAMES");
         }
-
         TF1 * S_n[6];
         double init_par[4] = {0};
-        double par[8] = {0,0,0,0.05,1.6,0,0,0};
+        double par[8] = {0,0,0,0.45,1.6,0,0,0};
        
         // Rough fit for initial parameters
-        TF1 *pe_fit = new TF1("pe_fit","gaus",5,range_high[v]+4);
+        TF1 *pe_fit = new TF1("pe_fit","gaus",7,range_high[v]+8);
         pc->Fit("pe_fit","Q0R");
         init_par[0] = pe_fit->GetParameter(2);      //1 p.e. gauss rms
         init_par[1] = pe_fit->GetParameter(1);      //1 p.e. gauss mean
@@ -189,105 +184,149 @@ int main( int argc, char* argv[] ) {
         init_par[3] = noise_fit->GetParameter(1);   //ped gauss mean
 
         // Pedestal peak
-        S_n[0] = new TF1("Sped",Sped,-3,3,5);
+        S_n[0] = new TF1("Sped",Sped,-3,10,5);
         S_n[0]->SetParNames("W","sig0","Q0","miu","N");
+        S_n[0]->SetParameter(0,1);
         S_n[0]->SetParLimits(0,0,1);
         S_n[0]->SetParameter(1,init_par[2]);
         S_n[0]->SetParameter(2,init_par[3]);
-        S_n[0]->SetParameter(3,1.4);
-        S_n[0]->SetParameter(4,75000);
-        S_n[0]->SetLineColor(2);
-        pc->Fit("Sped","QR");
+        S_n[0]->FixParameter(3,0.067);
+        S_n[0]->SetParameter(4,900000);
+        S_n[0]->SetLineColor(1);
+        pc->Fit("Sped","R");
         par[0] = S_n[0]->GetParameter("Q0");
         par[1] = S_n[0]->GetParameter("sig0");
         par[2] = S_n[0]->GetParameter("W");
         par[7] = S_n[0]->GetParameter("N");
 
         // Noise exponential
-        TF1 * S_noise = new TF1("Snoise",Snoise,-3,120,5);
-        S_noise->SetParNames("W","alpha","Q0","miu","N");
-        S_noise->FixParameter(0,1);//par[2]);
-        S_noise->SetParameter(1,par[3]);
-        S_noise->SetParLimits(1,0,1);
-        S_noise->SetParameter(2,par[0]);
-        S_noise->FixParameter(3,par[4]);
-        S_noise->SetParameter(4,par[7]);
-        S_noise->SetLineColor(4);
-        pc->Fit("Snoise","0QR");
-        par[3] = S_noise->GetParameter("alpha");
+        // TF1 * S_noise = new TF1("Snoise",Snoise,-3,120,5);
+        // S_noise->SetParNames("W","alpha","Q0","miu","N");
+        // S_noise->SetParameter(0,par[2]);
+        // S_noise->SetParLimits(0,0,1);
+        // S_noise->SetParameter(1,par[3]);
+        // S_noise->SetParLimits(1,0,1);
+        // S_noise->FixParameter(2,par[0]);
+        // S_noise->FixParameter(3,0.067);         //par[4]);
+        // // S_noise->SetParLimits(3,0.05,0.07);
+        // S_noise->SetParameter(4,par[7]);
+        // S_noise->SetLineColor(4);
+        // pc->Fit("Snoise","R0Q+");
+        // par[3] = S_noise->GetParameter("alpha");
 
         // 1 p.e. peak
-        S_n[1] = new TF1("S1",S1,4,range_high[v]+8,4);      //range_high[v]+3
-        S_n[1]->SetParNames("sig1","Q1","miu","N");
+        S_n[1] = new TF1("S1",S1,7,range_high[v]+8,6);
+        S_n[1]->SetParNames("sig1","Q1","miu","N","Q0","Qsh");
         S_n[1]->SetParameter(0,init_par[0]);
         S_n[1]->SetParameter(1,init_par[1]);
-        S_n[1]->SetParameter(2,par[4]);
+        S_n[1]->FixParameter(2,0.067);
         S_n[1]->SetParameter(3,par[7]);
-        S_n[1]->SetLineColor(6);
-        pc->Fit("S1", "0QR");
-        // par[4] = 1.6;// S_n[1]->GetParameter("miu");
+        S_n[1]->SetParameter(4,par[0]);
+        S_n[1]->SetParameter(5,par[2]/par[3]);
+        S_n[1]->SetLineColor(9);
+        pc->Fit("S1", "RQ");
         par[5] = S_n[1]->GetParameter("sig1");
         par[6] = S_n[1]->GetParameter("Q1");
 
         // 2+ p.e. peak
         for (int n=2; n<=4; n++) {
             string fitname = "S" + to_string(n);
-            S_n[n] = new TF1(fitname.c_str(),Sn,4,range_high[v]+80,5);
-            S_n[n]->SetParNames("sig1","Q1","miu","N","n");
+            S_n[n] = new TF1(fitname.c_str(),Sn,4,range_high[v]+80,7);
+            S_n[n]->SetParNames("sig1","Q1","miu","N","n","Q0","Qsh");
             S_n[n]->FixParameter(0,par[5]);
             S_n[n]->FixParameter(1,par[6]);
-            S_n[n]->FixParameter(2,par[4]);
+            S_n[n]->FixParameter(2,0.067);
             S_n[n]->FixParameter(3,par[7]);
             S_n[n]->FixParameter(4,n);
+            S_n[1]->SetParameter(5,par[0]);
+            S_n[1]->SetParameter(6,par[2]/par[3]);
             S_n[n]->SetLineColor(3);
-            pc->Fit(fitname.c_str(), "0QR");
+            pc->Fit(fitname.c_str(), "R0Q");
         }
 
-        TF1 *pc_f = new TF1("pc_f",fitf,-3,range_high[v]+90,9);       //87
-        pc_f->SetParNames("Q0","sig0","W","alpha","miu","sig1","Q1","N","ped_cutoff");
-        
-        // pc_f->SetParameter(0,0);
-        // pc_f->SetParameter(1,1);
-        // pc_f->SetParameter(2,2);
-        // pc_f->SetParameter(3,0.05);
-        // pc_f->SetParameter(4,3.3);
-        // pc_f->SetParameter(5,10);
-        // pc_f->SetParameter(6,20);
-        // pc_f->SetParameter(7,300000);
-
+        TF1 *pc_f = new TF1("pc_f",fitf,-3,range_high[v]+90,8);       //87
+        pc_f->SetParNames("Q0","sig0","W","alpha","miu","sig1","Q1","N");
         pc_f->SetParameter(0,par[0]);
         pc_f->SetParameter(1,par[1]);
         // pc_f->SetParLimits(0,S_n[0]->GetParameter(2)-1,S_n[0]->GetParameter(2)+1);
         // pc_f->SetParLimits(1,S_n[0]->GetParameter(1)-1,S_n[0]->GetParameter(1)+1);
-        pc_f->SetParameter(2,par[2]);
-        // pc_f->SetParLimits(2,0,1);
-        pc_f->SetParameter(3,par[3]);
-        pc_f->SetParLimits(3,0,1);
-        pc_f->SetParameter(4,par[4]);
-        // pc_f->FixParameter(4,par[4]);
-        
+        pc_f->SetParameter(2,0.023); //par[2]);
+        pc_f->SetParameter(3,0.45); //par[3]);
+        // pc_f->SetParLimits(3,0.08,0.2);
+        pc_f->SetParameter(4,0.067);
         // pc_f->SetParLimits(4,1,2);
         pc_f->SetParameter(5,par[5]);
-        pc_f->SetParameter(6,par[6]);
-        // pc_f->SetParLimits(6,par[6]-3,par[6]+3);
+        pc_f->SetParameter(6,par[6]);        
+        // pc_f->SetParLimits(5,S_n[1]->GetParameter(0)-2,S_n[1]->GetParameter(0)+2);
+        // pc_f->SetParLimits(6,S_n[1]->GetParameter(1)-3,S_n[1]->GetParameter(1)+3);
         pc_f->SetParameter(7,par[7]);
-        pc_f->FixParameter(8,range_high[v]+10);
+        pc->Fit("pc_f","R");  
 
+        double test_par[8];
+        for (int test=0; test<8; test++){
+            test_par[test] = pc_f->GetParameter(test);
+        } 
+        //"Q0","sig0","W","alpha","miu","sig1","Q1","N"
+        //  0 ,  1   , 2 ,   3   ,  4  ,   5  , 6  , 7
 
-        // pc_f->FixParameter(0,noise_fit->GetParameter(1));
-        // pc_f->FixParameter(1,noise_fit->GetParameter(2));
-        // pc_f->SetParLimits(2,0,0.6);
-        // pc_f->SetParLimits(3,0,0.1);
-        // pc_f->FixParameter(4,1);
-        // pc_f->FixParameter(5,pe_fit->GetParameter(2));
-        // pc_f->SetParLimits(6,pe_fit->GetParameter(1)-5,pe_fit->GetParameter(1)+5);
-        // pc_f->SetParLimits(7,1000,3000);
-        pc->Fit("pc_f","QR");  
+        // TF1 *Sped_test = new TF1("Sped-test",Sped,-3,3,5);
+        // Sped_test->SetParNames("W","sig0","Q0","miu","N");
+        // // Sped_test->SetParameters(test_par[2],test_par[1],test_par[0],test_par[4],test_par[7]);
+        // Sped_test->FixParameter(0,test_par[2]);
+        // Sped_test->FixParameter(1,test_par[1]);
+        // Sped_test->FixParameter(2,test_par[0]);
+        // Sped_test->FixParameter(3,test_par[4]);
+        // Sped_test->FixParameter(4,test_par[7]);
+        // Sped_test->SetLineColor(2);
+        // pc->Fit("Sped-test","QR");
+        // // Sped_test->Draw();
+
+        // TF1 * Snoise_test = new TF1("Snoise-test",Snoise,-3,120,5);
+        // Snoise_test->SetParNames("W","alpha","Q0","miu","N");
+        // Snoise_test->FixParameter(0,test_par[2]);
+        // Snoise_test->FixParameter(1,test_par[3]);
+        // Snoise_test->FixParameter(2,test_par[0]);
+        // Snoise_test->FixParameter(3,test_par[4]);
+        // Snoise_test->FixParameter(4,test_par[7]);
+        // Snoise_test->SetLineColor(4);
+        // pc->Fit("Snoise-test","QR");
+
+        // TF1 * S1_test = new TF1("S1-test",S1,0,range_high[v]+15,6);
+        // S1_test->SetParNames("sig1","Q1","miu","N","Q0","Qsh");
+        // S1_test->FixParameter(0,test_par[5]);
+        // S1_test->FixParameter(1,test_par[6]);
+        // S1_test->FixParameter(2,test_par[4]);
+        // S1_test->FixParameter(3,test_par[7]);
+        // S1_test->FixParameter(4,test_par[0]);
+        // S1_test->FixParameter(5,test_par[2]/test_par[3]);
+        // S1_test->SetLineColor(6);
+        // pc->Fit("S1-test","QR");
+        // // S1_test->Draw("SAME");
+
+        //  // 2+ p.e. peak
+        // for (int n=2; n<=3; n++) {
+        //     string fitname_test = "S" + to_string(n) = "-test";
+        //     TF1* Sn_test = new TF1(fitname_test.c_str(),Sn,4,range_high[v]+80,7);
+        //     Sn_test->SetParNames("sig1","Q1","miu","N","n","Q0","Qsh");
+        //     Sn_test->FixParameter(0,test_par[5]);
+        //     Sn_test->FixParameter(1,test_par[6]);
+        //     Sn_test->FixParameter(2,test_par[4]);
+        //     Sn_test->FixParameter(3,test_par[7]);
+        //     Sn_test->FixParameter(4,n);
+        //     Sn_test->FixParameter(5,test_par[0]);
+        //     Sn_test->FixParameter(6,test_par[2]/test_par[3]);      
+        //     Sn_test->SetLineColor(3);
+        //     pc->Fit(fitname_test.c_str(), "QR");
+        // }
 
         
         gPad->Update();
         gStyle->SetOptStat(11);        
         gStyle->SetOptFit();
+        // TPaveStats *fit_stats = (TPaveStats*)pc->GetListOfFunctions()->FindObject("stats");
+        // fit_stats->SetOptStat();
+        // pc->SetStats(1);
+
 
         // means[v]=par[6];
         means[v]=pc_f->GetParameter("Q1");
@@ -312,17 +351,6 @@ int main( int argc, char* argv[] ) {
         
     
         c1->Modified();
-
-
-        // find number of entries in pedestal
-        int test_lo = 14*bin_unit;
-        int test_hi = 26*bin_unit;
-        int ped_count = 0;
-        for (int i=12; i<=26; i++) {
-            ped_count += pc->GetBinContent(i);
-        }
-        
-        cout << "Num entries in pedestal: " << pc->GetBinContent(20) << endl;
         
 //        files[v]->Close();            // including this deletes the histograms
     }
@@ -337,8 +365,6 @@ int main( int argc, char* argv[] ) {
     gPad->SetLogy();
     pc_mean->Draw("a*");
     c2->SaveAs("pc_spectrum_mean.png");
-
-
     
     return 0;
 }
