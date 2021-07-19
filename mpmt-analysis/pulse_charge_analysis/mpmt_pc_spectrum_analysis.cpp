@@ -61,9 +61,8 @@ Double_t fitf(Double_t *x, Double_t *p) {
 
     for (int n=2; n<=3; n++) {
         int fact = 1;
-        int scale = n-1; //10*pow(5,n-2);
         for (int i=n; i>1; i--) {fact *= i;}
-        Sn += 3*pow(p[4],n)/(sqrt(2*M_PI*n)*p[5]*fact*scale)*exp(pow((x[0]-n*p[6]-p[0]-p[2]/p[3])/p[5],2)/(-2*n)-p[4]);
+        Sn += 3*pow(p[4],n)/(sqrt(2*M_PI*n)*p[5]*fact)*exp(pow((x[0]-n*p[6]-p[0]-p[2]/p[3])/p[5],2)/(-2*n)-p[4]);
     }
     
     return p[7]*(Sped+Snoise+S1+Sn);
@@ -90,7 +89,6 @@ Double_t S1(Double_t *x, Double_t *p) {
 // 0     ,1   ,2    ,3  ,4  ,5   ,6
 Double_t Sn(Double_t *x, Double_t *p) {
     Double_t Sn = 0;
-    // double scale = 1;//pow(10,p[4]-1);;
     // for (int n=3; n<=4; n++) {
     int fact = 1;
     for (int i=p[4]; i>1; i--) {
@@ -124,7 +122,7 @@ int main( int argc, char* argv[] ) {
     int range_high[8] = {13,15,18,21,22,24,26,28};
     
     // For each file:
-    for (int v=0; v<1; v++) {
+    for (int v=4; v<5; v++) {
         
         // Get the waveform fit TTree
         tt2 = (TTree*)files[v]->Get("ptfanalysis2");
@@ -148,8 +146,16 @@ int main( int argc, char* argv[] ) {
             auto pulse_charge = wf2->qsum;
             pc->Fill(pulse_charge * 1000.0); // Convert to mV
             
+            // if (pulse_charge>=-4 && pulse_charge<=4) miu+=pulse_charge;
             if (i==961240) break;
         }
+
+        // Calculate miu
+        double N = 0;
+        for (int bin=12; bin<=28; bin++) N+=pc->GetBinContent(bin);
+        double miu = -log(N/961240);
+
+        cout << "N: " << N << endl;
         
         // Find peak-to-valley ratio
         // Range (mV*8ns) depends on run
@@ -164,21 +170,23 @@ int main( int argc, char* argv[] ) {
             pc->GetYaxis()->SetTitle("Number of events");
         }
         pc->SetLineColor(color[v]);
-        if (v==0) {
+        // if (v==0) {
             pc->Draw();
-        } else {
-            pc->Draw("SAMES");
-        }
+        // } else {
+        //     pc->Draw("SAMES");
+        // }
+        
         TF1 * S_n[6];
         // double init_par[4] = {0};
-        double par[8] = {0,0,0.02,0.45,0.067,0,0,900000};
-        // "Q0","sig0","W","alpha","miu","sig1","Q1","N"
-        //  0 ,  1   , 2 ,   3   ,  4  ,   5  , 6  , 7
+        double par[8] = { 0,      0,        0.023,    0.45,       miu,    0,      0,      N};
+                        //"Q0",   "sig0",   "W"  ,    "alpha",    "miu",  "sig1", "Q1",   "N"
+                        //  0 ,     1   ,     2  ,    3      ,     4   ,  5     , 6   ,   7
        
+        // PREFITS:
         // Rough fit for initial parameters
         TF1 *pe_fit = new TF1("pe_fit","gaus",7,range_high[v]+8);
         pc->Fit("pe_fit","Q0R");
-        par[5] = pe_fit->GetParameter(2);      //1 p.e. gauss rms
+        par[5]= pe_fit->GetParameter(2);      //1 p.e. gauss rms
         par[6] = pe_fit->GetParameter(1);      //1 p.e. gauss mean
         TF1 *noise_fit = new TF1("noise_fit","gaus",-2,2);
         pc->Fit("noise_fit","Q0R");
@@ -186,66 +194,42 @@ int main( int argc, char* argv[] ) {
         par[0] = noise_fit->GetParameter(1);   //ped gauss mean
 
         // Pedestal peak
-        S_n[0] = new TF1("Sped",Sped,-3,10,5);
+        S_n[0] = new TF1("Sped",Sped,-4,4,5);
         S_n[0]->SetParNames("W","sig0","Q0","miu","N");
-        S_n[0]->SetParameter(0,0.02);
-        // S_n[0]->SetParLimits(0,0,0.45);
-        S_n[0]->SetParameter(1,par[1]);
-        S_n[0]->SetParameter(2,par[0]);
-        S_n[0]->FixParameter(3,par[4]);
-        S_n[0]->SetParameter(4,par[7]);
+        S_n[0]->SetParameters(par[2],par[1],par[0],par[4],par[7]);
         S_n[0]->SetLineColor(1);
-        pc->Fit("Sped","RQ");
+        pc->Fit("Sped","0QR");
         par[0] = S_n[0]->GetParameter("Q0");
         par[1] = S_n[0]->GetParameter("sig0");
+        par[2] = S_n[0]->GetParameter("W");
         par[7] = S_n[0]->GetParameter("N");
 
         // 1 p.e. peak
         S_n[1] = new TF1("S1",S1,7,range_high[v]+8,6);
         S_n[1]->SetParNames("sig1","Q1","miu","N","Q0","Qsh");
-        S_n[1]->SetParameter(0,par[0]);
-        S_n[1]->SetParameter(1,par[1]);
-        S_n[1]->FixParameter(2,par[4]);
-        S_n[1]->SetParameter(3,par[7]);
-        S_n[1]->SetParameter(4,par[0]);
-        S_n[1]->SetParameter(5,par[2]/par[3]);
-        S_n[1]->SetLineColor(9);
-        pc->Fit("S1", "RQ");
+        S_n[1]->SetParameters(par[5],par[6],par[4],par[7],par[0],par[2]/par[3]);
+        S_n[1]->SetLineColor(6);
+        pc->Fit("S1", "R0Q");
         par[5] = S_n[1]->GetParameter("sig1");
         par[6] = S_n[1]->GetParameter("Q1");
 
-        // 2+ p.e. peak
-        for (int n=2; n<=4; n++) {
-            string fitname = "S" + to_string(n);
-            S_n[n] = new TF1(fitname.c_str(),Sn,4,range_high[v]+80,7);
-            S_n[n]->SetParNames("sig1","Q1","miu","N","n","Q0","Qsh");
-            S_n[n]->FixParameter(0,par[5]);
-            S_n[n]->FixParameter(1,par[6]);
-            S_n[n]->FixParameter(2,0.067);
-            S_n[n]->FixParameter(3,par[7]);
-            S_n[n]->FixParameter(4,n);
-            S_n[1]->SetParameter(5,par[0]);
-            S_n[1]->SetParameter(6,par[2]/par[3]);
-            S_n[n]->SetLineColor(3);
-            pc->Fit(fitname.c_str(), "R0Q");
-        }
-
         TF1 *pc_f = new TF1("pc_f",fitf,-3,range_high[v]+90,8);       //87
         pc_f->SetParNames("Q0","sig0","W","alpha","miu","sig1","Q1","N");
-        pc_f->SetParameter(0,par[0]);
-        pc_f->SetParameter(1,par[1]);
-        pc_f->SetParameter(2,0.023); //W
-        pc_f->SetParameter(3,0.45); //alpha
-        // pc_f->SetParLimits(3,0.08,0.2);
-        pc_f->SetParameter(4,0.067);
-        pc_f->SetParameter(5,par[5]);
-        pc_f->SetParameter(6,par[6]);
-        pc_f->SetParameter(7,par[7]);
-        pc->Fit("pc_f","R");  
-
+        pc_f->SetParameters(par[0],par[1],par[2],par[3],par[4],par[5],par[6],par[7]);
+        // pc_f->SetParameter(0,par[0]);
+        // pc_f->SetParameter(1,par[1]);
+        // pc_f->SetParameter(2,0.023);
+        // pc_f->SetParameter(3,0.45);
+        // pc_f->SetParameter(4,0.067);
+        // pc_f->SetParameter(5,par[5]);
+        // pc_f->SetParameter(6,par[6]);
+        // pc_f->SetParameter(7,par[7]);
+        pc->Fit("pc_f","R");          
+        
+        // POST FITS:
         double test_par[8];
-        for (int test=0; test<8; test++){
-            test_par[test] = pc_f->GetParameter(test);
+        for (int test=0; test<8; test++){                               //"Q0","sig0","W","alpha","miu","sig1","Q1","N"
+            test_par[test] = pc_f->GetParameter(test);                  //  0 ,  1   , 2 ,   3   ,  4  ,   5  , 6  , 7
         } 
 
         TF1 *Sped_test = new TF1("Sped-test",Sped,-3,3,5);
@@ -294,7 +278,7 @@ int main( int argc, char* argv[] ) {
             Sn_test->FixParameter(4,n);
             Sn_test->FixParameter(5,test_par[0]);
             Sn_test->FixParameter(6,test_par[2]/test_par[3]);      
-            Sn_test->SetLineColor(3);
+            Sn_test->SetLineColor(8);
             pc->Fit(fitname_test.c_str(), "QR+");
         }
 
