@@ -2,7 +2,6 @@
 #include "ScanPoint.hpp"
 #include "TCanvas.h"
 #include "TFile.h"
-#include "TF1.h"
 #include "TH1D.h"
 #include "TH2F.h"
 #include "THStack.h"
@@ -13,7 +12,6 @@
 #include "TLatex.h"
 #include "TLegend.h"
 #include "TPaveStats.h"
-#include "TProfile.h"
 
 #include <iostream>
 #include <vector>
@@ -103,13 +101,13 @@ int main( int argc, char* argv[] ) {
     
     // Set up files
     TFile * files[7];
-    files[0] = new TFile( "../../mpmt_Analysis_run0861.root" , "read" );
+    files[0] = new TFile( "../../mpmt_Analysis_run0917.root" , "read" );    //861
     files[1] = new TFile( "../../mpmt_Analysis_run0914.root" , "read" );    //854
     files[2] = new TFile( "../../mpmt_Analysis_run0912.root" , "read" );    //853
     files[3] = new TFile( "../../mpmt_Analysis_run0909.root" , "read" );    //857
     files[4] = new TFile( "../../mpmt_Analysis_run0910.root" , "read" );    //855
     files[5] = new TFile( "../../mpmt_Analysis_run0911.root" , "read" );    //856
-    files[6] = new TFile( "../../mpmt_Analysis_run0862.root" , "read" );
+    files[6] = new TFile( "../../mpmt_Analysis_run0916.root" , "read" );    //862
     // files[7] = new TFile( "../../mpmt_Analysis_run0863.root" , "read" );
     
     // Set up voltages
@@ -119,10 +117,10 @@ int main( int argc, char* argv[] ) {
     // Set up canvas
     TCanvas *c1 = new TCanvas("C1","C1",1600,1300);
     int color[7] = {1,810,632,616,600,882,861}; //black, orange, red, magenta, blue, violet, green
-    int range_high[7] = {0,23,25,27,33,40,0};
+    int range_high[7] = {22,23,25,27,33,40,45};
     
     // For each file:
-    for (int v=1; v<6; v++) {
+    for (int v=0; v<7; v++) {
         
         // Get the waveform fit TTree
         tt2 = (TTree*)files[v]->Get("ptfanalysis2");
@@ -133,7 +131,7 @@ int main( int argc, char* argv[] ) {
         double x_low = 20;
         double x_hi = 300;
         string hist_name = to_string((int)voltages[v]) + "V";
-        TH1F *pc = new TH1F(hist_name.c_str(),"Laser Pulse Charge",x_low+x_hi,-1*x_low*bin_unit,x_hi*bin_unit);
+        TH1F *pc = new TH1F(hist_name.c_str(),"Miu=0.36, Pulse charge distribution at different HV",x_low+x_hi,-1*x_low*bin_unit,x_hi*bin_unit);
         
         // Reset peak-to-valley calculation variables
         ptv_min_amp = 10000;
@@ -163,12 +161,12 @@ int main( int argc, char* argv[] ) {
         
         // Draw histogram
         gPad->SetLogy();
-        if(v==1) {
+        if(v==0) {
             pc->GetXaxis()->SetTitle("Pulse charge (mV * 8ns)");
             pc->GetYaxis()->SetTitle("Number of events");
         }
         pc->SetLineColor(color[v]);
-        if (v==1) {
+        if (v==0) {
             pc->Draw();
         } else {
             pc->Draw("SAMES");
@@ -218,11 +216,11 @@ int main( int argc, char* argv[] ) {
         pc->Fit("pc_f","R");          
         
         // POST-FITS:
+        // Uncomment to view separate fits
         for (int save=0; save<8; save++) par[save] = pc_f->GetParameter(save); 
 
         // TF1 *Sped_test = new TF1("Sped-test",Sped,-3,3,5);
         // Sped_test->SetParNames("W","sig0","Q0","miu","N");
-        // // Sped_test->SetParameters(par[2],par[1],par[0],par[4],par[7]);
         // Sped_test->FixParameter(0,par[2]);
         // Sped_test->FixParameter(1,par[1]);
         // Sped_test->FixParameter(2,par[0]);
@@ -230,7 +228,6 @@ int main( int argc, char* argv[] ) {
         // Sped_test->FixParameter(4,par[7]);
         // Sped_test->SetLineColor(2);
         // pc->Fit("Sped-test","QR+");
-        // // Sped_test->Draw();
 
         // TF1 * Snoise_test = new TF1("Snoise-test",Snoise,-3,120,5);
         // Snoise_test->SetParNames("W","alpha","Q0","miu","N");
@@ -252,7 +249,6 @@ int main( int argc, char* argv[] ) {
         // S1_test->FixParameter(5,par[2]/par[3]);
         // S1_test->SetLineColor(6);
         // pc->Fit("S1-test","QR+");
-        // // S1_test->Draw("SAME");
 
         //  // 2+ p.e. peak
         // for (int n=2; n<=4; n++) {
@@ -287,14 +283,13 @@ int main( int argc, char* argv[] ) {
         listOfLines->Add(myt);
         pc->SetStats(0);
         ps->SetX1NDC(0.25+v*0.15);ps->SetX2NDC(0.40+v*0.15);
-        ps->SetY1NDC(0.65);ps->SetY2NDC(0.85);
+        ps->SetY1NDC(0.7);ps->SetY2NDC(0.9);
         if (v>=5) {
             ps->SetX1NDC(0.25+(v-2)*0.15);ps->SetX2NDC(0.40+(v-2)*0.15);
-            ps->SetY1NDC(0.45);ps->SetY2NDC(0.65);
+            ps->SetY1NDC(0.5);ps->SetY2NDC(0.7);
         }
         ps->SetTextColor(color[v]);
-        
-    
+
         c1->Modified();
         
 //        files[v]->Close();            // including this deletes the histograms
