@@ -122,7 +122,7 @@ int main( int argc, char* argv[] ) {
     int range_high[8] = {13,15,18,21,22,24,26,28};
     
     // For each file:
-    for (int v=4; v<5; v++) {
+    for (int v=0; v<7; v++) {
         
         // Get the waveform fit TTree
         tt2 = (TTree*)files[v]->Get("ptfanalysis2");
@@ -170,11 +170,11 @@ int main( int argc, char* argv[] ) {
             pc->GetYaxis()->SetTitle("Number of events");
         }
         pc->SetLineColor(color[v]);
-        // if (v==0) {
+        if (v==0) {
             pc->Draw();
-        // } else {
-        //     pc->Draw("SAMES");
-        // }
+        } else {
+            pc->Draw("SAMES");
+        }
         
         TF1 * S_n[6];
         // double init_par[4] = {0};
@@ -216,82 +216,67 @@ int main( int argc, char* argv[] ) {
         TF1 *pc_f = new TF1("pc_f",fitf,-3,range_high[v]+90,8);       //87
         pc_f->SetParNames("Q0","sig0","W","alpha","miu","sig1","Q1","N");
         pc_f->SetParameters(par[0],par[1],par[2],par[3],par[4],par[5],par[6],par[7]);
-        // pc_f->SetParameter(0,par[0]);
-        // pc_f->SetParameter(1,par[1]);
-        // pc_f->SetParameter(2,0.023);
-        // pc_f->SetParameter(3,0.45);
-        // pc_f->SetParameter(4,0.067);
-        // pc_f->SetParameter(5,par[5]);
-        // pc_f->SetParameter(6,par[6]);
-        // pc_f->SetParameter(7,par[7]);
+        pc_f->SetParLimits(2,0.01,0.05);
+        pc_f->SetParLimits(3,0,1);
         pc->Fit("pc_f","R");          
         
         // POST FITS:
-        double test_par[8];
-        for (int test=0; test<8; test++){                               //"Q0","sig0","W","alpha","miu","sig1","Q1","N"
-            test_par[test] = pc_f->GetParameter(test);                  //  0 ,  1   , 2 ,   3   ,  4  ,   5  , 6  , 7
-        } 
+        for (int save=0; save<8; save++) par[save] = pc_f->GetParameter(save); 
 
-        TF1 *Sped_test = new TF1("Sped-test",Sped,-3,3,5);
-        Sped_test->SetParNames("W","sig0","Q0","miu","N");
-        // Sped_test->SetParameters(test_par[2],test_par[1],test_par[0],test_par[4],test_par[7]);
-        Sped_test->FixParameter(0,test_par[2]);
-        Sped_test->FixParameter(1,test_par[1]);
-        Sped_test->FixParameter(2,test_par[0]);
-        Sped_test->FixParameter(3,test_par[4]);
-        Sped_test->FixParameter(4,test_par[7]);
-        Sped_test->SetLineColor(2);
-        pc->Fit("Sped-test","QR+");
-        // Sped_test->Draw();
+        // TF1 *Sped_test = new TF1("Sped-test",Sped,-3,3,5);
+        // Sped_test->SetParNames("W","sig0","Q0","miu","N");
+        // // Sped_test->SetParameters(par[2],par[1],par[0],par[4],par[7]);
+        // Sped_test->FixParameter(0,par[2]);
+        // Sped_test->FixParameter(1,par[1]);
+        // Sped_test->FixParameter(2,par[0]);
+        // Sped_test->FixParameter(3,par[4]);
+        // Sped_test->FixParameter(4,par[7]);
+        // Sped_test->SetLineColor(2);
+        // pc->Fit("Sped-test","QR+");
+        // // Sped_test->Draw();
 
-        TF1 * Snoise_test = new TF1("Snoise-test",Snoise,-3,120,5);
-        Snoise_test->SetParNames("W","alpha","Q0","miu","N");
-        Snoise_test->FixParameter(0,test_par[2]);
-        Snoise_test->FixParameter(1,test_par[3]);
-        Snoise_test->FixParameter(2,test_par[0]);
-        Snoise_test->FixParameter(3,test_par[4]);
-        Snoise_test->FixParameter(4,test_par[7]);
-        Snoise_test->SetLineColor(4);
-        pc->Fit("Snoise-test","QR+");
+        // TF1 * Snoise_test = new TF1("Snoise-test",Snoise,-3,120,5);
+        // Snoise_test->SetParNames("W","alpha","Q0","miu","N");
+        // Snoise_test->FixParameter(0,par[2]);
+        // Snoise_test->FixParameter(1,par[3]);
+        // Snoise_test->FixParameter(2,par[0]);
+        // Snoise_test->FixParameter(3,par[4]);
+        // Snoise_test->FixParameter(4,par[7]);
+        // Snoise_test->SetLineColor(4);
+        // pc->Fit("Snoise-test","QR+");
 
-        TF1 * S1_test = new TF1("S1-test",S1,0,range_high[v]+15,6);
-        S1_test->SetParNames("sig1","Q1","miu","N","Q0","Qsh");
-        S1_test->FixParameter(0,test_par[5]);
-        S1_test->FixParameter(1,test_par[6]);
-        S1_test->FixParameter(2,test_par[4]);
-        S1_test->FixParameter(3,test_par[7]);
-        S1_test->FixParameter(4,test_par[0]);
-        S1_test->FixParameter(5,test_par[2]/test_par[3]);
-        S1_test->SetLineColor(6);
-        pc->Fit("S1-test","QR+");
-        // S1_test->Draw("SAME");
+        // TF1 * S1_test = new TF1("S1-test",S1,0,range_high[v]+15,6);
+        // S1_test->SetParNames("sig1","Q1","miu","N","Q0","Qsh");
+        // S1_test->FixParameter(0,par[5]);
+        // S1_test->FixParameter(1,par[6]);
+        // S1_test->FixParameter(2,par[4]);
+        // S1_test->FixParameter(3,par[7]);
+        // S1_test->FixParameter(4,par[0]);
+        // S1_test->FixParameter(5,par[2]/par[3]);
+        // S1_test->SetLineColor(6);
+        // pc->Fit("S1-test","QR+");
+        // // S1_test->Draw("SAME");
 
-         // 2+ p.e. peak
-        for (int n=2; n<=3; n++) {
-            string fitname_test = "S" + to_string(n) = "-test";
-            TF1* Sn_test = new TF1(fitname_test.c_str(),Sn,4,range_high[v]+80,7);
-            Sn_test->SetParNames("sig1","Q1","miu","N","n","Q0","Qsh");
-            Sn_test->FixParameter(0,test_par[5]);
-            Sn_test->FixParameter(1,test_par[6]);
-            Sn_test->FixParameter(2,test_par[4]);
-            Sn_test->FixParameter(3,test_par[7]);
-            Sn_test->FixParameter(4,n);
-            Sn_test->FixParameter(5,test_par[0]);
-            Sn_test->FixParameter(6,test_par[2]/test_par[3]);      
-            Sn_test->SetLineColor(8);
-            pc->Fit(fitname_test.c_str(), "QR+");
-        }
-
+        //  // 2+ p.e. peak
+        // for (int n=2; n<=3; n++) {
+        //     string fitname_test = "S" + to_string(n) = "-test";
+        //     TF1* Sn_test = new TF1(fitname_test.c_str(),Sn,4,range_high[v]+80,7);
+        //     Sn_test->SetParNames("sig1","Q1","miu","N","n","Q0","Qsh");
+        //     Sn_test->FixParameter(0,par[5]);
+        //     Sn_test->FixParameter(1,par[6]);
+        //     Sn_test->FixParameter(2,par[4]);
+        //     Sn_test->FixParameter(3,par[7]);
+        //     Sn_test->FixParameter(4,n);
+        //     Sn_test->FixParameter(5,par[0]);
+        //     Sn_test->FixParameter(6,par[2]/par[3]);      
+        //     Sn_test->SetLineColor(8);
+        //     pc->Fit(fitname_test.c_str(), "QR+");
+        // }
         
         gPad->Update();
         gStyle->SetOptStat(11);        
         gStyle->SetOptFit();
-        // TPaveStats *fit_stats = (TPaveStats*)pc->GetListOfFunctions()->FindObject("stats");
-        // fit_stats->SetOptStat();
-        // pc->SetStats(1);
 
-
-        // means[v]=par[6];
         means[v]=pc_f->GetParameter("Q1");
        
         c1->Update();
