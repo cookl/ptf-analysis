@@ -57,7 +57,7 @@ Double_t fitf(Double_t *x, Double_t *p) {
     if (x[0] > p[0]) Snoise=p[3]*p[2]*exp(-1*p[3]*(x[0]-p[0])-p[4]);
     S1=p[4]/(sqrt(2*M_PI)*p[5])*exp(-0.5*pow((x[0]-p[6]-p[0]-p[2]/p[3])/p[5],2)-p[4]);
 
-    for (int n=2; n<=4; n++) {
+    for (int n=2; n<=10; n++) {
         int fact = 1;
         for (int i=n; i>1; i--) {fact *= i;}
         Sn += pow(p[4],n)/(sqrt(2*M_PI*n)*p[5]*fact)*exp(pow((x[0]-n*p[6]-p[0]-p[2]/p[3])/p[5],2)/(-2*n)-p[4]);
@@ -101,23 +101,24 @@ int main( int argc, char* argv[] ) {
     
     // Set up files
     TFile * files[7];
-    files[0] = new TFile( "../../mpmt_Analysis_run0917.root" , "read" );    //861
-    files[1] = new TFile( "../../mpmt_Analysis_run0914.root" , "read" );    //854
-    files[2] = new TFile( "../../mpmt_Analysis_run0912.root" , "read" );    //853
-    files[3] = new TFile( "../../mpmt_Analysis_run0909.root" , "read" );    //857
-    files[4] = new TFile( "../../mpmt_Analysis_run0910.root" , "read" );    //855
-    files[5] = new TFile( "../../mpmt_Analysis_run0911.root" , "read" );    //856
-    files[6] = new TFile( "../../mpmt_Analysis_run0916.root" , "read" );    //862
+    files[0] = new TFile( "../../mpmt_Analysis_run0924.root" , "read" );
+    files[1] = new TFile( "../../mpmt_Analysis_run0925.root" , "read" );
+    files[2] = new TFile( "../../mpmt_Analysis_run0909.root" , "read" );
+    files[3] = new TFile( "../../mpmt_Analysis_run0926.root" , "read" );
+    files[4] = new TFile( "../../mpmt_Analysis_run0918.root" , "read" );
+    files[5] = new TFile( "../../mpmt_Analysis_run0928.root" , "read" );
+    files[6] = new TFile( "../../mpmt_Analysis_run0919.root" , "read" );
     // files[7] = new TFile( "../../mpmt_Analysis_run0863.root" , "read" );
     
-    // Set up voltages
-    double voltages[7] = {1209,1234,1258,1275,1307,1331,1356};
+    // Set up LDCurrent
+    double LDCurrent[7] = {110,115,120,125,130,135,140};
     double means[7];
     
     // Set up canvas
     TCanvas *c1 = new TCanvas("C1","C1",1600,1300);
-    int color[7] = {1,810,632,616,600,882,861}; //black, orange, red, magenta, blue, violet, green
-    int range_high[7] = {22,23,25,27,33,40,45};
+    int color[7] = {1,4,6,8,9,46,874};
+    int range_low = 4;
+    int range_high = 25;
     
     // For each file:
     for (int v=0; v<7; v++) {
@@ -129,9 +130,9 @@ int main( int argc, char* argv[] ) {
         
         // Initiliaze histograms
         double x_low = 20;
-        double x_hi = 300;
-        string hist_name = to_string((int)voltages[v]) + "V";
-        TH1F *pc = new TH1F(hist_name.c_str(),"Miu=0.36, Pulse charge distribution at different HV",x_low+x_hi,-1*x_low*bin_unit,x_hi*bin_unit);
+        double x_hi = 500;
+        string hist_name = "LD Current = " + to_string((int) LDCurrent[v]);
+        TH1F *pc = new TH1F(hist_name.c_str(),"1292V, Pulse charge distribution at different laser intensities",x_low+x_hi,-1*x_low*bin_unit,x_hi*bin_unit);
         
         // Reset peak-to-valley calculation variables
         ptv_min_amp = 10000;
@@ -155,9 +156,8 @@ int main( int argc, char* argv[] ) {
         
         // Find peak-to-valley ratio
         // Range (mV*8ns) depends on run
-        int range_low = 3;
-        peakToValley(range_low, range_high[v], x_low,pc);
-        std::cout << "HV: "<< voltages[v] <<"V. Peak-to-valley ratio: " << ptv_max_amp << "/" << ptv_min_amp << " = " << peak_to_valley << std::endl;;
+        peakToValley(range_low, range_high, x_low,pc);
+        std::cout << "HV: "<< LDCurrent[v] <<"V. Peak-to-valley ratio: " << ptv_max_amp << "/" << ptv_min_amp << " = " << peak_to_valley << std::endl;;
         
         // Draw histogram
         gPad->SetLogy();
@@ -174,106 +174,97 @@ int main( int argc, char* argv[] ) {
         
         TF1 * S_n[6];
         // double init_par[4] = {0};
-        double par[8] = { 0,      0,        0.023,    0.45,       miu,    0,      0,      N};
+        double par[8] = { 0,      0,        0.05,    0.2,       miu,    0,      0,      N};
                         //"Q0",   "sig0",   "W"  ,    "alpha",    "miu",  "sig1", "Q1",   "N"
                         //  0 ,     1   ,     2  ,    3      ,     4   ,  5     , 6   ,   7
-       
+
+        // TLine * ptv_hi = new TLine(4,0,4,100000);
+        // ptv_hi->SetLineColor(color[v]);
+        // ptv_hi->Draw("SAME");
+
+        // TLine * ptv_low = new TLine(25,0,25,100000);
+        // ptv_low->SetLineColor(color[v]);
+        // ptv_low->Draw("SAME");
+        
         // PRE-FITS:
         // Rough fit for initial parameters
-        TF1 *pe_fit = new TF1("pe_fit","gaus",7,range_high[v]+15);
+
+        TF1 *pe_fit = (v>5) ? new TF1("pe_fit","gaus",20,33) : new TF1("pe_fit","gaus",18,28);        
         pc->Fit("pe_fit","Q0R");
         par[5]= pe_fit->GetParameter(2);      //1 p.e. gauss rms
         par[6] = pe_fit->GetParameter(1);      //1 p.e. gauss mean
-        TF1 *noise_fit = new TF1("noise_fit","gaus",-2,2);
-        pc->Fit("noise_fit","Q0R");
-        par[1] = noise_fit->GetParameter(2);   //ped gauss rms
-        par[0] = noise_fit->GetParameter(1);   //ped gauss mean
+        TF1 *ped_fit = new TF1("ped_fit","gaus",-2,2);
+        pc->Fit("ped_fit","Q0R");
+        par[1] = ped_fit->GetParameter(2);   //ped gauss rms
+        par[0] = ped_fit->GetParameter(1);   //ped gauss mean
 
         // Pedestal peak
-        S_n[0] = new TF1("Sped",Sped,-3,3,5);
+        S_n[0] = new TF1("Sped",Sped,-2,2,5);
         S_n[0]->SetParNames("W","sig0","Q0","miu","N");
         S_n[0]->SetParameters(par[2],par[1],par[0],par[4],par[7]);
         S_n[0]->SetLineColor(1);
-        pc->Fit("Sped","QR0");
+        pc->Fit("Sped","R0Q");
         par[0] = S_n[0]->GetParameter("Q0");
         par[1] = S_n[0]->GetParameter("sig0");
         par[2] = S_n[0]->GetParameter("W");
         par[7] = S_n[0]->GetParameter("N");
 
         // 1 p.e. peak
-        S_n[1] = new TF1("S1",S1,7,range_high[v]+15,6);
+        S_n[1] = (v>5) ? new TF1("S1",S1,20,33,6) : new TF1("S1",S1,18,28,6);
         S_n[1]->SetParNames("sig1","Q1","miu","N","Q0","Qsh");
         S_n[1]->SetParameters(par[5],par[6],par[4],par[7],par[0],par[2]/par[3]);
         S_n[1]->SetLineColor(6);
-        pc->Fit("S1", "RQ0");
+        pc->Fit("S1", "R0Q");
         par[5] = S_n[1]->GetParameter("sig1");
         par[6] = S_n[1]->GetParameter("Q1");
 
+        // cout << "params:"<<endl;
+        // for (int i=0; i<7; i++) cout<<par[i]<<endl;
+
         // Overall fit
-        TF1 *pc_f = new TF1("pc_f",fitf,-3,range_high[v]+100,8);       //87
+        TF1 *pc_f = new TF1("pc_f",fitf,-3,250,8);       //87
         pc_f->SetParNames("Q0","sig0","W","alpha","miu","sig1","Q1","N");
         pc_f->SetParameters(par[0],par[1],par[2],par[3],par[4],par[5],par[6],par[7]);
+        pc_f->SetNpx(400);
         pc->Fit("pc_f","R");          
         
-        // POST-FITS:
-        // Uncomment to view separate fits
-        for (int save=0; save<8; save++) par[save] = pc_f->GetParameter(save); 
+        // // POST-FITS:
+        // // Uncomment to view separate fits
+        // for (int save=0; save<8; save++) par[save] = pc_f->GetParameter(save); 
 
         // TF1 *Sped_test = new TF1("Sped-test",Sped,-3,3,5);
         // Sped_test->SetParNames("W","sig0","Q0","miu","N");
-        // Sped_test->FixParameter(0,par[2]);
-        // Sped_test->FixParameter(1,par[1]);
-        // Sped_test->FixParameter(2,par[0]);
-        // Sped_test->FixParameter(3,par[4]);
-        // Sped_test->FixParameter(4,par[7]);
-        // Sped_test->SetLineColor(2);
-        // pc->Fit("Sped-test","QR+");
+        // Sped_test->SetParameters(par[2],par[1],par[0],par[4],par[7]);
+        // Sped_test->SetLineColor(1);
+        // Sped_test->Draw("same");
 
-        // TF1 * Snoise_test = new TF1("Snoise-test",Snoise,-3,120,5);
+        // TF1 * Snoise_test = new TF1("Snoise-test",Snoise,-2,250,5);
         // Snoise_test->SetParNames("W","alpha","Q0","miu","N");
-        // Snoise_test->FixParameter(0,par[2]);
-        // Snoise_test->FixParameter(1,par[3]);
-        // Snoise_test->FixParameter(2,par[0]);
-        // Snoise_test->FixParameter(3,par[4]);
-        // Snoise_test->FixParameter(4,par[7]);
+        // Snoise_test->SetParameters(par[2],par[3],par[0],par[4],par[7]);
         // Snoise_test->SetLineColor(4);
-        // pc->Fit("Snoise-test","QR+");
+        // Snoise_test->Draw("same");
 
-        // TF1 * S1_test = new TF1("S1-test",S1,0,range_high[v]+30,6);
+        // TF1 * S1_test = new TF1("S1-test",S1,0,50,6);
         // S1_test->SetParNames("sig1","Q1","miu","N","Q0","Qsh");
-        // S1_test->FixParameter(0,par[5]);
-        // S1_test->FixParameter(1,par[6]);
-        // S1_test->FixParameter(2,par[4]);
-        // S1_test->FixParameter(3,par[7]);
-        // S1_test->FixParameter(4,par[0]);
-        // S1_test->FixParameter(5,par[2]/par[3]);
+        // S1_test->SetParameters(par[5],par[6],par[4],par[7],par[0],par[2]/par[3]);
         // S1_test->SetLineColor(6);
-        // pc->Fit("S1-test","QR+");
+        // S1_test->Draw("same");
 
         //  // 2+ p.e. peak
-        // for (int n=2; n<=4; n++) {
+        // for (int n=2; n<=10; n++) {
         //     string fitname_test = "S" + to_string(n) = "-test";
-        //     TF1* Sn_test = new TF1(fitname_test.c_str(),Sn,4,range_high[v]+100,7);
+        //     TF1* Sn_test = new TF1(fitname_test.c_str(),Sn,4,250,7);
         //     Sn_test->SetParNames("sig1","Q1","miu","N","n","Q0","Qsh");
-        //     Sn_test->FixParameter(0,par[5]);
-        //     Sn_test->FixParameter(1,par[6]);
-        //     Sn_test->FixParameter(2,par[4]);
-        //     Sn_test->FixParameter(3,par[7]);
-        //     Sn_test->FixParameter(4,n);
-        //     Sn_test->FixParameter(5,par[0]);
-        //     Sn_test->FixParameter(6,par[2]/par[3]);      
+        //     Sn_test->SetParameters(par[5],par[6],par[4],par[7],n,par[0],par[2]/par[3]);
         //     Sn_test->SetLineColor(8);
-        //     pc->Fit(fitname_test.c_str(), "QR+");
+        //     Sn_test->Draw("same");
         // }
-        
-        gPad->Update();
+
         gStyle->SetOptStat(11);        
         gStyle->SetOptFit();
 
         means[v]=pc_f->GetParameter("Q1");
-       
-        c1->Update();
-        
+               
         // Print peak-to-valley ratio on histogram
         TPaveStats *ps = (TPaveStats*)pc->GetListOfFunctions()->FindObject("stats");
         ps->SetName("peak-to-valley");
@@ -295,16 +286,16 @@ int main( int argc, char* argv[] ) {
 //        files[v]->Close();            // including this deletes the histograms
     }
     
-    c1->SaveAs("pc_spectrum.png");
+    c1->SaveAs("laser_pc_spectrum.png");
     
     TCanvas *c2 = new TCanvas("C2");
-    TGraph *pc_mean = new TGraph(7,voltages,means);
-    pc_mean->SetTitle("Pulse charge p.e. peak mean at different HV");
+    TGraph *pc_mean = new TGraph(7,LDCurrent,means);
+    pc_mean->SetTitle("1PE peak charge at different laser intensities");
     pc_mean->GetXaxis()->SetTitle("HV (V)");
-    pc_mean->GetYaxis()->SetTitle("Mean of pulse charge p.e. peak (mV*8ns)");
-    gPad->SetLogy();
+    pc_mean->GetYaxis()->SetTitle("1PE peak charge (mV*8ns)");
+    // pc_mean->GetYaxis()->SetRangeUser(18,25);
     pc_mean->Draw("a*");
-    c2->SaveAs("pc_spectrum_mean.png");
+    c2->SaveAs("laser_pc_spectrum_mean.png");
     
     return 0;
 }
