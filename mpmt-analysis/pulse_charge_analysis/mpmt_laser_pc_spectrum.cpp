@@ -174,7 +174,7 @@ int main( int argc, char* argv[] ) {
         
         TF1 * S_n[6];
         // double init_par[4] = {0};
-        double par[8] = { 0,      0,        0.05,    0.2,       miu,    0,      0,      N};
+        double par[8] = { 0,      0,        0.057,    0.1457,       miu,    0,      0,      N};
                         //"Q0",   "sig0",   "W"  ,    "alpha",    "miu",  "sig1", "Q1",   "N"
                         //  0 ,     1   ,     2  ,    3      ,     4   ,  5     , 6   ,   7
 
@@ -224,7 +224,15 @@ int main( int argc, char* argv[] ) {
         // Overall fit
         TF1 *pc_f = new TF1("pc_f",fitf,-3,250,8);       //87
         pc_f->SetParNames("Q0","sig0","W","alpha","miu","sig1","Q1","N");
-        pc_f->SetParameters(par[0],par[1],par[2],par[3],par[4],par[5],par[6],par[7]);
+        pc_f->SetParameter(0,par[0]);
+        pc_f->SetParameter(1,par[1]);
+        pc_f->FixParameter(2,par[2]);
+        pc_f->FixParameter(3,par[3]);
+        pc_f->SetParameter(4,par[4]);
+        pc_f->SetParameter(5,par[5]);
+        pc_f->SetParameter(6,par[6]);
+        pc_f->SetParameter(7,par[7]);
+        // pc_f->SetParameters(par[0],par[1],par[2],par[3],par[4],par[5],par[6],par[7]);
         pc_f->SetNpx(400);
         pc->Fit("pc_f","R");          
         
