@@ -11,13 +11,30 @@
 #include <fstream>
 #include <math.h>
 
-void PTFAnalysis::ChargeSum( float ped ){
-  fitresult->qped = ped;
-  float sum = 0.;
-  for( int ibin = 1; ibin<=hwaveform->GetNbinsX(); ibin++ ){
-    sum += ped - hwaveform->GetBinContent( ibin );
-  }
-  fitresult->qsum = sum;
+// Pulse charge calculation (integrated pulse height over bin range {bin_low,bin_high})
+// Optionally arguments: bin_low and bin_high (otherwise checks entire range from 0-8192ns)
+// Note that time in waveform = bin number * 8 ns
+void PTFAnalysis::ChargeSum( float ped, int bin_low, int bin_high ){
+    if (bin_high==0) bin_high=hwaveform->GetNbinsX();
+    fitresult->qped = ped;
+    float sum = 0.;
+    
+    // Recalculate pedestal per waveform
+    if (bin_high!=0) {
+        ped=0;
+        int ped_range = bin_low-50;
+        if (ped_range<10) ped_range=10;
+        for (int i=1; i<=ped_range; i++) ped+= hwaveform->GetBinContent(i);
+        ped = ped/(bin_low-50);
+        fitresult->qped = ped;
+    }
+    
+    // Pulse charge calculation
+    for( int ibin = bin_low; ibin<=bin_high; ibin++ ){
+        auto to_add = ped - hwaveform->GetBinContent( ibin );
+        sum += to_add;
+    }
+    fitresult->qsum = sum;
 }
 
 bool PTFAnalysis::MonitorCut( float cut ){
@@ -656,8 +673,10 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, Wrapper & wrapper, double errorbar, PT
   if ( save_waveforms && wfdir_fft==nullptr ) wfdir_fft = outfile->mkdir(wfdir_fft_name.c_str());
   if ( save_waveforms && nowfdir_fft==nullptr ) nowfdir_fft = outfile->mkdir(nowfdir_fft_name.c_str());
   outfile->cd();
+    
   // Loop over scan points (index i)
   unsigned long long nfilled = 0;// number of TTree entries so far
+
   for (unsigned i = 2; i < wrapper.getNumEntries(); i++) {
     //if ( i>2000 ) continue;
     if( terminal_output ){
@@ -677,7 +696,6 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, Wrapper & wrapper, double errorbar, PT
     scanpoints.push_back( ScanPoint( location.x, location.y, location.z,time_F.time_c, T.ext_2, nfilled ) );
     
     ScanPoint& curscanpoint = scanpoints[ scanpoints.size()-1 ];
-    
     // loop over the number of waveforms at this ScanPoint (index j)
     int numWaveforms = wrapper.getNumSamples();
     for ( int j=0; j<numWaveforms; j++) {
@@ -698,9 +716,20 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, Wrapper & wrapper, double errorbar, PT
       }else{
         fitresult->numPulses = 0;
       }
+
+//       Do simple charge sum calculation
+        if( pmt.pmt == 0 ) {
+            ChargeSum(0.9931); //original PTF function call here
+        }
         
-      // Do simple charge sum calculation
-      if( pmt.pmt == 0 ) ChargeSum(0.9931);
+        // Added by Yuka June 2021 for PMT pulse charge calculation
+        if (pmt.type == PTF::mPMT_REV0_PMT) {
+            if (pmt.pmt==1) ChargeSum(1.0034,260,271);    //2080 to 2170 ns
+            if (pmt.pmt==2) ChargeSum(1.00146,272,287);   //2180 to 2300 ns
+        }
+        
+        
+        
       // For main PMT do FFT and check if there is a waveform
       // If a waveform present then fit it
       if( dofit && pulse_location_cut && pmt.pmt == 0 ) dofit = PulseLocationCut(10);
@@ -758,7 +787,6 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, Wrapper & wrapper, double errorbar, PT
   }
   //cout << endl;
   // Done.
-  
 }
 
 const std::vector< double > PTFAnalysis::get_bins( char dim ){
