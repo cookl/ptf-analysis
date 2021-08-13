@@ -15,10 +15,10 @@ terminal_output = true
 pulse_location_cut = false
 fft_cut = false
 do_pulse_finding = true
-do_pulse_fitting = true
+do_pulse_fitting = false
 
 
 # mPMT parameters
 
 # list of channels to analyze; comma separated list
-mpmt_channel_list = 0, 2, 4
+mpmt_channel_list = 1,2
