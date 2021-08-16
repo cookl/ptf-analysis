@@ -185,8 +185,7 @@ int main(int argc, char** argv) {
   ptn->Draw();
   gPad->BuildLegend();
   c2->SaveAs(filename2.c_str());
-  string filename3 = title + ".root";
-  c2->Print(filename3.c_str());
+  c2->Write(title.c_str());
 
   outfile->Write();
   outfile->Close();
