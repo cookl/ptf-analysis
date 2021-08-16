@@ -33,7 +33,7 @@ otherwise default) channels are also outputted.
 */
 
 TH1D* hwaveform{nullptr}; // current waveform
-int color[20]={8,5,41,28,9,30,46,38,1,920,632,416,600,400,616,432,800,820,880,860};
+int color[20]={1,633,600,419,618,807,891,14,861,413,803,874,430,895,873,870,801,637,625,602};
 
 int main(int argc, char** argv) {  
 
@@ -99,7 +99,7 @@ int main(int argc, char** argv) {
 
   // Opening the output root file
   string outname = "run0" + run_num + "_wfdisplay_" + argv[2] + ".root";
-  TFile * outFile = new TFile(outname.c_str(), "NEW");
+  TFile * outfile = new TFile(outname.c_str(), "NEW");
 
   // Retrieve active channels and set up PMT
   vector<int> active_channels;
@@ -138,7 +138,7 @@ int main(int argc, char** argv) {
     // Build the waveform histogram
     string hname = "run0" + run_num + " - event" + to_string(event_num-2) + " - ch" + to_string(pmt.channel);
     string htitle = hname + "; Time (ns); Voltage (V)";
-    outFile->cd();
+    outfile->cd();
     hwaveform = new TH1D( hname.c_str(), htitle.c_str(), numTimeBins, 0., float(numTimeBins)*1000/digi.samplingRate );
 
     wrapper.setCurrentEntry(event_num);
@@ -151,6 +151,12 @@ int main(int argc, char** argv) {
       hwaveform->SetBinError( ibin, 2.1e-3 );
     }
     hwaveform->Scale(digi.fullScaleRange/digiCounts);
+    
+    // plot options
+    hwaveform->SetLineColor(color[i]);
+    hwaveform->SetMarkerStyle(8);
+    hwaveform->SetMarkerSize(0.5);
+    hwaveform->SetMarkerColor(color[i]);
 
     // Print waveform separately
     TCanvas *c1 = new TCanvas("c1", "C1",1000,800);
@@ -162,9 +168,7 @@ int main(int argc, char** argv) {
 
     // Overlay current waveform
     c2->cd();
-    hwaveform->SetLineColor(color[i]);
-    hwaveform->SetMarkerStyle(7);
-    hwaveform->SetMarkerColor(color[i]);
+    hwaveform->GetYaxis()->SetRangeUser(0.25,1.3);
     hwaveform->Draw("SAMES");
     c2->Update();
   }
@@ -181,9 +185,11 @@ int main(int argc, char** argv) {
   ptn->Draw();
   gPad->BuildLegend();
   c2->SaveAs(filename2.c_str());
+  string filename3 = title + ".root";
+  c2->Print(filename3.c_str());
 
-  outFile->Write();
-  outFile->Close();
+  outfile->Write();
+  outfile->Close();
   return 0;
 }
 
