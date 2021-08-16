@@ -15,13 +15,13 @@ using namespace std;
 This program takes a mPMT ROOT data file and a specified event number as inputs. 
 
 Other optional inputs include:
-  - specified channels (0-20) provided as a comma separated list
+  - specified channels (0-19) provided as a comma separated list
   - specified time range in ns (0-8192) in the format (lower_range,higher_range)
 Channel and time range options can be specified separately or at the same time 
 (order does not matter).
 
 The default settings are:
-  - channels 0-20
+  - channels 0-19
   - full time range 0-8192 ns
 
 Each waveform for the specified (or otherwise default) channels is outputted 
