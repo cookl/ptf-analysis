@@ -174,7 +174,7 @@ int main( int argc, char* argv[] ) {
         
         TF1 * S_n[6];
         // double init_par[4] = {0};
-        double par[8] = { 0,      0,        0.057,    0.1457,       miu,    0,      0,      N};
+        double par[8] = { 0,      0,        0.057,    0.147,       miu,    0,      0,      N};
                         //"Q0",   "sig0",   "W"  ,    "alpha",    "miu",  "sig1", "Q1",   "N"
                         //  0 ,     1   ,     2  ,    3      ,     4   ,  5     , 6   ,   7
 
@@ -226,7 +226,7 @@ int main( int argc, char* argv[] ) {
         pc_f->SetParNames("Q0","sig0","W","alpha","miu","sig1","Q1","N");
         pc_f->SetParameter(0,par[0]);
         pc_f->SetParameter(1,par[1]);
-        pc_f->FixParameter(2,par[2]);
+        pc_f->SetParameter(2,par[2]);
         pc_f->FixParameter(3,par[3]);
         pc_f->SetParameter(4,par[4]);
         pc_f->SetParameter(5,par[5]);

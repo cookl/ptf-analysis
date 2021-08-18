@@ -100,29 +100,32 @@ Double_t Sn(Double_t *x, Double_t *p) {
 int main( int argc, char* argv[] ) {
     
     // Set up files
-    TFile * files[8];
-    files[0] = new TFile( "../../mpmt_Analysis_run0933.root" , "read" );    
-    files[1] = new TFile( "../../mpmt_Analysis_run0917.root" , "read" );
-    files[2] = new TFile( "../../mpmt_Analysis_run0914.root" , "read" );
-    files[3] = new TFile( "../../mpmt_Analysis_run0912.root" , "read" );
-    files[4] = new TFile( "../../mpmt_Analysis_run0909.root" , "read" );
-    files[5] = new TFile( "../../mpmt_Analysis_run0910.root" , "read" );
-    files[6] = new TFile( "../../mpmt_Analysis_run0911.root" , "read" );
-    files[7] = new TFile( "../../mpmt_Analysis_run0916.root" , "read" );
+    TFile * files[11];
+    files[0] = new TFile( "../../mpmt_Analysis_run0933.root" , "read" );
+    files[1] = new TFile( "../../mpmt_Analysis_run0934.root" , "read" );   
+    files[2] = new TFile( "../../mpmt_Analysis_run0929.root" , "read" );   
+    files[3] = new TFile( "../../mpmt_Analysis_run0930.root" , "read" );
+    files[4] = new TFile( "../../mpmt_Analysis_run0917.root" , "read" );
+    files[5] = new TFile( "../../mpmt_Analysis_run0914.root" , "read" );
+    files[6] = new TFile( "../../mpmt_Analysis_run0912.root" , "read" );
+    files[7] = new TFile( "../../mpmt_Analysis_run0909.root" , "read" );
+    files[8] = new TFile( "../../mpmt_Analysis_run0910.root" , "read" );
+    files[9] = new TFile( "../../mpmt_Analysis_run0911.root" , "read" );
+    files[10] = new TFile( "../../mpmt_Analysis_run0916.root" , "read" );
     
     // Set up voltages
     // double voltages[7] = {1209,1234,1258,1275,1307,1331,1356};
-    double voltages[8] = {1000,1225,1250,1275,1292,1325,1350,1375};
-    double means[8];
+    double voltages[11] = {1000,1050,1100,1150,1225,1250,1275,1292,1325,1350,1375};
+    double means[11];
     
     // Set up canvas
     TCanvas *c1 = new TCanvas("C1","C1",1600,1300);
-    int color[8] = {1,2,4,6,8,9,46,874};
-    int range_low[8]{3,4,4,4,4,5,6,7};
-    int range_high[8]={4,18,22,24,27,33,36,40};
+    int color[20]={1,633,600,419,618,807,891,14,861,413,803,874,430,895,873,870,801,637,625,602};
+    int range_low[11]{3,3,3,3,4,4,4,4,5,6,7};
+    int range_high[11]={4,6,9,13,18,22,24,27,33,36,40};
     
     // For each file:
-    for (int v=0; v<1; v++) {
+    for (int v=0; v<11; v++) {
         
         // Get the waveform fit TTree
         tt2 = (TTree*)files[v]->Get("ptfanalysis2");
@@ -145,9 +148,7 @@ int main( int argc, char* argv[] ) {
             // Collect pulse charge
             auto pulse_charge = wf2->qsum;
             pc->Fill(pulse_charge * 1000.0); // Convert to mV
-            
-            // if (pulse_charge>=-4 && pulse_charge<=4) miu+=pulse_charge;
-            if (i==961240) break;
+            if (i==930000) break;
         }
 
         // Calculate miu
@@ -200,16 +201,16 @@ int main( int argc, char* argv[] ) {
         pc->Fit("Sped","QR0");
         par[0] = S_n[0]->GetParameter("Q0");
         par[1] = S_n[0]->GetParameter("sig0");
-        par[2] = S_n[0]->GetParameter("W");
+        // par[2] = S_n[0]->GetParameter("W");
         par[7] = S_n[0]->GetParameter("N");
 
         // 1 p.e. peak
-        if (v<1) S_n[1] = new TF1("S1",S1,range_low[v],range_high[v]+1,6);
+        if (v<2) S_n[1] = new TF1("S1",S1,range_low[v],range_high[v]+1,6);
         else S_n[1] = new TF1("S1",S1,range_low[v]*3,range_high[v]+5,6);
         S_n[1]->SetParNames("sig1","Q1","miu","N","Q0","Qsh");
         S_n[1]->SetParameters(par[5],par[6],par[4],par[7],par[0],par[2]/par[3]);
         S_n[1]->SetLineColor(6);
-        pc->Fit("S1", "RQ+");
+        pc->Fit("S1", "R0Q");
         par[5] = S_n[1]->GetParameter("sig1");
         par[6] = S_n[1]->GetParameter("Q1");
 
@@ -224,17 +225,17 @@ int main( int argc, char* argv[] ) {
         // Overall fit
         TF1 *pc_f = new TF1("pc_f",fitf,-3,140,8);       //87
         pc_f->SetParNames("Q0","sig0","W","alpha","miu","sig1","Q1","N");
-        pc_f->SetParameters(par[0],par[1],par[2],par[3],par[4],par[5],par[6],par[7]);
-        // pc_f->SetParameter(0,par[0]);
-        // pc_f->SetParameter(1,par[1]);
-        // pc_f->FixParameter(2,par[2]);
-        // pc_f->FixParameter(3,par[3]);
-        // pc_f->SetParameter(4,par[4]);
-        // pc_f->SetParameter(5,par[5]);
-        // pc_f->SetParameter(6,par[6]);
-        // pc_f->SetParameter(7,par[7]);
-        pc_f->SetNpx(200);
-        pc->Fit("pc_f","0R+");          
+        // pc_f->SetParameters(par[0],par[1],par[2],par[3],par[4],par[5],par[6],par[7]);
+        pc_f->SetParameter(0,par[0]);
+        pc_f->SetParameter(1,par[1]);
+        pc_f->FixParameter(2,par[2]);
+        pc_f->SetParameter(3,par[3]);
+        pc_f->SetParameter(4,par[4]);
+        pc_f->SetParameter(5,par[5]);
+        pc_f->SetParameter(6,par[6]);
+        pc_f->SetParameter(7,par[7]);
+        pc_f->SetNpx(300);
+        pc->Fit("pc_f","R");          
         
         // // POST-FITS:
         // // Uncomment to view separate fits
@@ -286,9 +287,14 @@ int main( int argc, char* argv[] ) {
         pc->SetStats(0);
         ps->SetX1NDC(0.25+v*0.15);ps->SetX2NDC(0.40+v*0.15);
         ps->SetY1NDC(0.7);ps->SetY2NDC(0.9);
-        if (v>=5) {
-            ps->SetX1NDC(0.25+(v-2)*0.15);ps->SetX2NDC(0.40+(v-2)*0.15);
+        
+        if (v>4) {
+            ps->SetX1NDC(0.25+(v-3)*0.15);ps->SetX2NDC(0.40+(v-3)*0.15);
             ps->SetY1NDC(0.5);ps->SetY2NDC(0.7);
+        }
+        if (v>8){
+            ps->SetX1NDC(0.25+(v-6)*0.15);ps->SetX2NDC(0.40+(v-6)*0.15);
+            ps->SetY1NDC(0.3);ps->SetY2NDC(0.5);
         }
         ps->SetTextColor(color[v]);
 
@@ -304,7 +310,7 @@ int main( int argc, char* argv[] ) {
     pc_mean->SetTitle("1PE peak charge at different HV");
     pc_mean->GetXaxis()->SetTitle("HV (V)");
     pc_mean->GetYaxis()->SetTitle("1PE peak charge (mV*8ns)");
-    pc_mean->GetYaxis()->SetRangeUser(9,100);
+    // pc_mean->GetYaxis()->SetRangeUser(9,100);
     gPad->SetLogy();
     pc_mean->Draw("a*");
     c2->SaveAs("hv_pc_spectrum_mean.png");
