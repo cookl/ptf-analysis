@@ -29,6 +29,8 @@ double peak_to_valley;
 double ptv_min_amp;
 double ptv_max_amp;
 
+int color[20]={1,633,600,419,618,807,891,14,861,413,803,874,430,895,873,870,801,637,625,602};
+
 // Calculate peak-to-valley ratio for pulse charge
 //  - calculated by finding minimum and maximum in given range
 void peakToValley(int range_low, int range_high, int pc_lower_range, TH1F* pc) {
@@ -57,7 +59,7 @@ Double_t fitf(Double_t *x, Double_t *p) {
     if (x[0] > p[0]) Snoise=p[3]*p[2]*exp(-1*p[3]*(x[0]-p[0])-p[4]);
     S1=p[4]/(sqrt(2*M_PI)*p[5])*exp(-0.5*pow((x[0]-p[6]-p[0]-p[2]/p[3])/p[5],2)-p[4]);
 
-    for (int n=2; n<=4; n++) {
+    for (int n=2; n<=10; n++) {
         int fact = 1;
         for (int i=n; i>1; i--) {fact *= i;}
         Sn += pow(p[4],n)/(sqrt(2*M_PI*n)*p[5]*fact)*exp(pow((x[0]-n*p[6]-p[0]-p[2]/p[3])/p[5],2)/(-2*n)-p[4]);
@@ -96,48 +98,21 @@ Double_t Sn(Double_t *x, Double_t *p) {
     return Sn;
 }
 
+void charge_spectrum(TCanvas * c, int num_files, TFile ** files,  double * values, double * mean=NULL, int *range_low=NULL, int *range_high=NULL) {
+    for (int v=0; v<num_files; v++) {
 
-int main( int argc, char* argv[] ) {
-    
-    // Set up files
-    TFile * files[11];
-    files[0] = new TFile( "../../mpmt_Analysis_run0933.root" , "read" );
-    files[1] = new TFile( "../../mpmt_Analysis_run0934.root" , "read" );   
-    files[2] = new TFile( "../../mpmt_Analysis_run0929.root" , "read" );   
-    files[3] = new TFile( "../../mpmt_Analysis_run0930.root" , "read" );
-    files[4] = new TFile( "../../mpmt_Analysis_run0917.root" , "read" );
-    files[5] = new TFile( "../../mpmt_Analysis_run0914.root" , "read" );
-    files[6] = new TFile( "../../mpmt_Analysis_run0912.root" , "read" );
-    files[7] = new TFile( "../../mpmt_Analysis_run0909.root" , "read" );
-    files[8] = new TFile( "../../mpmt_Analysis_run0910.root" , "read" );
-    files[9] = new TFile( "../../mpmt_Analysis_run0911.root" , "read" );
-    files[10] = new TFile( "../../mpmt_Analysis_run0916.root" , "read" );
-    
-    // Set up voltages
-    // double voltages[7] = {1209,1234,1258,1275,1307,1331,1356};
-    double voltages[11] = {1000,1050,1100,1150,1225,1250,1275,1292,1325,1350,1375};
-    double means[11];
-    
-    // Set up canvas
-    TCanvas *c1 = new TCanvas("C1","C1",1600,1300);
-    int color[20]={1,633,600,419,618,807,891,14,861,413,803,874,430,895,873,870,801,637,625,602};
-    int range_low[11]{3,3,3,3,4,4,4,4,5,6,7};
-    int range_high[11]={4,6,9,13,18,22,24,27,33,36,40};
-    
-    // For each file:
-    for (int v=0; v<11; v++) {
-        
         // Get the waveform fit TTree
         tt2 = (TTree*)files[v]->Get("ptfanalysis2");
         wf2 = new WaveformFitResult;
         if(tt2) wf2->SetBranchAddresses( tt2 );
-        
+
         // Initiliaze histograms
         double x_low = 20;
-        double x_hi = 300;
-        string hist_name = to_string((int)voltages[v]) + "V";
-        TH1F *pc = new TH1F(hist_name.c_str(),"Miu=0.36, Pulse charge distribution at different HV",x_low+x_hi,-1*x_low*bin_unit,x_hi*bin_unit);
-        
+        double x_hi = (mean==NULL) ? 500 : 300;
+        string hist_name = (mean==NULL) ? "LD Current = " + to_string((int) values[v]): to_string((int)values[v]) + "V";
+        string hist_title = (mean==NULL) ? "1292V, Pulse charge distribution at different laser intensities" : "Miu=0.36, Pulse charge distribution at different HV";
+        TH1F *pc = new TH1F(hist_name.c_str(),hist_title.c_str(),x_low+x_hi,-1*x_low*bin_unit,x_hi*bin_unit);
+    
         // Reset peak-to-valley calculation variables
         ptv_min_amp = 10000;
         ptv_max_amp = 0;
@@ -154,14 +129,17 @@ int main( int argc, char* argv[] ) {
         // Calculate miu
         double N = 0;
         for (int bin=12; bin<=28; bin++) N+=pc->GetBinContent(bin);
-        double miu = -log(N/961240);
-        
+        double miu = -log(N/930000);
+    
         // Find peak-to-valley ratio
-        // Range (mV*8ns) depends on run
-        peakToValley(range_low[v], range_high[v], x_low,pc);
-        std::cout << "HV: "<< voltages[v] <<"V. Peak-to-valley ratio: " << ptv_max_amp << "/" << ptv_min_amp << " = " << peak_to_valley << std::endl;;
+        if (mean==NULL) {
+            peakToValley(4,25,x_low,pc);
+        } else {
+            peakToValley(range_low[v],range_high[v],x_low,pc);
+        }
 
         // Draw histogram
+        c->cd();
         gPad->SetLogy();
         if(v==0) {
             pc->GetXaxis()->SetTitle("Pulse charge (mV * 8ns)");
@@ -173,25 +151,29 @@ int main( int argc, char* argv[] ) {
         } else {
             pc->Draw("SAMES");
         }
-        
-        
 
+        // BEGIN FITTING CHARGE SPECTRUM
         TF1 * S_n[6];
-        // double init_par[4] = {0};
-        double par[8] = { 0,      0,        0.057,    0.1457,       miu,    0,      0,      N};
-                        //"Q0",   "sig0",   "W"  ,    "alpha",    "miu",  "sig1", "Q1",   "N"
-                        //  0 ,     1   ,     2  ,    3      ,     4   ,  5     , 6   ,   7
+        double par[8] = {0,0,0.057,0.147,miu,0,0,N};   //{Q0, sig0, W, alpha, miu, sig1, Q1, N}
 
         // PRE-FITS:
         // Rough fit for initial parameters
-        TF1 *pe_fit = new TF1("pe_fit","gaus",range_low[v]*1.2,range_high[v]*3+v);
+        TF1 *pe_fit;
+        if (mean==NULL) {
+            if (v<6) pe_fit = new TF1("pe_fit","gaus",18,28);
+            if (v==6) pe_fit = new TF1("pe_fit","gaus",20,33);
+            if (v==7) pe_fit = new TF1("pe_fit","gaus",26,31);
+            if (v>7) pe_fit = new TF1("pe_fit","gaus",26,31);
+        } else {
+            pe_fit = new TF1("pe_fit","gaus",range_low[v]*1.2,range_high[v]*3+v);
+        }
         pc->Fit("pe_fit","Q0R");
-        par[5]= pe_fit->GetParameter(2);      //1 p.e. gauss rms
-        par[6] = pe_fit->GetParameter(1);      //1 p.e. gauss mean
-        TF1 *ped_fit = new TF1("ped_fit","gaus",-2,3);
+        par[5] = pe_fit->GetParameter(2);    //1 p.e. gauss rms
+        par[6] = pe_fit->GetParameter(1);   //1 p.e. gauss mean
+        TF1 *ped_fit = new TF1("ped_fit","gaus",-2,2);
         pc->Fit("ped_fit","Q0R");
-        par[1] = ped_fit->GetParameter(2);   //ped gauss rms
-        par[0] = ped_fit->GetParameter(1);   //ped gauss mean
+        par[1] = ped_fit->GetParameter(2);  //ped gauss rms
+        par[0] = ped_fit->GetParameter(1);  //ped gauss mean
 
         // Pedestal peak
         S_n[0] = new TF1("Sped",Sped,-2,2,5);
@@ -201,12 +183,18 @@ int main( int argc, char* argv[] ) {
         pc->Fit("Sped","QR0");
         par[0] = S_n[0]->GetParameter("Q0");
         par[1] = S_n[0]->GetParameter("sig0");
-        // par[2] = S_n[0]->GetParameter("W");
+        if (mean==NULL) par[2] = S_n[0]->GetParameter("W");
         par[7] = S_n[0]->GetParameter("N");
 
         // 1 p.e. peak
-        if (v<2) S_n[1] = new TF1("S1",S1,range_low[v],range_high[v]+1,6);
-        else S_n[1] = new TF1("S1",S1,range_low[v]*3,range_high[v]+5,6);
+        if (mean==NULL) {
+            if (v<6) S_n[1] = new TF1("S1",S1,18,28,6);
+            if (v==6) S_n[1] = new TF1("S1",S1,20,33,6);
+            if (v==7) S_n[1] = new TF1("S1",S1,26,31,6);
+            if (v>7) S_n[1] = new TF1("S1",S1,26,31,6);
+        } else {
+            S_n[1] = (v<2) ? new TF1("S1",S1,range_low[v],range_high[v]+1,6) : new TF1("S1",S1,range_low[v]*3,range_high[v]+5,6);
+        }
         S_n[1]->SetParNames("sig1","Q1","miu","N","Q0","Qsh");
         S_n[1]->SetParameters(par[5],par[6],par[4],par[7],par[0],par[2]/par[3]);
         S_n[1]->SetLineColor(6);
@@ -214,29 +202,18 @@ int main( int argc, char* argv[] ) {
         par[5] = S_n[1]->GetParameter("sig1");
         par[6] = S_n[1]->GetParameter("Q1");
 
-        // TLine * ptv_hi = new TLine(range_low[v],0,range_low[v],100000);
-        // ptv_hi->SetLineColor(color[v]);
-        // ptv_hi->Draw("SAME");
-
-        // TLine * ptv_low = new TLine(range_high[v]+1,0,range_high[v]+1,100000);
-        // ptv_low->SetLineColor(color[v]);
-        // ptv_low->Draw("SAME");
-
         // Overall fit
-        TF1 *pc_f = new TF1("pc_f",fitf,-3,140,8);       //87
+        TF1 *pc_f = new TF1("pc_f",fitf,-3,x_hi/2,8);
         pc_f->SetParNames("Q0","sig0","W","alpha","miu","sig1","Q1","N");
-        // pc_f->SetParameters(par[0],par[1],par[2],par[3],par[4],par[5],par[6],par[7]);
-        pc_f->SetParameter(0,par[0]);
-        pc_f->SetParameter(1,par[1]);
-        pc_f->FixParameter(2,par[2]);
-        pc_f->SetParameter(3,par[3]);
-        pc_f->SetParameter(4,par[4]);
-        pc_f->SetParameter(5,par[5]);
-        pc_f->SetParameter(6,par[6]);
-        pc_f->SetParameter(7,par[7]);
-        pc_f->SetNpx(300);
-        pc->Fit("pc_f","R");          
-        
+        pc_f->SetParameters(par[0],par[1],par[2],par[3],par[4],par[5],par[6],par[7]);
+        if (mean==NULL) {
+            pc_f->FixParameter(3,par[3]);
+        } else {
+            pc_f->FixParameter(2,par[2]);
+        }
+        pc_f->SetNpx(400);
+        pc->Fit("pc_f","R"); 
+
         // // POST-FITS:
         // // Uncomment to view separate fits
         // for (int save=0; save<8; save++) par[save] = pc_f->GetParameter(save); 
@@ -269,14 +246,13 @@ int main( int argc, char* argv[] ) {
         //     Sn_test->Draw("same");
         // }
 
-        gPad->Update();
         gStyle->SetOptStat(11);        
         gStyle->SetOptFit();
 
-        means[v]=pc_f->GetParameter("Q1");
-       
-        c1->Update();
-        
+        if (mean!=NULL) mean[v]=pc_f->GetParameter("Q1");
+
+        c->Update();
+
         // Print peak-to-valley ratio on histogram
         TPaveStats *ps = (TPaveStats*)pc->GetListOfFunctions()->FindObject("stats");
         ps->SetName("peak-to-valley");
@@ -287,7 +263,6 @@ int main( int argc, char* argv[] ) {
         pc->SetStats(0);
         ps->SetX1NDC(0.25+v*0.15);ps->SetX2NDC(0.40+v*0.15);
         ps->SetY1NDC(0.7);ps->SetY2NDC(0.9);
-        
         if (v>4) {
             ps->SetX1NDC(0.25+(v-3)*0.15);ps->SetX2NDC(0.40+(v-3)*0.15);
             ps->SetY1NDC(0.5);ps->SetY2NDC(0.7);
@@ -298,22 +273,61 @@ int main( int argc, char* argv[] ) {
         }
         ps->SetTextColor(color[v]);
 
-        c1->Modified();
-        
-//        files[v]->Close();            // including this deletes the histograms
+        c->Modified();
     }
+}
+
+
+int main( int argc, char* argv[] ) {
     
-    c1->SaveAs("hv_pc_spectrum.png");
+    // Set up for charge spectrum at diff HV
+    TCanvas *c1 = new TCanvas("C1","C1",1600,1300);
+    TFile * hv_files[11] = {
+        new TFile( "../../mpmt_Analysis_run0933.root" , "read" ),
+        new TFile( "../../mpmt_Analysis_run0934.root" , "read" ),
+        new TFile( "../../mpmt_Analysis_run0929.root" , "read" ),
+        new TFile( "../../mpmt_Analysis_run0930.root" , "read" ),
+        new TFile( "../../mpmt_Analysis_run0917.root" , "read" ),
+        new TFile( "../../mpmt_Analysis_run0914.root" , "read" ),
+        new TFile( "../../mpmt_Analysis_run0912.root" , "read" ),
+        new TFile( "../../mpmt_Analysis_run0909.root" , "read" ),
+        new TFile( "../../mpmt_Analysis_run0910.root" , "read" ),
+        new TFile( "../../mpmt_Analysis_run0911.root" , "read" ),
+        new TFile( "../../mpmt_Analysis_run0916.root" , "read" )
+    };
+    double voltages[11] = {1000,1050,1100,1150,1225,1250,1275,1292,1325,1350,1375};
+    double mean[11];
+    int range_low[11]{3,3,3,3,4,4,4,4,5,6,7};
+    int range_high[11]={4,6,9,13,18,22,24,27,33,36,40};
+
+    // Set up for charge spectrum at diff laser intensities
+    TCanvas *c2 = new TCanvas("C2","C2",1600,1300);
+    double LDCurrent[8] = {110,115,120,125,130,135,140,145};
+    TFile * laser_files[8] = {
+        new TFile( "../../mpmt_Analysis_run0924.root" , "read" ),
+        new TFile( "../../mpmt_Analysis_run0925.root" , "read" ),
+        new TFile( "../../mpmt_Analysis_run0909.root" , "read" ),
+        new TFile( "../../mpmt_Analysis_run0926.root" , "read" ),
+        new TFile( "../../mpmt_Analysis_run0918.root" , "read" ),
+        new TFile( "../../mpmt_Analysis_run0928.root" , "read" ),
+        new TFile( "../../mpmt_Analysis_run0919.root" , "read" ),
+        new TFile( "../../mpmt_Analysis_run0935.root" , "read" ),
+    };
+
+    charge_spectrum(c1, 11, &hv_files[0], &voltages[0], &mean[0], &range_low[0], &range_high[0]);
+    charge_spectrum(c2, 8, &laser_files[0], &LDCurrent[0]);
     
-    TCanvas *c2 = new TCanvas("C2");
-    TGraph *pc_mean = new TGraph(7,voltages,means);
+    c1->SaveAs("charge_spectrum_diffHV.png");
+    c2->SaveAs("charge_spectrum_diffLaser.png");
+    
+    TCanvas *c3 = new TCanvas("C3");
+    TGraph *pc_mean = new TGraph(7,voltages,mean);
     pc_mean->SetTitle("1PE peak charge at different HV");
     pc_mean->GetXaxis()->SetTitle("HV (V)");
     pc_mean->GetYaxis()->SetTitle("1PE peak charge (mV*8ns)");
-    // pc_mean->GetYaxis()->SetRangeUser(9,100);
     gPad->SetLogy();
     pc_mean->Draw("a*");
-    c2->SaveAs("hv_pc_spectrum_mean.png");
+    c3->SaveAs("charge_spectrum_diffHV_mean.png");
     
     return 0;
 }
