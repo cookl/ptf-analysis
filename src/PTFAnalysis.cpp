@@ -4,35 +4,28 @@
 #include "Utilities.hpp"
 #include "TVirtualFFT.h"
 #include "PulseFinding.hpp"
-#include "TCanvas.h"
-#include "TH1D.h"
 #include "TH2D.h"
 
 #include <iostream>
 #include <ostream>
 #include <fstream>
 #include <math.h>
-#include <TStyle.h>
-#include <string>
-#include <cstring>
 
-// pulse charge (integrated pulse height over bin range {bin_low,bin_high})
-// Optionally arguments: time_low and time_high (otherwise checks entire range)
+// Pulse charge calculation (integrated pulse height over bin range {bin_low,bin_high})
+// Optionally arguments: bin_low and bin_high (otherwise checks entire range from 0-8192ns)
+// Note that time in waveform = bin number * 8 ns
 void PTFAnalysis::ChargeSum( float ped, int bin_low, int bin_high ){
     if (bin_high==0) bin_high=hwaveform->GetNbinsX();
     fitresult->qped = ped;
     float sum = 0.;
     
-    // Pedesetal histogram
+    // Recalculate pedestal per waveform
     if (bin_high!=0) {
         ped=0;
-        for (int i=1; i<=bin_low-50; i++) {
-            auto adc_value = hwaveform->GetBinContent(i);
-            ped+= adc_value;
-            pre_pulse->Fill(adc_value);
-        }
+        int ped_range = bin_low-50;
+        if (ped_range<10) ped_range=10;
+        for (int i=1; i<=ped_range; i++) ped+= hwaveform->GetBinContent(i);
         ped = ped/(bin_low-50);
-        pedestal->Fill(ped);
         fitresult->qped = ped;
     }
     
@@ -681,25 +674,6 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, Wrapper & wrapper, double errorbar, PT
   if ( save_waveforms && nowfdir_fft==nullptr ) nowfdir_fft = outfile->mkdir(nowfdir_fft_name.c_str());
   outfile->cd();
     
-    
-// setup output histograms of adc values pre-pulse and pedestal values (yuka 2021 may)
-    pre_pulse = new TH1F("pre-pulse","ADC Values Pre-Pulse",40,2040*0.0004883,2080*0.0004883);
-                         //10,0.9978,1.000);
-    pedestal = new TH1F("pedestal","Pedestal value per waveform",60,0.9990,1.0050);
-    
-//    TTree * tt1;
-//    if (pmt.channel == 2) {
-//        string fname = "mpmt_Analysis_run0" + to_string(run_number) + ".root";
-//        TFile * fin = new TFile( fname.c_str(), "read" );
-//        TTree * tt1 = (TTree*)fin->Get("ptfanalysis1");
-//        WaveformFitResult * wf1 = new WaveformFitResult;
-//        if(tt1) wf1->SetBranchAddresses( tt1 );
-//    }
-    
-    int low=272;
-    int high=288;
-    int channel_shift = 13;
-    
   // Loop over scan points (index i)
   unsigned long long nfilled = 0;// number of TTree entries so far
 
@@ -749,6 +723,8 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, Wrapper & wrapper, double errorbar, PT
         if( pmt.pmt == 0 ) {
             ChargeSum(0.9931); //original PTF function call here
         }
+        
+        // Added by Yuka June 2021 for PMT pulse charge calculation
         if (pmt.type == PTF::mPMT_REV0_PMT) {
 //            if (pmt.channel==1) ch1_times = times[i];
             //          Channel 1 doesn't really need pulse charge calculations
@@ -832,34 +808,6 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, Wrapper & wrapper, double errorbar, PT
   }
   //cout << endl;
   // Done.
-    Double_t w = 800;
-    Double_t h = 600;
-    TCanvas *c1 = new TCanvas("c1", "c1", w, h);
-    c1->SetWindowSize(w + (w - c1->GetWw()), h + (h - c1->GetWh()));
-//    TCanvas *c1 = new TCanvas("c1");
-    pre_pulse->SetStats(1);
-    gStyle->SetOptStat(1111);
-//    pre_pulse->Print("all");
-    pre_pulse->GetXaxis()->SetTitle("Voltage (V)");
-    pre_pulse->GetYaxis()->SetTitle("Number of events");
-    pre_pulse->Draw();
-    pre_pulse->Fit("gaus");
-    gStyle->SetOptFit(11);
-    if (pmt.pmt==1) c1->SaveAs("ch1_adc_pre_pulse.png");
-    if (pmt.pmt==2) c1->SaveAs("ch2_adc_pre_pulse.png");
-    
-    TCanvas *c2 = new TCanvas("c2", "c2", w, h);
-    c2->SetWindowSize(w + (w - c2->GetWw()), h + (h - c2->GetWh()));
-//    pedestal->Print("all");
-    pedestal->SetStats(1);
-    gStyle->SetOptStat(1111);
-    pedestal->GetXaxis()->SetTitle("Pedestal per waveform (V)");
-    pedestal->GetYaxis()->SetTitle("Number of events");
-    pedestal->Draw();
-    pedestal->Fit("gaus");
-    gStyle->SetOptFit(11);
-    if (pmt.pmt==1) c2->SaveAs("ch1_pedestals.png");
-    if (pmt.pmt==2) c2->SaveAs("ch2_pedestals.png");
 }
 
 const std::vector< double > PTFAnalysis::get_bins( char dim ){

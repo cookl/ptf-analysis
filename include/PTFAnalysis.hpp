@@ -75,17 +75,6 @@ private:
   TDirectory* nowfdir{nullptr};
   TDirectory* wfdir_fft{nullptr};
   TDirectory* nowfdir_fft{nullptr};
-    
-    TH1F *pre_pulse;
-    TH1F *pedestal;
-
-    float times[1030000];
-//    std::vector<float> times;
-    
-    //    int low=272;
-//    int high=288;
-//    int channel_shift = 13;
-//
 
 };
 
