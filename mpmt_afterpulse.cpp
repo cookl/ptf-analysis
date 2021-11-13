@@ -44,11 +44,11 @@ int main( int argc, char* argv[] ) {
   
   // Arbritary values of a time window:
   double afpTimeThreshold1 = 2180; //< ns
-  double afpTimeThreshold2 = 2230; //< ns
+  double afpTimeThreshold2 = 2300; //< ns
 
   // P.E. values
   double peDivision = 0.5;
-  double peHeight   = 8.0; //< mV 
+  double peHeight   = 14.64; //< mV 
   double peArea     = 260.0; // mV.ns ?
 
   // DCR parameters
@@ -75,12 +75,12 @@ int main( int argc, char* argv[] ) {
   analysis(tt, wf, peHeight, peDivision, afpTimeThreshold1, afpTimeThreshold2, dcr_estimation, vecT, vecQ, vecA, vecDeltaT, vecAlsr, vecQlsr, vecAafp, vecQafp, lsrCounts, afpCounts, singleAfpCounts, afpCounter_corrected);
 
   // Measure afterpulse rate according to p.e. level.
-  rates(lsrCounts,singleAfpCounts,afpCounts,afpCounter_corrected,singleRates,multipleRates,multipleRates_corrected,singleErrors,multipleErrors,multipleRates_corrected_error);
+  rates(lsrCounts,singleAfpCounts,afpCounts,afpCounter_corrected,singleRates,multipleRates,multipleRates_corrected,singleErrors,multipleErrors,multipleErrors_corrected);
   
     // // Debugging
   std::map<Int_t, Double_t>::iterator it_lsr;
   for (it_lsr = lsrCounts.begin(); it_lsr != lsrCounts.end(); it_lsr++) {
-    std::cout<<it_lsr->first<<"  "<<multipleRates_corrected.find(it_lsr->first)->second<<"  "<<multipleRates_corrected_error.find(it_lsr->first)->second<<std::endl;
+    std::cout<<it_lsr->first<<"  "<<multipleRates_corrected.find(it_lsr->first)->second<<"  "<<multipleErrors_corrected.find(it_lsr->first)->second<<std::endl;
   }
 
   //
@@ -132,6 +132,8 @@ int main( int argc, char* argv[] ) {
     graphMultiple->SetPointError(i-1, 0., multipleErrors.find(it->first)->second*100.);
     graphCorrected->SetPoint(i-1, it->first*peDivision, multipleRates_corrected.find(it->first)->second*100.);
     graphCorrected->SetPointError(i-1, 0., multipleErrors_corrected.find(it->first)->second*100.);
+    std::cout << "Multi error is " << multipleErrors.find(it->first)->second*100. << std::endl;
+    std::cout << "Multi corrected error is " << multipleErrors_corrected.find(it->first)->second*100. << std::endl;
   }
   
   // Styles
@@ -141,8 +143,8 @@ int main( int argc, char* argv[] ) {
   graphSingle->SetMarkerSize(1.4);
   graphSingle->SetMarkerColor(8);
   graphSingle->SetLineColor(1);
-  graphSingle->GetYaxis()->SetRangeUser(0, 100);
-  graphSingle->GetXaxis()->SetRangeUser(0, 5);
+  graphSingle->GetYaxis()->SetRangeUser(0, 250);
+  graphSingle->GetXaxis()->SetRangeUser(0, 15);
   graphMultiple->SetMarkerColor(2);
   graphMultiple->SetMarkerStyle(8);
   graphMultiple->SetMarkerSize(1.4);
@@ -153,7 +155,7 @@ int main( int argc, char* argv[] ) {
   // Legend
   TLegend *leg2 = new TLegend(0.16,0.7,0.6,0.85);
   leg2->AddEntry(graphMultiple,  "All events");
-  // leg2->AddEntry(graphCorrected, "All events (corrected)");
+  leg2->AddEntry(graphCorrected, "All events (corrected)");
   leg2->AddEntry(graphSingle,    "Single event");
   leg2->SetTextSize(0.036);
   leg2->SetLineWidth(0);
@@ -161,7 +163,7 @@ int main( int argc, char* argv[] ) {
   // Draw
   graphSingle->Draw("AP");
   graphMultiple->Draw("P");
-  // graphCorrected->Draw("P");
+  graphCorrected->Draw("P");
   leg2->Draw("SAME");
 
   // Multiple rate fitting
@@ -183,14 +185,14 @@ int main( int argc, char* argv[] ) {
   graphSingle->Fit(singleFitting, "", "", 0.0, singleRates.end()->first);
 
   // Corrected rate fitting
-  // std::cout<<"\nMultiple events corrected for DCR:"<<std::endl;
-  // TF1* correctedFitting = new TF1("linear_corrected","[0] + [1]*x", multipleRates_corrected.begin()->first*peDivision, multipleRates_corrected.end()->first*peDivision);
-  // correctedFitting->SetParameters(intercept-dcr_estimation*1024*1.e-9*100, slope);
-  // std::cout<<"Estimated intercept: "<<intercept-dcr_estimation*1024*1.e-9*100<<std::endl;
-  // // correctedFitting->SetParameters(0.0, 14.);
-  // correctedFitting->SetLineColor(38);
-  // correctedFitting->SetLineStyle(2);
-  // graphCorrected->Fit(correctedFitting, "", "", 0., 16);
+  std::cout<<"\nMultiple events corrected for DCR:"<<std::endl;
+  TF1* correctedFitting = new TF1("linear_corrected","[0] + [1]*x", multipleRates_corrected.begin()->first*peDivision, multipleRates_corrected.end()->first*peDivision);
+  correctedFitting->SetParameters(intercept-dcr_estimation*1024*1.e-9*100, slope);
+  std::cout<<"Estimated intercept: "<<intercept-dcr_estimation*1024*1.e-9*100<<std::endl;
+  correctedFitting->SetParameters(0.0, 14.);
+  correctedFitting->SetLineColor(38);
+  correctedFitting->SetLineStyle(2);
+  graphCorrected->Fit(correctedFitting, "", "", 0., 16);
 
   // Add a title to the graph
   char inGraphTitle[1024];
@@ -259,7 +261,7 @@ void analysis(TTree* tt, WaveformFitResult* wf, const Double_t peHeight, const D
     
     // If there are pulses on waveform
     if(wf->numPulses > 0){
-
+      // std::cout << "." ; 
       // Start afterpulse counter at zero for this waveform.
       Int_t singleAfpCounter = 0, lsrCounter = 0;
       Double_t afpCounter = 0, afpCounter_corrected = 0;
@@ -268,13 +270,14 @@ void analysis(TTree* tt, WaveformFitResult* wf, const Double_t peHeight, const D
       // considering only the waveforms whose first pulses 
       // are within the laser window.
 
-      if (wf->pulseTimes[0]<afpTimeThreshold2) { // < To consider all types of waveforms.
-      // if ((wf->pulseTimes[0]>=afpTimeThreshold1) && (wf->pulseTimes[0]<afpTimeThreshold2)) { //< To consider only waveform with laser pulse as first signal.
+    // if (wf->pulseTimes[0]<afpTimeThreshold2) { // < To consider all types of waveforms.
+	  if ((wf->pulseTimes[0]>=afpTimeThreshold1) && (wf->pulseTimes[0]<afpTimeThreshold2)) { //< To consider only waveform with laser pulse as first signal.
         
         // Count the laser and find its height
         lsrCounter++;
         lsrPulseInt = round(wf->pulseCharges[0]*1000.0/peHeight/peDivision);
-
+	
+	// std::cout << "Laser=" << lsrPulseInt << " " << wf->numPulses ;
         // Count the number of afterpulses, if any
         afpCounter_corrected -= (dcr)*(1024*8)*1.e-9;
         if (wf->numPulses > 1) {
@@ -282,7 +285,9 @@ void analysis(TTree* tt, WaveformFitResult* wf, const Double_t peHeight, const D
           afpCounter += Double_t(wf->numPulses)-1.;
           afpCounter_corrected += Double_t(wf->numPulses)-1.;
         }
+	// std::cout << std::endl;
       }
+      
 
       // Add laser-count information to map
       std::map<Int_t, Double_t>::iterator it_lsr = lsrCounts.find(lsrPulseInt);
@@ -376,7 +381,7 @@ void rates(std::map<Int_t, Double_t> &lsrCounts, std::map<Int_t, Double_t> &sing
     // The compound error of rates, in quadrature
     Double_t singleError    = singleRates.find(it_lsr->first)->second*sqrt(pow(singleCount_error/singleCounts.find(it_lsr->first)->second, 2) + pow(lsrCount_error/it_lsr->second, 2)); 
     Double_t multipleError  = multipleRates.find(it_lsr->first)->second*sqrt(pow(multipleCount_error/multipleCounts.find(it_lsr->first)->second, 2) + pow(lsrCount_error/it_lsr->second, 2)); 
-    Double_t correctedError = afpCounter_corrected.find(it_lsr->first)->second*sqrt(pow(afpCounter_corr_err/afpCounter_corrected.find(it_lsr->first)->second, 2) + pow(lsrCount_error/it_lsr->second, 2) );
+    Double_t correctedError = multipleRates_corrected.find(it_lsr->first)->second*sqrt(pow(afpCounter_corr_err/afpCounter_corrected.find(it_lsr->first)->second, 2) + pow(lsrCount_error/it_lsr->second, 2) );
 
     // Add the errors to their maps
     singleErrors.insert(std::make_pair(it_lsr->first, singleError));
@@ -397,6 +402,8 @@ void dcr_estimate(TTree* tt, WaveformFitResult* wf, const Double_t early_thresho
 
   Double_t timeWindow = afpTimeThreshold1*1.e-9;
   std::vector<Double_t> waveformDCRs, waveformDCRs_errors;
+
+  std::cout << "Total number of waveforms is " << tt->GetEntries() << std::endl;
 
   // Analyze all waveforms and find the ones with dark pulses
   for (int k = 0; k < tt->GetEntries(); k++){
@@ -434,9 +441,12 @@ void dcr_estimate(TTree* tt, WaveformFitResult* wf, const Double_t early_thresho
   // Find average of DCR
   dcr_estimation = DCRsum/waveformDCRs.size();
 
+  std::cout << "Total number of waveformDCRs is " << waveformDCRs.size() << std::endl;
+
   // Find dcr error
   dcr_error = sqrt(DCRerrorsquared)/waveformDCRs_errors.size();
 
+  std::cout << "Total number of waveformDCRs_errors is " << waveformDCRs_errors.size() << std::endl;
 }
 
 void drawHistogram(std::vector<double> data, TH1F* histogram, const char runNumber[], const Int_t y1_in, const Int_t y2_in, const Double_t x1_in, const Double_t x2_in, const Double_t percentage_x, const Double_t percentage_y) {
