@@ -31,12 +31,9 @@
 
 
 #include "wrapper.hpp"
-#include "MeanRMSCalc.hpp"
-#include "ErrorBarAnalysis.hpp"
 #include "WaveformFitResult.hpp"
 #include "ScanPoint.hpp"
 #include "PTFAnalysis.hpp"
-#include "PTFQEAnalysis.hpp"
 #include "Utilities.hpp"
 #include <string>
 #include <iostream>
@@ -49,7 +46,6 @@
 #include <vector>
 #include <algorithm>
 #include <cmath>
-#include <unordered_set>
 
 #include "TH1D.h"
 #include "TH2D.h"
@@ -61,6 +57,8 @@
 #include "TStyle.h"
 #include "Configuration.hpp"
 
+#include "BrbSettingsTree.hxx"
+
 using namespace std;
 
 int main(int argc, char** argv) {
@@ -70,6 +68,8 @@ int main(int argc, char** argv) {
     return 0;
   }
 
+
+  
   std::cout << "Creating utilities " << std::endl;
   // Get utilities
   Utilities utils;
@@ -95,7 +95,6 @@ int main(int argc, char** argv) {
   std::cout << "Number of active channels: " << active_channels.size() << "\nActive channels are: ";
   for(unsigned int i = 0; i < active_channels.size(); i++){ std::cout << active_channels[i]<< " ";}
   std::cout << std::endl;
-    
 
   vector<int> phidgets = {0, 1, 3};
   vector<PTF::PMT> activePMTs;
@@ -110,12 +109,7 @@ int main(int argc, char** argv) {
     PTF::PMT PMT = {ch,ch,PTF::mPMT_REV0_PMT};
 
     activePMTs.push_back(PMT);
-    //PTF::PMT PMT0 = {0,0,PTF::mPMT_REV0_PMT}; // only looking at one pmt at a time
-    //PTF::PMT PMT1 = {1,1,PTF::mPMT_REV0_PMT}; // only looking at one pmt at a time
-    ////PTF::PMT PMT16 = {16,16,PTF::mPMT_REV0_PMT}; // only looking at one pmt at a time
-    //PTF::PMT PMT17 = {17,17,PTF::mPMT_REV0_PMT}; // only looking at one pmt at a time
-    //PTF::PMT PMT18 = {18,18,PTF::mPMT_REV0_PMT};
-    //PTF::PMT PMT19 = {19,19,PTF::mPMT_REV0_PMT};
+
   }
   vector<PTF::Gantry> gantries = {PTF::Gantry0, PTF::Gantry1};
   Wrapper wrapper = Wrapper(1, 1024, activePMTs, phidgets, gantries,mPMT_DIGITIZER);
@@ -123,34 +117,16 @@ int main(int argc, char** argv) {
   wrapper.openFile( string(argv[1]), "scan_tree");
   cerr << "Num entries: " << wrapper.getNumEntries() << endl << endl;
   cout << "Points ready " << endl;
-
+  
+  // Open the BRB Settings tree 
+  wrapper.LoadBrbSettingsTree();
+  
   for(unsigned int i = 0; i < active_channels.size(); i++){
     PTF::PMT pmt = activePMTs[i];
     PTFAnalysis *analysis = new PTFAnalysis( outFile, wrapper, 2.1e-3, pmt, string(argv[3]), true );
     if(i == 0) analysis->write_scanpoints();
 
   }
-    // Do analysis of waveforms for each scanpoint
-    //analysis0->write_scanpoints();
-
-  // Switch PMT to monitor PMT
-  
-  // Do analysis of waveforms for each scanpoint
-  //PTFAnalysis *analysis1 = new PTFAnalysis( outFile, wrapper, 2.1e-3/*errbars1->get_errorbar()*/, PMT1, string(argv[3]), true );
-  
- // Do analysis of waveforms for each scanpoint
-  //PTFAnalysis *analysis16 = new PTFAnalysis( outFile, wrapper, 2.1e-3/*errbars1->get_errorbar()*/, PMT16, string(argv[3]), true );
-  
- // Do analysis of waveforms for each scanpoint
-  //PTFAnalysis *analysis17 = new PTFAnalysis( outFile, wrapper, 2.1e-3/*errbars1->get_errorbar()*/, PMT17, string(argv[3]), true );
-  
-
-  //PTFAnalysis *analysis18 = new PTFAnalysis( outFile, wrapper, 2.1e-3/*errbars1->get_errorbar()*/, PMT18, string(argv[3]), true );
-
-  // PTFAnalysis *analysis19 = new PTFAnalysis( outFile, wrapper, 2.1e-3/*errbars1->get_errorbar()*/, PMT19, string(argv[3]), true );
-  // Do quantum efficiency analysis
-  // This is now also done in a separate analysis script (including temperature corrections)
-  //PTFQEAnalysis *qeanalysis = new PTFQEAnalysis( outFile, analysis0, analysis1 );
 
   outFile->Write();
   outFile->Close();
