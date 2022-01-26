@@ -25,12 +25,16 @@ void simple_threshold_technique(TH1D *hwaveform, WaveformFitResult *fitresult, P
   // Loop over waveform; look for every case of waveform going below fixed threshold
   
   double baseline = 1.0;
+
   // If it is an mPMT channel, the use the baseline from BRB settings tree.
   if(pmt.type == PTF::mPMT_REV0_PMT){
     baseline = BrbSettingsTree::Get()->GetBaseline(pmt.channel);
   }
   
+
   double threshold = baseline - 0.004;
+    
+    if (pmt.channel == 1) threshold = baseline - 0.2;
 
   int nsamples = hwaveform->GetNbinsX();
 
@@ -45,7 +49,7 @@ void simple_threshold_technique(TH1D *hwaveform, WaveformFitResult *fitresult, P
     }
     
     if(sample < threshold && !in_pulse){ // found a pulse
-      in_pulse = true;      
+      in_pulse = true;
     }
     
     if(sample >= threshold && in_pulse){ /// finished this pulse
@@ -56,7 +60,7 @@ void simple_threshold_technique(TH1D *hwaveform, WaveformFitResult *fitresult, P
 
         //if(0)std::cout << "Pulse found : " << fitresult->numPulses << " " << min_bin
         //          << " " << min_value << " " << std::endl;
-        fitresult->numPulses++;      
+        fitresult->numPulses++;
       }
       min_bin = 9999, min_value = 9999;
     }
