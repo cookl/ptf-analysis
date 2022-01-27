@@ -68,6 +68,8 @@ int main( int argc, char* argv[] ) {
     h1->Draw();
     h1->GetXaxis()->SetTitle("Pulse height (mV)");
     h1->GetYaxis()->SetTitle("Number of events");
+    h1->Fit("gaus","","",35,80);
+    gStyle->SetOptFit(11);
     c3->SaveAs("mpmt_pulse_height.png");
 
     
