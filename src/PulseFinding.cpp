@@ -1,6 +1,11 @@
 #include "PulseFinding.hpp"
 #include <iostream>
+
 #include "BrbSettingsTree.hxx"
+
+#include <vector>
+
+
 
 void find_pulses(int algo_type, TH1D *hwaveform, WaveformFitResult *fitresult, PTF::PMT pmt){
 
@@ -26,10 +31,12 @@ void simple_threshold_technique(TH1D *hwaveform, WaveformFitResult *fitresult, P
   
   double baseline = 1.0;
 
+
   // If it is an mPMT channel, the use the baseline from BRB settings tree.
   if(pmt.type == PTF::mPMT_REV0_PMT){
     baseline = BrbSettingsTree::Get()->GetBaseline(pmt.channel);
   }
+
   
 
   double threshold = baseline - 0.004;
@@ -70,5 +77,4 @@ void simple_threshold_technique(TH1D *hwaveform, WaveformFitResult *fitresult, P
   //  if(fitresult->numPulses){ std::cout << "number of pulses found: " << fitresult->numPulses << " " << std::endl;}
   
 }
-
 
