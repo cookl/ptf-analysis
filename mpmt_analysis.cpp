@@ -97,6 +97,7 @@ int main(int argc, char** argv) {
   std::cout << std::endl;
 
   vector<int> phidgets = {0, 1, 3};
+
   vector<PTF::PMT> activePMTs;
 
 
@@ -111,6 +112,7 @@ int main(int argc, char** argv) {
     activePMTs.push_back(PMT);
 
   }
+
   vector<PTF::Gantry> gantries = {PTF::Gantry0, PTF::Gantry1};
   Wrapper wrapper = Wrapper(1, 1024, activePMTs, phidgets, gantries,mPMT_DIGITIZER);
   std::cout << "Open file: " << std::endl;
@@ -118,8 +120,10 @@ int main(int argc, char** argv) {
   cerr << "Num entries: " << wrapper.getNumEntries() << endl << endl;
   cout << "Points ready " << endl;
   
+
   // Open the BRB Settings tree 
   wrapper.LoadBrbSettingsTree();
+
   
   for(unsigned int i = 0; i < active_channels.size(); i++){
     PTF::PMT pmt = activePMTs[i];
