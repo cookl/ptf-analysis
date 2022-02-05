@@ -45,7 +45,6 @@
 
 namespace PTF {
 
-
 enum Gantry {
   Gantry0 = 0,
   Gantry1 = 1
@@ -57,11 +56,14 @@ enum PMTType {
   PTF_Monitor_PMT = 1,
   PTF_Receiver_PMT = 2,
   mPMT_REV0_PMT = 3,
-  mPMT_Monitor_PMT = 4
+  mPMT_Monitor_PMT = 4,
+  Reference = 5
 };
 
 
+
 struct PMT {
+
   int pmt;
   int channel;
   PMTType type;
@@ -72,10 +74,29 @@ struct PhidgetReading {
   double Bx[150];
   double By[150];
   double Bz[150];
+  double Ax[150];
+  double Ay[150];
+  double Az[150];
 };
+
+}
+
+
+struct PhidgetSet {
+    PTF::PhidgetReading data;
+    TBranch*       branchX{nullptr};
+    TBranch*       branchY{nullptr};
+    TBranch*       branchZ{nullptr};
+    TBranch*       branchaccx{nullptr};
+    TBranch*       branchaccy{nullptr};
+    TBranch*       branchaccz{nullptr};
+  };
+
+
 
 
 struct GantryData {
+
   double x;
   double y;
   double z;
@@ -83,24 +104,40 @@ struct GantryData {
   double phi;
 };
 
+struct Temperature_r {
+  //double int_1;
+  //double ext_1;
+  double ext_2;
+};
+
+struct Phidget_acce00 {
+  double acc_x;
+  double acc_y;
+  double acc_z;
+};
+
+
+struct Timing {
+   Double_t time_c;
+};
 
 struct PMTSet {
   int      channel;
-  PMTType  type;
+  PTF::PMTType  type;
   double*  data{nullptr};
   TBranch* branch{nullptr};
 
 };
 
-struct PhidgetSet {
-  PhidgetReading data;
-  TBranch*       branchX{nullptr};
-  TBranch*       branchY{nullptr};
-  TBranch*       branchZ{nullptr};
-};
+//struct PhidgetSet {
+//  PTF::PhidgetReading data;
+//  TBranch*       branchX{nullptr};
+//  TBranch*       branchY{nullptr};
+//  TBranch*       branchZ{nullptr};
+//};
 
 struct GantrySet {
-  Gantry     gantry;
+  PTF::Gantry     gantry;
   GantryData data;
   TBranch*   branchX{nullptr};
   TBranch*   branchY{nullptr};
@@ -124,10 +161,12 @@ struct Digitizer {
 };
 
 
+
+
 struct Wrapper {
-  Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, const std::vector<PMT>& activePMTs, const std::vector<int>& phidgets, const std::vector<Gantry>& gantries, DigitizerModel digi);
-  Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, const std::vector<PMT>& activePMTs, const std::vector<int>& phidgets, const std::vector<Gantry>& gantries, DigitizerModel digi, const std::string& fileName, const std::string& treeName = "scan_tree");
-  ~Wrapper();
+	Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, const std::vector<PTF::PMT>& activePMTs, const std::vector<int>& phidgets, const std::vector<PTF::Gantry>& gantries, DigitizerModel digi);
+    Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, const std::vector<PTF::PMT>& activePMTs, const std::vector<int>& phidgets, const std::vector<PTF::Gantry>& gantries, DigitizerModel digi, const std::string& fileName, const std::string& treeName = "scan_tree");
+	~Wrapper();
 
 
 public:
@@ -140,6 +179,9 @@ public:
   // Does nothing if the file is already closed 
   void closeFile();
 
+  // Load the BRB settings tree; returns -1 on failure
+  int LoadBrbSettingsTree();
+  
   // Returns -1 on not found
   int getChannelForPmt(int pmt) const;
   // Ditto
@@ -164,9 +206,18 @@ public:
   // Returns the length of the samples
   int getSampleLength() const;
 
-  GantryData getDataForCurrentEntry(Gantry whichGantry) const;
+  GantryData getDataForCurrentEntry(PTF::Gantry whichGantry) const;
 
-  PhidgetReading getReadingForPhidget(int phidget) const;
+  PTF::PhidgetReading getReadingForPhidget(int phidget) const;
+  
+  Temperature_r getReadingTemperature() const;
+  
+
+  //Phidget_acce00 getReadingAcceleration() const;
+
+
+  
+  Timing getReadingTime() const;
 
   Digitizer getDigitizerSettings() const {return digiData;}
 
@@ -182,6 +233,11 @@ private:
   std::unordered_map<int, PhidgetSet*> phidgetData;
   std::unordered_map<int, GantrySet*>  gantryData;
   Digitizer digiData;
+  
+
+  Temperature_r Temp;
+  Timing ti;
+  //*Phidget_acce00 ACC;
   
   unsigned long long    numEntries;
   unsigned long long    numSamples;
@@ -256,7 +312,7 @@ namespace Exceptions {
 } // end namespace Exceptions
 
 
-} // end namespace PTF
+ // end namespace PTF
 
 
 // template <typename T, typename Ts>

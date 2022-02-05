@@ -22,7 +22,6 @@ struct Circle_st {
 /// that are below cut_below * maximum_gradient to zero, then fit to
 /// circle. Returns Circle_st representing the best fit circle.
 Circle_st find_circle_max_grad( const TH2D* in, TH2D*& grad, double cut_below = 0.8 );
-
 /// Function sets any bins outside of circle to zero
 void zero_outside_circle( TH2D* in, const Circle_st& c );
 

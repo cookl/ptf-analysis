@@ -1,11 +1,15 @@
 #include "wrapper.hpp"
-
+#include "BrbSettingsTree.hxx"
 
 using namespace std;
 using namespace PTF;
 
 
+//constructor of the class
+
+
 Wrapper::Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, const vector<PMT>& activePMTs, const vector<int>& phidgets, const vector<Gantry>& gantries, DigitizerModel digi)
+
   : maxSamples(maxSamples), sampleSize(sampleSize)
 {
   for (auto pmt : activePMTs) {
@@ -94,8 +98,10 @@ double* Wrapper::getDataForPmt(int pmt) const {
 
 
 bool Wrapper::setDataPointers() {
-  if (tree == nullptr || file == nullptr)
+  if (tree == nullptr || file == nullptr){
+    cout << "false tree or file ppointer" << endl;
     return false;
+}
   
   // Set PMT branches
   char branchName[64];
@@ -104,7 +110,8 @@ bool Wrapper::setDataPointers() {
     pmt.second->branch = nullptr;
     pmt.second->branch = tree->GetBranch(branchName);
     if (pmt.second->branch == nullptr) {
-      return false;
+      cout << "False second branch pointer " << branchName << endl;   
+   return false;
     }
     pmt.second->branch->SetAddress(pmt.second->data);
   }
@@ -125,13 +132,30 @@ bool Wrapper::setDataPointers() {
     phidget.second->branchZ = nullptr;
     phidget.second->branchZ = tree->GetBranch(branchName);
     phidget.second->branchZ->SetAddress(&phidget.second->data.Bz);
+	
+    snprintf(branchName, 64, PHIDGET_FORMAT_ACCX, phidget.first);
+    phidget.second->branchX = nullptr;
+    phidget.second->branchX = tree->GetBranch(branchName);
+    phidget.second->branchX->SetAddress(&phidget.second->data.Ax);
+
+    snprintf(branchName, 64, PHIDGET_FORMAT_ACCY, phidget.first);
+    phidget.second->branchY = nullptr;
+    phidget.second->branchY = tree->GetBranch(branchName);
+    phidget.second->branchY->SetAddress(&phidget.second->data.Ay);
+
+    snprintf(branchName, 64, PHIDGET_FORMAT_ACCZ, phidget.first);
+    phidget.second->branchZ = nullptr;
+    phidget.second->branchZ = tree->GetBranch(branchName);
+    phidget.second->branchZ->SetAddress(&phidget.second->data.Az);
 
     if (phidget.second->branchX == nullptr
         || phidget.second->branchY == nullptr
         || phidget.second->branchZ == nullptr) {
+      cout << "False branch xyz" << endl; 
       return false;
     }
   }
+
 
   // Set gantry branches
   for (auto gantry : gantryData) {
@@ -169,9 +193,34 @@ bool Wrapper::setDataPointers() {
     }
   }
 
+
   TBranch* brNumSamples = tree->GetBranch("num_points");
 
   brNumSamples->SetAddress(&numSamples);
+  TBranch
+    //*T_int = tree->GetBranch("int_temp"),//, *T_ext1 = tree->GetBranch("ext1_temp")
+    *T_ext2 = tree->GetBranch("ext2_temp");
+    
+   // *braNumSamples = tree->GetBranch("num_points");
+  //T_int->SetAddress(&Temp.int_1);
+  //T_ext1->SetAddress(&Temp.ext_1);
+
+  // Make sure this branch exists first
+  if(T_ext2) T_ext2->SetAddress(&Temp.ext_2);
+
+
+  //braNumSamples->SetAddress(&numSamples);
+  TBranch
+    *Time_1=tree->GetBranch("timestamp");
+
+  // Make sure this branch exists first
+  if(Time_1) Time_1->SetAddress(&ti.time_c);
+	
+   // TBranch
+   //   *ACC_x= tree->GetBranch("gantry0_x"), *g0Y = tree->GetBranch("gantry0_y"), *g0Z = tree->GetBranch("gantry0_z"),
+   //     *ACC_y = tree->GetBranch("gantry0_rot"), *g0Phi = tree->GetBranch("gantry0_tilt"),
+   //   *ACC_z = tree->GetBranch("gantry1_x"), *g1Y = tree->GetBranch("gantry1_y"), *g1Z = tree->GetBranch("gantry1_z"),
+    //    *g1Theta = tree->GetBranch("gantry1_rot"), *g1Phi = tree->GetBranch("gantry1_tilt");
 
   return true;
 }
@@ -210,6 +259,7 @@ void Wrapper::openFile(const string& fileName, const string& treeName) {
   file = new TFile(fileName.c_str(), "READ");
 
   if (!file->IsOpen()) {
+    
     delete file;
     file = nullptr;
     throw new Exceptions::FileDoesNotExist(fileName);
@@ -219,10 +269,12 @@ void Wrapper::openFile(const string& fileName, const string& treeName) {
   file->GetObject(treeName.c_str(), tree);
 
   if (!tree) {
+    std::cout << "Error, ttreename not valid: " << treeName.c_str() << std::endl;
     throw new Exceptions::InvalidTreeName(treeName);
   }
 
   auto res = setDataPointers();
+
 
   if (!res) {
     throw new Exceptions::DataPointerError();
@@ -252,6 +304,13 @@ void Wrapper::closeFile() {
     file = nullptr;
   }
   entry = UINT32_MAX;
+}
+
+
+int Wrapper::LoadBrbSettingsTree(){
+
+  return BrbSettingsTree::Get()->LoadSettingsTree(file);
+  
 }
 
 
@@ -333,6 +392,7 @@ int Wrapper::getSampleLength() const {
 
 
 GantryData Wrapper::getDataForCurrentEntry(Gantry whichGantry) const {
+
   if (!isFileOpen()) {
     throw new Exceptions::NoFileIsOpen();
   }
@@ -358,3 +418,19 @@ PhidgetReading Wrapper::getReadingForPhidget(int phidget) const {
     return res->second->data;
   }
 }
+
+Temperature_r Wrapper::getReadingTemperature() const {
+  if (!isFileOpen()) {
+    throw new Exceptions::NoFileIsOpen();
+  }
+  return Temp;
+}
+Timing Wrapper::getReadingTime() const {
+ if (!isFileOpen()) {
+    throw new Exceptions::NoFileIsOpen();
+  }
+  return ti;
+
+}
+
+ 

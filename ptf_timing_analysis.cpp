@@ -1,4 +1,4 @@
-/* ptf_charge_analysis.cpp
+/* ptf_timing_analysis.cpp
    Analysis of fitted waveforms to determine the PMT timing response.
    Produces histogram of the PMT pulse location.
    Currently taken relative to digitised trigger pulse.
@@ -27,20 +27,9 @@
 #include <algorithm>
 #include <string>
 #include <iomanip>
+#include <sstream>
 
 using namespace std;
-
-//Gaussian fitting function
-// x[0] is x value
-// par[0] = amplitude
-// par[1] = mean
-// par[2] = sigma
-double my_gaussian(double *x, double *par) {
-  double arg=0;
-  if(par[2]!=0) arg=(x[0]-par[1])/par[2];
-  double gfunc=par[0] * TMath::Exp( -0.5*arg*arg );
-  return gfunc;
-}
 
 int main( int argc, char* argv[] ) {
 
@@ -69,9 +58,10 @@ int main( int argc, char* argv[] ) {
   vector< double > xbins = utils.get_bins( scanpoints, 'x' );
   vector< double > ybins = utils.get_bins( scanpoints, 'y' );
 
-  //Create one charge histogram per scan point
+  //Create one time histogram per scan point
   std::vector< TH1D* > h_pmt0_tscanpt;
   std::vector< TH1D* > h_pmt1_tscanpt;
+  std::vector< TH1D* > h_pmt2_tscanpt;
 
   // Loop through scanpoints
   TDirectory * dirbyscanpt = fout->mkdir( "dirbyscanpt" );
@@ -94,7 +84,7 @@ int main( int argc, char* argv[] ) {
     os_title<<"; T (ns) for X="<<fixed<<setprecision(3)<<scanpoints[iscan].x()<<" Y="<<scanpoints[iscan].y();
     os_title<<"; Counts/bin";
     if (iscan%1000==0) std::cout<<"Scan point "<<iscan<<" creating histogram: "<<os_title.str()<<std::endl;
-    TH1D* htmp = new TH1D( os_name.str().c_str(), os_title.str().c_str(), 15, 40., 100. ) ;
+    TH1D* htmp = new TH1D( os_name.str().c_str(), os_title.str().c_str(), 60, 10., 70. ) ;
     htmp->SetDirectory( dirscanpt );
     h_pmt0_tscanpt.push_back( htmp );
 
@@ -104,9 +94,19 @@ int main( int argc, char* argv[] ) {
     os_title<<"PMT1: Time for signal, scan point "<<iscan;
     os_title<<"; T (ns) for X="<<fixed<<setprecision(3)<<scanpoints[iscan].x()<<" Y="<<scanpoints[iscan].y();
     os_title<<"; Counts/bin";
-    htmp = new TH1D( os_name.str().c_str(), os_title.str().c_str(), 15, 40., 100. ) ;
+    htmp = new TH1D( os_name.str().c_str(), os_title.str().c_str(), 60, 10., 70. ) ;
     htmp->SetDirectory( dirscanpt );
     h_pmt1_tscanpt.push_back( htmp );
+
+    os_name.str(""); os_name.clear();
+    os_title.str(""); os_title.clear();
+    os_name<<"h_pmt2_tscanpt_"<<iscan;
+    os_title<<"PMT2: Time for signal, scan point "<<iscan;
+    os_title<<"; T (ns) for X="<<fixed<<setprecision(3)<<scanpoints[iscan].x()<<" Y="<<scanpoints[iscan].y();
+    os_title<<"; Counts/bin";
+    htmp = new TH1D( os_name.str().c_str(), os_title.str().c_str(), 60, 10., 70. ) ;
+    htmp->SetDirectory( dirscanpt );
+    h_pmt2_tscanpt.push_back( htmp );
   }
   
   fout->cd("/");
@@ -135,6 +135,15 @@ int main( int argc, char* argv[] ) {
   }
   WaveformFitResult * wf1 = new WaveformFitResult;
   wf1->SetBranchAddresses( tt1 );
+
+  // get the waveform fit TTree for PMT2 (The reference wave)
+  TTree * tt2 = (TTree*)fin->Get("ptfanalysis2");
+  if ( !tt2 ){
+    std::cerr<<"Failed to read TTree called ptfanalysis2, exiting"<<std::endl;
+    return 0;
+  }
+  WaveformFitResult * wf2 = new WaveformFitResult;
+  wf2->SetBranchAddresses( tt2 );
   
   //Loop through scanpoints to fill histograms
   for(unsigned int iscan=0; iscan<scanpoints.size(); iscan++){
@@ -144,14 +153,19 @@ int main( int argc, char* argv[] ) {
     for ( unsigned iev = 0; iev < scanpoint.nentries(); ++iev ){
       
       tt0->GetEvent( scanpoint.get_entry() + iev );
+      tt1->GetEvent( scanpoint.get_entry() + iev );
+      tt2->GetEvent( scanpoint.get_entry() + iev );
+
       if ( wf0->haswf ){
-        h_pmt0_tscanpt[ iscan ]->Fill( wf0->mean );
+        h_pmt0_tscanpt[ iscan ]->Fill( wf0->mean - wf2->mean );
       }
       
-      tt1->GetEvent( scanpoint.get_entry() + iev );
       if ( wf1->haswf ){
-        h_pmt1_tscanpt[ iscan ]->Fill( wf1->mean );
+        h_pmt1_tscanpt[ iscan ]->Fill( wf1->mean - wf2->mean );
       }
+
+      h_pmt2_tscanpt[ iscan ]->Fill( wf2->mean );
+
     }
   }
 
@@ -171,15 +185,8 @@ int main( int argc, char* argv[] ) {
     //std::cout<<"Fitting "<<fname.str()
 	//     <<" with "<<h_pmt0_tscanpt[iscan]->GetEntries()
 	//     <<std::endl;
-    TF1* ftmp = new TF1( fname.str().c_str(), my_gaussian, 40., 100., 3 );
-    ftmp->SetParNames("Amplitude","Mean","Sigma");
-    ftmp->SetParameter(0, 20.);
-    ftmp->SetParameter(1, 70.);
-    ftmp->SetParameter(2, 10.);
-    ftmp->SetParLimits(0, 0.0, 5000.0);
-    ftmp->SetParLimits(1, 56.0, 90.0 );
-    ftmp->SetParLimits(2, 0.0, 200.0 );
-    h_pmt0_tscanpt[iscan]->Fit( ftmp, "Q", "", 40., 100. );
+    TF1* ftmp = new TF1( fname.str().c_str(), "gaus", 20., 50. );
+    h_pmt0_tscanpt[iscan]->Fit( ftmp, "Q" );
     vecpmtresponse.push_back( ftmp );
     //if( ftmp->GetParameter(1) > 25. &&
     //  ftmp->GetParameter(1) < min_time ) min_time = ftmp->GetParameter(1);
@@ -204,11 +211,11 @@ int main( int argc, char* argv[] ) {
   zero_outside_circle( h_tts, circ );
 
   //Set plot ranges
-  h_rtt->SetMinimum(69.0);
-  h_rtt->SetMaximum(80.0);
-  h_tts->SetMinimum(4.4);
+  h_rtt->SetMinimum(29.0);
+  h_rtt->SetMaximum(38.0);
+  h_tts->SetMinimum(1.4);
   //h_tts->SetMaximum(8.8);
-  h_tts->SetMaximum(6.4);
+  h_tts->SetMaximum(4.0);
 
   //Make plots
   TCanvas* c = new TCanvas("canvas");

@@ -1,3 +1,4 @@
+
 /// collect_qe_plots
 /// John Walker (Apr. 2020)
 ///
@@ -24,6 +25,7 @@
 #include "TMultiGraph.h"
 #include "TVector2.h"
 #include "TAxis.h"
+#include "TPaveStats.h"
 
 #include <stdlib.h>
 #include <string>
@@ -326,6 +328,9 @@ void collect_qe_plots(){
   cout<< "\\end{center}" <<endl;
 
 
+  gStyle->SetOptFit();
+  TF1 *gr_fit = ((TF1 *)(gROOT->GetFunction("pol1")));
+
   // Plot average QE vs magnetic field
   // x-direction, air, cover off
   TCanvas * tc = new TCanvas( "av_qe_vs_bfield", "av_qe_vs_bfield" );
@@ -350,6 +355,11 @@ void collect_qe_plots(){
   gr_xa0->SetMarkerColor(kMagenta+3);
   gr_xa0->SetMarkerStyle(21);
   gr_xa0->Draw("AP");
+  gr_xa0->Fit(gr_fit,"QW");
+  gr_xa0->Fit(gr_fit,"Q");
+  gr_xa0->GetFunction("pol1")->SetLineColor(kMagenta+3);
+  gPad->Modified();
+  gPad->Update();
   string plotname = string("ptf_qe_analysis_vs_bfield_air_coveroff_x.pdf");
   tc->SaveAs(plotname.c_str(),"pdf");
 
@@ -373,6 +383,9 @@ void collect_qe_plots(){
   gr_ya0->SetMarkerColor(kMagenta+3);
   gr_ya0->SetMarkerStyle(21);
   gr_ya0->Draw("AP");
+  gr_ya0->Fit(gr_fit,"QW");
+  gr_ya0->Fit(gr_fit,"Q");
+  gr_ya0->GetFunction("pol1")->SetLineColor(kMagenta+3);
   gPad->Modified();
   gPad->Update();
   plotname = string("ptf_qe_analysis_vs_bfield_air_coveroff_y.pdf");
@@ -398,8 +411,14 @@ void collect_qe_plots(){
   gr_za0->SetMarkerColor(kMagenta+3);
   gr_za0->SetMarkerStyle(21);
   gr_za0->Draw("AP");
-  gPad->Modified();
+  gr_za0->Fit(gr_fit,"QW");
+  gr_za0->Fit(gr_fit,"Q");
+  gr_za0->GetFunction("pol1")->SetLineColor(kMagenta+3);
   gPad->Update();
+  TPaveStats* stats_za0 = (TPaveStats*)gr_za0->GetListOfFunctions()->FindObject("stats");
+  stats_za0->SetTextColor(kMagenta+3);
+  stats_za0->SetX1NDC(0.12); stats_za0->SetX2NDC(0.32); stats_za0->SetY1NDC(0.85);
+  gPad->Modified();
   plotname = string("ptf_qe_analysis_vs_bfield_air_coveroff_z.pdf");
   tc->SaveAs(plotname.c_str(),"pdf");
 
@@ -422,6 +441,9 @@ void collect_qe_plots(){
   gr_xw0->SetMarkerColor(kOrange-3);
   gr_xw0->SetMarkerStyle(21);
   gr_xw0->Draw("AP");
+  gr_xw0->Fit(gr_fit,"QW");
+  gr_xw0->Fit(gr_fit,"Q");
+  gr_xw0->GetFunction("pol1")->SetLineColor(kOrange-3);
   gPad->Modified();
   gPad->Update();
   plotname = string("ptf_qe_analysis_vs_bfield_water_coveroff_x.pdf");
@@ -447,6 +469,9 @@ void collect_qe_plots(){
   gr_yw0->SetMarkerColor(kOrange-3);
   gr_yw0->SetMarkerStyle(21);
   gr_yw0->Draw("AP");
+  gr_yw0->Fit(gr_fit,"QW");
+  gr_yw0->Fit(gr_fit,"Q");
+  gr_yw0->GetFunction("pol1")->SetLineColor(kOrange-3);
   gPad->Modified();
   gPad->Update();
   plotname = string("ptf_qe_analysis_vs_bfield_water_coveroff_y.pdf");
@@ -468,8 +493,14 @@ void collect_qe_plots(){
   mg_x->SetTitle( "; Bx [mG]; Mean QE" );
   mg_x->Draw("AP");
   tc->BuildLegend(0.2, 0.5, 0.45, 0.65);
-  gPad->Modified();
   gPad->Update();
+  TPaveStats* stats_xa0 = (TPaveStats*)gr_xa0->GetListOfFunctions()->FindObject("stats");
+  TPaveStats* stats_xw0 = (TPaveStats*)gr_xw0->GetListOfFunctions()->FindObject("stats");
+  stats_xa0->SetTextColor(kMagenta+3);
+  stats_xw0->SetTextColor(kOrange-3);
+  stats_xa0->SetX1NDC(0.12); stats_xa0->SetX2NDC(0.32); stats_xa0->SetY1NDC(0.85);
+  stats_xw0->SetX1NDC(0.72); stats_xw0->SetX2NDC(0.92); stats_xw0->SetY1NDC(0.85);
+  gPad->Modified();
   plotname = string("ptf_qe_analysis_vs_bfield_coveroff_x.pdf");
   tc->SaveAs(plotname.c_str(),"pdf");
 
@@ -481,8 +512,14 @@ void collect_qe_plots(){
   mg_y->SetTitle( "; By [mG]; Mean QE" );
   mg_y->Draw("AP");
   tc->BuildLegend(0.2, 0.5, 0.45, 0.65);
-  gPad->Modified();
   gPad->Update();
+  TPaveStats* stats_ya0 = (TPaveStats*)gr_ya0->GetListOfFunctions()->FindObject("stats");
+  TPaveStats* stats_yw0 = (TPaveStats*)gr_yw0->GetListOfFunctions()->FindObject("stats");
+  stats_ya0->SetTextColor(kMagenta+3);
+  stats_yw0->SetTextColor(kOrange-3);
+  stats_ya0->SetX1NDC(0.12); stats_ya0->SetX2NDC(0.32); stats_ya0->SetY1NDC(0.85);
+  stats_yw0->SetX1NDC(0.72); stats_yw0->SetX2NDC(0.92); stats_yw0->SetY1NDC(0.85);
+  gPad->Modified();
   plotname = string("ptf_qe_analysis_vs_bfield_coveroff_y.pdf");
   tc->SaveAs(plotname.c_str(),"pdf");
 

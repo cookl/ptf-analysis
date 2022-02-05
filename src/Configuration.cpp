@@ -81,9 +81,56 @@ bool Configuration::Get(const string& key, int& value) const
 {
   string str;
 
+
   if (Get(key, str))
   {
+    std::cout << "Rading int: " << str << std::endl;
     value = atoi(str.c_str());
+    return true;
+  }
+  else
+  {
+    return false;
+  }
+}
+
+bool Configuration::Get(const string& key, std::vector<int>& values) const
+{
+  string str;
+
+
+  if (Get(key, str))
+  {
+    
+    // Find all the comma-separated entries in list
+    size_t pos = str.find(',');
+    
+    while (pos != string::npos)
+      {
+
+	// get this value
+        string value = Trim(str.substr(0, pos));
+	int ivalue = atoi(value.c_str());
+	values.push_back(ivalue);
+	
+	// Check for next ','
+	if(str.size() > pos+1){
+	  str   = Trim(str.substr(pos + 1));
+	  pos = str.find(',');
+	}else{	 
+	  str=std::string("");
+	  pos = string::npos;
+	}
+	    
+      }
+
+    // Check if there is extra characters are last ',' ; if so, treat as int    
+    if(str.size() > 0){
+      int ivalue = atoi(str.c_str());
+      values.push_back(ivalue);
+    }
+
+    //value = atoi(str.c_str());
     return true;
   }
   else
@@ -98,6 +145,7 @@ bool Configuration::Get(const string& key, long& value) const
 
   if (Get(key, str))
   {
+
     value = atol(str.c_str());
     return true;
   }
