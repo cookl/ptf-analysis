@@ -23,7 +23,7 @@ using namespace std;
 /// Keeps track of number of Scan Points, and locations used find entries in TTree
 class PTFAnalysis {
 public:
-  PTFAnalysis( TFile * outfile, PTF::Wrapper & ptf, double errorbar, PTF::PMT & pmt, string config_file, bool savewf=false );
+  PTFAnalysis( TFile * outfile,Wrapper & ptf, double errorbar, PTF::PMT & pmt, string config_file, bool savewf=false );
   ~PTFAnalysis(){
     if ( fitresult ) delete fitresult;
   }
@@ -43,19 +43,26 @@ public:
   const std::vector< double >      get_bins( char dim );
   
 private:
-  void ChargeSum( float ped ); // Charge sum relative to ped
+  void ChargeSum( float ped, int bin_low=1, int bin_high=0 ); // Charge sum relative to ped
   bool MonitorCut( float cut ); // Cut if no monitor PMT pulse
   bool FFTCut(); // Do FFT and check if waveform present
   bool PulseLocationCut( int cut ); // Cut on pulse in first or last bins
   void InitializeFitResult( int wavenum, int nwaves  );
-  void FitWaveform( int wavenum, int nwaves, PTF::PMTType pmt );
-  //bool HasWaveform( int pmt );
+
+  void FitWaveform( int wavenum, int nwaves, PTF::PMT pmt );
   static double pmt0_gaussian(double *x, double *par);
   static double pmt1_gaussian(double *x, double *par);
-  static bool comparison (double i, double j){ return (fabs( i-j ) < 1e-5); }
+  static double funcEMG(double* x, double* p);
+  static double pmt2_piecewise(double *x, double *par);
+  static double bessel(double *x, double *p);
+  static bool comparison(double i, double j){ return (fabs( i-j ) < 1e-5); }
 
   std::vector< ScanPoint > scanpoints;
-  TF1* fmygauss{nullptr};  // gaussian function used to fit waveform
+
+  //std::vector< ScanPoint > Temperature;
+  //TF1* fmygauss{nullptr};  // gaussian function used to fit waveform
+  TF1* ffitfunc{nullptr};  // function used to fit waveform
+
   TH1D* hwaveform{nullptr}; // current waveform
   TH1* hfftm{nullptr}; // fast fourier transform magnitude
   WaveformFitResult * fitresult{nullptr};
