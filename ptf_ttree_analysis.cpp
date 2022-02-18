@@ -20,7 +20,6 @@ int main( int argc, char* argv[] ) {
   for ( const ScanPoint& sp : scanpoints ){
     std::cout << sp;
   }
-
   // get the waveform fit TTree
   TTree * tt = (TTree*)fin->Get("ptfanalysis");
   WaveformFitResult * wf = new WaveformFitResult;
@@ -33,7 +32,7 @@ int main( int argc, char* argv[] ) {
 	      <<" scanpt="<<wf->scanpt
 	      <<" amp="<<wf->amp
 	      <<" iswf="<<wf->haswf<<std::endl;
-
+  
   }
       
   return 0;

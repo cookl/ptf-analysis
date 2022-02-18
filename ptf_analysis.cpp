@@ -83,9 +83,10 @@ int main(int argc, char** argv) {
   vector<int> phidgets = {0, 1, 3};
   PTF::PMT PMT0 = {0,0,PTF::Hamamatsu_R3600_PMT}; // only looking at one PMT at a time
   PTF::PMT PMT1 = {1,5,PTF::PTF_Monitor_PMT}; // only looking at one PMT at a time
-  vector<PTF::PMT> activePMTs = { PMT0, PMT1 }; // must be ordered {main,monitor}
+  PTF::PMT REF = {2,1,PTF::Reference}; // only looking at one PMT at a time
+  vector<PTF::PMT> activePMTs = { PMT0, PMT1, REF }; // must be ordered {main,monitor}
   vector<PTF::Gantry> gantries = {PTF::Gantry0, PTF::Gantry1};
-  PTF::Wrapper wrapper = PTF::Wrapper(6000, 70, activePMTs, phidgets, gantries, PTF::PTF_CAEN_V1730);
+  Wrapper wrapper = Wrapper(6000, 70, activePMTs, phidgets, gantries, PTF_CAEN_V1730);
   wrapper.openFile( string(argv[1]), "scan_tree");
   cerr << "Num entries: " << wrapper.getNumEntries() << endl << endl;
 
@@ -105,6 +106,11 @@ int main(int argc, char** argv) {
   
   // Do analysis of waveforms for each scanpoint
   PTFAnalysis *analysis1 = new PTFAnalysis( outFile, wrapper, 4.4/*errbars1->get_errorbar()*/, PMT1, string(argv[3]), true );
+
+  // Switch to reference waveform
+  
+  // Do analysis of waveforms for each scanpoint
+  PTFAnalysis *analysis2 = new PTFAnalysis( outFile, wrapper, 4.4/*errbars2->get_errorbar()*/, REF, string(argv[3]), true );
   
   // Do quantum efficiency analysis
   // This is now also done in a separate analysis script (including temperature corrections)

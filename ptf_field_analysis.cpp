@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
   vector<int> phidgets = {4};
   vector<PTF::PMT> activePMTs = {}; //Not looking at PMT data
   vector<PTF::Gantry> gantries = {PTF::Gantry0, PTF::Gantry1};
-  PTF::Wrapper wrapper = PTF::Wrapper(6000, 70, activePMTs, phidgets, gantries, PTF::PTF_CAEN_V1730);
+  Wrapper wrapper = Wrapper(6000, 70, activePMTs, phidgets, gantries, PTF_CAEN_V1730);
   wrapper.openFile( string(argv[1])+"/out_run0"+argv[2]+".root", "scan_tree");
   cerr << "Num entries: " << wrapper.getNumEntries() << endl << endl;
 
