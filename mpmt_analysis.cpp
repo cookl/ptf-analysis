@@ -108,7 +108,7 @@ int main(int argc, char** argv) {
   analysis0->write_scanpoints();
 
   // Switch PMT to monitor PMT
-  
+
   // Do analysis of waveforms for each scanpoint
   PTFAnalysis *analysis1 = new PTFAnalysis( outFile, wrapper, 2.1e-3/*errbars1->get_errorbar()*/, PMT1, string(argv[3]), true );
   PTFAnalysis *analysis2 = new PTFAnalysis( outFile, wrapper, 2.1e-3/*errbars1->get_errorbar()*/, PMT2, string(argv[3]), true );
