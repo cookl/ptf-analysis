@@ -15,3 +15,6 @@ terminal_output = true
 pulse_location_cut = false
 fft_cut = false
 do_pulse_finding = true
+do_pulse_fitting = false
+
+
