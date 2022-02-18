@@ -23,6 +23,12 @@ const std::vector< double > Utilities::get_bins( std::vector< ScanPoint > scanpo
     else if( dim == 'z' ){
       positions.push_back( scanpoint.z() );
     }
+    else if( dim == 'time' ){
+      positions.push_back( scanpoint.time_1() );
+    }
+    else if( dim == 'temp' ){
+      positions.push_back( scanpoint.t_ext2() );
+    }
     else{
       cout << "Utilities::get_bins Error: input must be x, y or z!" << endl;
       exit( EXIT_FAILURE );

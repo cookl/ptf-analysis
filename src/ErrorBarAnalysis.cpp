@@ -2,7 +2,7 @@
 
 using namespace std;
 
-ErrorBarAnalysis::ErrorBarAnalysis( TFile* outfile, PTF::Wrapper & wrapper, PTF::PMT & pmt ){
+ErrorBarAnalysis::ErrorBarAnalysis( TFile* outfile, Wrapper & wrapper, PTF::PMT & pmt ){
   static unsigned instance_count = 0;
   ++instance_count;
   
@@ -12,7 +12,7 @@ ErrorBarAnalysis::ErrorBarAnalysis( TFile* outfile, PTF::Wrapper & wrapper, PTF:
   MeanRMSCalc diffrmscalc;
 
   // Get digitizer settings
-  PTF::Digitizer digi = wrapper.getDigitizerSettings();
+  Digitizer digi = wrapper.getDigitizerSettings();
   double digiCounts = pow(2.0, digi.resolution);
 
   int  numTimeBins= wrapper.getSampleLength();

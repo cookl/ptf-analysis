@@ -30,6 +30,8 @@
 #include <algorithm>
 #include <string>
 
+#include <sstream>
+
 using namespace std;
 
 const double sqrt2pi = std::sqrt( 2 * std::acos(-1) );

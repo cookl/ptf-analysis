@@ -3,6 +3,7 @@
 
 #include <map>
 #include <string>
+#include <vector>
 //#include <fstream>
 //#include <iostream>
 
@@ -58,6 +59,7 @@ class Configuration
     // get value associated with given key
     bool Get(const string& key, string& value) const;
     bool Get(const string& key, int&    value) const;
+    bool Get(const string& key, std::vector<int>& values) const;
     bool Get(const string& key, long&   value) const;
     bool Get(const string& key, double& value) const;
     bool Get(const string& key, bool&   value) const;

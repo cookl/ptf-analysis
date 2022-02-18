@@ -11,23 +11,28 @@
 class ScanPoint {
 public:
   ScanPoint(); // default constructor
-  void set_xyz( double x, double y, double z ){ fX=x; fY=y; fZ=z; }
+  void set_xyz( double x, double y, double z,double time_1,double t_ext2 ){ fX=x; fY=y; fZ=z;fT_ext2=t_ext2;
+    fTime_1=time_1; }
   void set_entry( unsigned long long entry ){ fEntry = entry; ++fEntries; }
   
-  ScanPoint( double x, double y, double z, 
+  ScanPoint( double x, double y, double z, double time_1,double t_ext2,
 	     unsigned long long entry, unsigned long long entries = 0 );
 
   ScanPoint & operator++(){ ++fEntries; return *this; }// prefix increment operator
   
-  void get_xyz( double& xx, double &yy, double&zz ) const { xx=fX; yy=fY; zz=fZ; }
+  void get_xyz( double& xx, double &yy, double&zz, double&tti,double&tt_ext2 ) const { xx=fX; yy=fY; zz=fZ;tti=fTime_1;tt_ext2=fT_ext2; }
   double x() const { return fX; }
   double y() const { return fY; }
   double z() const { return fZ; }
+  double time_1() const {return fTime_1;}
+  //double t_int1()	const	{return fT_int1;}
+  //double t_ext1()	const	{return fT_ext1;}
+  double t_ext2()	const	{return fT_ext2;}
   unsigned long long get_entry() const { return fEntry; }
   unsigned long long nentries() const { return fEntries; }
 
 private:
-  double fX, fY, fZ;            // x, y, z location of scan point
+  double fX, fY, fZ,fTime_1,fT_ext2;            // x, y, z location of scan point
   unsigned long long fEntry;    // first entry in TTree of this scan pt
   unsigned long long fEntries;  // number of entries (waveforms) in TTree for this scan pt
 };

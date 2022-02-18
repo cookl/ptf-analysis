@@ -48,7 +48,7 @@ int main( int argc, char* argv[] ) {
 
   // P.E. values
   double peDivision = 0.5;
-  double peHeight   = 52.14; //< mV 
+  double peHeight   = 9.261; //< mV 
   double peArea     = 260.0; // mV.ns ?
 
   // DCR parameters
@@ -255,11 +255,10 @@ int main( int argc, char* argv[] ) {
   histPE->GetXaxis()->SetTitle("Pulse height (PE)");
   histPE->GetXaxis()->SetRangeUser(0, 20);
   histPE->GetYaxis()->SetTitle("Number of events");
-  histPE->Fit("gaus","","",2,9);
+  histPE->Fit("gaus","","",3,6.5);
   gStyle->SetOptFit(11);
   sprintf(filename, "../images/%s-%s-mpmt-pulse-height.png", argv[2], argv[3] );
   cPE->SaveAs(filename);
-  //cPE->SaveAs("../images/%s-%s-mpmt-pulse-height.png", argv[2], argv[3] );
  
   return 0;
 }

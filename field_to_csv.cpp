@@ -16,15 +16,15 @@ int main(int argc, char** argv) {
   }
 
   const string run_no = argv[1];
-  string root_f = "/neut/datasrv2a/jmgwalker/ptf/ptf-analysis-2/develop/ptf-analysis-2/data/out_run0" + run_no + ".root";
-  string csv_f  = "/neut/datasrv2a/jmgwalker/ptf/ptf-analysis-2/develop/ptf-analysis-2/field_to_csv/out_run0" + run_no + ".csv";
+  string root_f = "/neut/data19/vincent/ptf-analysis-2/out_run0" + run_no + ".root"; 
+  string csv_f  = "/neut/data19/vincent/ptf-analysis_test/ptf-analysis/" + run_no + ".csv";
 
   vector<int> phidgets = {0, 1, 3, 4};
   vector<PTF::PMT> activePMTs = {};
 
   vector<PTF::Gantry> gantries = {PTF::Gantry0, PTF::Gantry1};
 
-  PTF::Wrapper wrapper = PTF::Wrapper(16384, 70, activePMTs, phidgets, gantries, PTF::PTF_CAEN_V1730);
+  Wrapper wrapper = Wrapper(16384, 70, activePMTs, phidgets, gantries, PTF_CAEN_V1730);
 
   unordered_set<int> skipLines = {};// {962,1923,2884,5240,6201,9611,10572,11533,12494,13455,15811,16771};
 
