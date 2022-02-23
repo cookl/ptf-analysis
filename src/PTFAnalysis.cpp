@@ -514,6 +514,7 @@ void PTFAnalysis::FitWaveform( int wavenum, int nwaves, PTF::PMT pmt) {
 
     fitresult->fitstat   = fitstat;
 
+
     // Do CFD analysis on the fitted pulse
     double baseline = ffitfunc->GetParameter(4);
     if(pmt.channel == 0) baseline = 0.991;
@@ -567,6 +568,7 @@ void PTFAnalysis::FitWaveform( int wavenum, int nwaves, PTF::PMT pmt) {
 	      << std::endl;
     
     
+
 
 
   }
