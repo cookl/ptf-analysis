@@ -21,6 +21,8 @@
 
 #include "config.hpp"
 
+#define nPoints_max 6000 
+
 /// Classes to to help with reading in PTF data
 /// PTF::PmtChannel           holds pmt number and channel number
 ///                           pmt seems to be an arbitrary number of user 
@@ -129,6 +131,12 @@ struct PMTSet {
 
 };
 
+struct EvtTimestampSet {
+  double*  evt_timestamp{nullptr};
+  TBranch* branch{nullptr};
+
+};
+
 //struct PhidgetSet {
 //  PTF::PhidgetReading data;
 //  TBranch*       branchX{nullptr};
@@ -206,6 +214,9 @@ public:
   // Returns the length of the samples
   int getSampleLength() const;
 
+  // Return the event timestamp
+  double getEventTimestamp(unsigned long long sample) const;
+
   GantryData getDataForCurrentEntry(PTF::Gantry whichGantry) const;
 
   PTF::PhidgetReading getReadingForPhidget(int phidget) const;
@@ -227,6 +238,7 @@ private:
   unsigned long long maxSamples;
   unsigned long long sampleSize;
   unsigned long long entry{ULONG_MAX};
+  double evt_timestamp[nPoints_max];
 
   // data
   std::unordered_map<int, PMTSet*>     pmtData;

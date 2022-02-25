@@ -195,12 +195,13 @@ double PTFAnalysis::bessel(double *x, double *p){
 }
   
 
-void PTFAnalysis::InitializeFitResult( int wavenum, int nwaves  ) {
+void PTFAnalysis::InitializeFitResult( int wavenum, int nwaves, double evt_timestamp) {
   fitresult->Init();
   ScanPoint & scanpoint = scanpoints[ scanpoints.size()-1 ];
   fitresult->scanpt    = scanpoints.size()-1;
   fitresult->wavenum   = wavenum;
   fitresult->nwaves    = nwaves;
+  fitresult->evt_timestamp = evt_timestamp;
   fitresult->x         = scanpoint.x();
   fitresult->y         = scanpoint.y();
   fitresult->z         = scanpoint.z();
@@ -696,7 +697,10 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, Wrapper & wrapper, double errorbar, PT
 	    hwaveform->SetBinError( ibin, errorbar );
       }
       hwaveform->Scale(digi.fullScaleRange/digiCounts);
-      InitializeFitResult( j, numWaveforms );
+
+      double evt_timestamp = (int) wrapper.getEventTimestamp(j);
+
+      InitializeFitResult( j, numWaveforms, evt_timestamp);
       
       // Do pulse finding (if requested)
       if(do_pulse_finding){
