@@ -1,7 +1,7 @@
 #include "WaveformFitResult.hpp"
 
 void WaveformFitResult::Init(){
-  scanpt=-1; wavenum=0; nwaves=0;
+  scanpt=-1; wavenum=0; nwaves=0; evt_timestamp=0.0;
   x=0.; y=0.; z=0.;
   ped=0.; ped_err=0.;
   mean=0.; mean_err=0.;
@@ -28,6 +28,7 @@ const char * WaveformFitResult::GetRootString(){
   rootstring ="scanpt/I";
   rootstring+=":wavenum/I";
   rootstring+=":nwaves/I";
+  rootstring+=":evt_timestamp/D";
   rootstring+=":x/F";
   rootstring+=":y/I";
   rootstring+=":z/I";
@@ -69,6 +70,7 @@ void WaveformFitResult::MakeTTreeBranches(TTree * t){
   t->Branch( "scanpt",    &scanpt,    "scanpt/I" );
   t->Branch( "wavenum",   &wavenum,   "wavenum/I" );
   t->Branch( "nwaves",    &nwaves,    "nwaves/I" );
+  t->Branch( "evt_timestamp",    &evt_timestamp,    "evt_timestamp/D" );
   t->Branch( "x",         &x,         "x/F" );
   t->Branch( "y",         &y,         "y/F" );
   t->Branch( "z",         &z,         "z/F" );
@@ -108,6 +110,7 @@ void WaveformFitResult::SetBranchAddresses(TTree * t){
   t->SetBranchAddress( "scanpt",    &scanpt );
   t->SetBranchAddress( "wavenum",   &wavenum );
   t->SetBranchAddress( "nwaves",    &nwaves );
+  t->SetBranchAddress( "evt_timestamp",    &evt_timestamp );
   t->SetBranchAddress( "x",         &x );
   t->SetBranchAddress( "y",         &y );
   t->SetBranchAddress( "z",         &z );
