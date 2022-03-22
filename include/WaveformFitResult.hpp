@@ -20,6 +20,7 @@ public:
   int scanpt;       //< scan point number
   int wavenum;      //< waveform number in scan
   int nwaves;       //< number of waveforms in this scan point
+  double evt_timestamp; //< timestamp for this event (unix time)
   float x;          //< x location of this scan point
   float y;          //< y location of this scan point
   float z;          //< z location of this scan point
