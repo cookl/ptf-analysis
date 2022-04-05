@@ -27,8 +27,8 @@
 // such as number, time position and 
 // height of pulses.
 // It outputs a plot of average pulse
-// height in PE vs time, for every minute
-// the file collected data
+// height in PE vs time, for a specified
+// interval of time (eg every minute)
 
 
 
@@ -56,9 +56,12 @@ int main( int argc, char* argv[] ) {
     // P.E. values
     double peHeight   = 13.18; //< mV
 
-    // Gaussian Fit Bounds
+    // Gaussian fit bounds
     double gausMin = 3;
     double gausMax = 7;
+
+    // Length of time each average data point analyzes, in minutes
+    double periodLen = 1;
 
 
 
@@ -91,16 +94,19 @@ int main( int argc, char* argv[] ) {
     // Partial minutes at the end of the run are NOT included (i.e. a 90s run would have totMins = 1)
     int totMins = int(floor((UEndTime - UStaTime)/60));
 
+    // Determine the total number of (full) time periods the root file ran for, in minutes
+    int totPeriods = int(floor(totMins / periodLen));
+
     
     
     //Define the arrays for storing mean pulse height
-    double means[totMins];
-    double meanErrs[totMins];
-    double mins[totMins];
-    double minErrs[totMins];
-    for(int i=0; i<totMins; i++){
-        mins[i] = i;
-        minErrs[i] = 0;
+    double means[totPeriods];
+    double meanErrs[totPeriods];
+    double mins[totPeriods];
+    double minErrs[totPeriods];
+    for(int i=0; i<totPeriods; i++){
+        mins[i] = periodLen*i;
+        minErrs[i] = 0;    // The minute-error is always 0 because we don't want horizontal error bars later
     }
 
 
@@ -113,41 +119,42 @@ int main( int argc, char* argv[] ) {
     // events until we're done running the program to avoid double counting
     int currentTime;
 
-    // Loop over each minute
-    for(int min = 0; min < totMins; min++){
+    // Loop over each time-period
+    for(int period = 0; period < totPeriods; period++){
         // Reset a few things before making a new minute-hist
         hist->Reset();
         endLoop = 0;
 
-        // Loop over each waveform in that minute
+        // Loop over each waveform in that time-period
         while(endLoop == 0){
             // Get event information from tree.
 	    tt->GetEvent(k);
 
-	    // If there are pulses on waveform
-	    if(wf->numPulses > 0){
+	    // Check if the event is actually in the next time-period
+	    if((wf->evt_timestamp - UStaTime) >= ((period + 1)*periodLen*60)){
+	      endLoop = 1;
+	      k -= 1;    // This is so that this event will be included in the next period
+	    } 
+	    else {
+	        // If there are pulses on waveform
+	        if(wf->numPulses > 0){
 
-	        if ((wf->pulseTimes[0]>=afpTimeThreshold1) && (wf->pulseTimes[0]<afpTimeThreshold2)) {
-	            // Find the pulse height
-		    lsrPulseFlt = wf->pulseCharges[0]*1000.0/peHeight;
-	        }
+	            if ((wf->pulseTimes[0]>=afpTimeThreshold1) && (wf->pulseTimes[0]<afpTimeThreshold2)) {
+	                // Find the pulse height
+		        lsrPulseFlt = wf->pulseCharges[0]*1000.0/peHeight;
+		    }
 
-	        // Loop over each pulse
-	        for(int i = 0; i < wf->numPulses; i++){
-	            // check if it is laser pulse (and not an afterpulse) 
-	            if (wf->pulseTimes[i]>=afpTimeThreshold1 && wf->pulseTimes[i]<afpTimeThreshold2){
-		        hist->Fill(lsrPulseFlt);
+		    // Loop over each pulse
+		    for(int i = 0; i < wf->numPulses; i++){
+		        // check if it is laser pulse (and not an afterpulse) 
+		        if (wf->pulseTimes[i]>=afpTimeThreshold1 && wf->pulseTimes[i]<afpTimeThreshold2){
+		            hist->Fill(lsrPulseFlt);
+		        }
 		    }
 	        }
-	    }
-	    
-	    // Check if the NEXT event will be in the next minute
-	    currentTime = wf->evt_timestamp - UStaTime;
-	    if((currentTime + 1) == ((min + 1)*60)){
-	      endLoop = 1;
-	    }
 	        
-	    k++;
+	        k++;
+	    }
 	}
 	
 	// Format the histogram
@@ -158,14 +165,15 @@ int main( int argc, char* argv[] ) {
 	hist->GetYaxis()->SetTitle("Number of events");
 	TFitResultPtr fitRes = hist->Fit("gaus","QS","",gausMin,gausMax);
 	gStyle->SetOptFit(11);
-	sprintf(filename, "../images/%s-%s-pulse-height-hist-minute-%d.png", argv[2], argv[3], min);
-	canvas->SaveAs(filename);
+	// Un-comment the following 2 lines to save each avg-pulse-height histogram
+	//sprintf(filename, "../images/%s-%s-pulse-height-hist-minute-%d.png", argv[2], argv[3], min);
+	//canvas->SaveAs(filename);
 
 	// Store the fit results
 	Double_t mean = fitRes->Parameter(1);
-	means[min] = mean;
+	means[period] = mean;
 	Double_t meanErr = fitRes->ParError(1);
-	meanErrs[min] = meanErr;
+	meanErrs[period] = meanErr;
 	//std::cout << "Mean: "  << mean << std::endl;
     }
 
@@ -174,14 +182,12 @@ int main( int argc, char* argv[] ) {
     // Plot the mean pulse height over time
     // Create the graph and canvas
     auto canvas2 = new TCanvas("canvas2","",1200,800);
-    TGraphErrors * timeGraph = new TGraphErrors(totMins,mins,means,minErrs,meanErrs);
+    TGraphErrors * timeGraph = new TGraphErrors(totPeriods,mins,means,minErrs,meanErrs);
     
     //formatting and saving
     timeGraph->SetTitle("Laser Stability over Time");
     timeGraph->GetXaxis()->SetTitle("Time (min)");
     timeGraph->GetYaxis()->SetTitle("Mean Pulse Height (PE)");
-    //timeGraph->SetMarkerColor(4);
-    //timeGraph->SetMarkerStyle(21);
     timeGraph->Draw("AP*");
     canvas2->Update();
     sprintf(filename, "../images/%s-%s-laser-pulse-stability.png", argv[2], argv[3]);
