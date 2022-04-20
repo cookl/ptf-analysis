@@ -1,5 +1,5 @@
 #include "wrapper.hpp"
-
+#include "BrbSettingsTree.hxx"
 
 using namespace std;
 using namespace PTF;
@@ -42,6 +42,8 @@ Wrapper::Wrapper(unsigned long long maxSamples, unsigned long long sampleSize, c
       digiData.resolution = mPMT_DIGITIZER_RESOLUTION;
       break;
   }
+
+  for(int i =0; i < nPoints_max; i++){evt_timestamp[i] = -1.0;}
 }
 
 
@@ -216,6 +218,15 @@ bool Wrapper::setDataPointers() {
   // Make sure this branch exists first
   if(Time_1) Time_1->SetAddress(&ti.time_c);
 	
+  // Set the branch for the timestamp for each event
+  TBranch *Time_2=tree->GetBranch("evt_timestamp");
+  if(Time_2){
+    Time_2->SetAddress(&evt_timestamp);
+    std::cout << "Found event timestamp branch.  Setting address" << std::endl;
+  }else{
+    std::cout << "Did not event timestamp branch." << std::endl;
+  }
+
    // TBranch
    //   *ACC_x= tree->GetBranch("gantry0_x"), *g0Y = tree->GetBranch("gantry0_y"), *g0Z = tree->GetBranch("gantry0_z"),
    //     *ACC_y = tree->GetBranch("gantry0_rot"), *g0Phi = tree->GetBranch("gantry0_tilt"),
@@ -307,6 +318,13 @@ void Wrapper::closeFile() {
 }
 
 
+int Wrapper::LoadBrbSettingsTree(){
+
+  return BrbSettingsTree::Get()->LoadSettingsTree(file);
+  
+}
+
+
 int Wrapper::getChannelForPmt(int pmt) const {
   // Could be replaced with binary search, but probably list is small enough to not matter
   auto res = pmtData.find(pmt);
@@ -383,6 +401,14 @@ int Wrapper::getSampleLength() const {
   return sampleSize;
 }
 
+double Wrapper::getEventTimestamp(unsigned long long sample) const {
+  if(sample > nPoints_max or sample < 0){
+    throw new Exceptions::SampleOutOfRange();
+  }
+ 
+  return evt_timestamp[sample];
+  
+}
 
 GantryData Wrapper::getDataForCurrentEntry(Gantry whichGantry) const {
 
