@@ -22,5 +22,6 @@ do_pulse_fitting = false
 
 # list of channels to analyze; comma separated list
 
-mpmt_channel_list = 1,2
+mpmt_channel_list = 0,1,2
+
 

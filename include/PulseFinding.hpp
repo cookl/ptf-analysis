@@ -15,5 +15,8 @@ void find_pulses(int algo_type, TH1D *hwaveform, WaveformFitResult *fitresult, P
 // Do simple comparison to fixed threshold to find pulses
 void simple_threshold_technique(TH1D *hwaveform, WaveformFitResult *fitresult, PTF::PMT pmt );
 
+// Another function to find peaks and compare the results to the first one
+void another_pulse_finding_function(TH1D *hwaveform, WaveformFitResult *fitresult, PTF::PMT pmt );
+
 #endif // __PULSEFINDING__
 

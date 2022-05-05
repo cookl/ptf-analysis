@@ -50,7 +50,7 @@ private:
   bool MonitorCut( float cut ); // Cut if no monitor PMT pulse
   bool FFTCut(); // Do FFT and check if waveform present
   bool PulseLocationCut( int cut ); // Cut on pulse in first or last bins
-  void InitializeFitResult( int wavenum, int nwaves  );
+  void InitializeFitResult( int wavenum, int nwaves, double evt_timestamp);
 
   void FitWaveform( int wavenum, int nwaves, PTF::PMT pmt );
   static double pmt0_gaussian(double *x, double *par);
