@@ -582,7 +582,7 @@ void PTFAnalysis::FitWaveform( int wavenum, int nwaves, PTF::PMT pmt) {
   }
 }
 
-PTFAnalysis::PTFAnalysis( TFile* outfile, Wrapper & wrapper, double errorbar, PTF::PMT & pmt, string config_file, bool savewf ){
+PTFAnalysis::PTFAnalysis( TFile* outfile, Wrapper & wrapper, double errorbar, PTF::PMT & pmt, string config_file, bool savewf, float* ch1_times ){
 
   // Load config file
   Configuration config;
@@ -666,7 +666,9 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, Wrapper & wrapper, double errorbar, PT
   // Loop over scan points (index i)
   unsigned long long nfilled = 0;// number of TTree entries so far
 
-  for (unsigned i = 2; i < wrapper.getNumEntries(); i++) {
+//    float times[wrapper.getNumEntries()];
+    
+  for (unsigned i = 2; i < wrapper.getNumEntries(); i++) {      // try smaller range (wrapper.getNumEntries())
     //if ( i>2000 ) continue;
     if( terminal_output ){
       cerr << "PTFAnalysis scan point " << i << " / " << wrapper.getNumEntries() << "\u001b[34;1m (" << (((double)i)/wrapper.getNumEntries()*100) << "%)\u001b[0m\033[K";
@@ -716,9 +718,28 @@ PTFAnalysis::PTFAnalysis( TFile* outfile, Wrapper & wrapper, double errorbar, PT
         
         // Added by Yuka June 2021 for PMT pulse charge calculation
         if (pmt.type == PTF::mPMT_REV0_PMT) {
-            if (pmt.pmt==1) ChargeSum(1.0034,260,271);    //2080 to 2170 ns
-            if (pmt.pmt==2) ChargeSum(1.00146,272,287);   //2180 to 2300 ns
+//            if (pmt.channel==1) ch1_times = times[i];
+            //          Channel 1 doesn't really need pulse charge calculations
+//            if (pmt.channel==1) ChargeSum(1.0034,260,271);    //2080 to 2170 ns
+            if (pmt.channel==1) times[i]=fitresult->pulseTimes[0];  //times.push_back(fitresult->pulseTimes[0]);
+            if (pmt.channel==2) {
+                if (ch1_times[i]!=0) {
+                    low = (ch1_times[i]/8) + channel_shift - 4;
+                    high = (ch1_times[i]/8) + channel_shift + 5;
+                }
+                ChargeSum(1.00146,low,high);   //2180 to 2300 ns
+            }
         }
+//
+//        std::cout << "time: " << fitresult->pulseTimes[0] << std::endl;
+//        std::cout << "i: " << i << std::endl;
+//        if (pmt.channel==1) std::cout << "pulseTime: " << times[i] <<std::endl;
+//        if (pmt.channel==2) std::cout << "pulseTime: " << ch1_times[i] <<std::endl;
+//        std::cout << "low: " << low <<std::endl;
+//        std::cout << "high: " << high <<std::endl;
+//        std::cout << "PMT TYPE: " << pmt.type << std::endl;
+//        std::cout << "PMT.pmt: " << pmt.pmt << std::endl;
+//        std::cout << "PMT.channel: " << pmt.channel << std:: endl;
         
         
         

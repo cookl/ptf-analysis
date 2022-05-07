@@ -213,6 +213,8 @@ void printPlots(string pc_fit_type, string ph_axis_type, int event_num) {
     // Print total pulse height
     TCanvas *c3 = new TCanvas("C3");
     total_ph->Draw();
+    total_ph->Fit("gaus","Q","C",5,10);
+    gStyle->SetOptFit();
     total_ph->GetXaxis()->SetTitle("Pulse height (mV)");
     total_ph->GetYaxis()->SetTitle("Number of events");
     c3->SaveAs("mpmt_pulse_height_total.png");

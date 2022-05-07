@@ -26,6 +26,7 @@
 #include "FindCircle.hpp"
 
 #include <iostream>
+#include <sstream>
 #include <vector>
 #include <algorithm>
 #include <string>
