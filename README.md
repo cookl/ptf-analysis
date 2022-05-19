@@ -35,7 +35,7 @@ This is the codebase for analysing the ROOT files produced from the (PMT test fa
 
 To download the repository use:
 
-`git clone https://<username>@bitbucket.org/ttriumfdaq/ptf-analysis-2.git`
+`git clone https://github.com/PMT-Test-Facilities/ptf-analysis`
 
 ## Getting the PTF data <a id="data"></a>
 
