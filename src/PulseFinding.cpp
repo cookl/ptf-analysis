@@ -70,5 +70,8 @@ void simple_threshold_technique(TH1D *hwaveform, WaveformFitResult *fitresult, P
     }
     
   }
+
+  //  if(fitresult->numPulses){ std::cout << "number of pulses found: " << fitresult->numPulses << " " << std::endl;}
+  
 }
 
