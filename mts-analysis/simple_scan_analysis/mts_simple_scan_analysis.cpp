@@ -1,22 +1,20 @@
-// Ashley/Thomas simple pulse height histogram
-// 2020-01-20
-
-
+// Ashley/Thomas/Angela 2D histograms
+// 2022-05-27
 #include "WaveformFitResult.hpp"
 #include "ScanPoint.hpp"
 #include "TCanvas.h"
 #include "TFile.h"
 #include "TF1.h"
+#include "TF2.h"
+#include "TMath.h"
 #include "TH1D.h"
 #include "TH2F.h"
 #include "THStack.h"
 #include "TGraph.h"
 #include "TGaxis.h"
-
-
-#include "TF1.h"
 #include "TStyle.h"
 #include "TLatex.h"
+#include "TLine.h"
 #include "TLegend.h"
 #include "TPaveStats.h"
 #include "TPad.h"
@@ -36,219 +34,243 @@ int main( int argc, char* argv[] )
   if ( argc != 2 ){
     std::cerr<<"Usage: ptf_ttree_analysis.app ptf_analysis.root\n";
     exit(0); }
-  
   TFile * fin = new TFile( argv[1], "read" );
   TTree * tt0;    
-  WaveformFitResult * wf0;
-   
-  // Get the waveform fit TTree for desired channel
-  tt0 = (TTree*)fin->Get("ptfanalysis2");
+  WaveformFitResult * wf0; 
+  // Getting the waveform fit TTree for desired channel
+  tt0 = (TTree*)fin->Get("ptfanalysis2");//select channel here
   wf0 = new WaveformFitResult;
   if(tt0) wf0->SetBranchAddresses( tt0 );
-
-  // Define bin paramaters for scan
-  float step_size = 0.01;//(m)
-  float x_scan_dist = 0.2;//(m)
-  float y_scan_dist = 0.24;//(m)
   
-  int num_bins_x = static_cast<int>(x_scan_dist/step_size)+1 ;//number of bins for x
-  int num_bins_y = static_cast<int>(y_scan_dist/step_size)+1 ;//number of bins for y
-  float x_low = 0.375 - step_size/2;
-  float x_high = 0.375 + x_scan_dist + step_size/2;
-  float y_low = x_low;
-  float y_high = 0.375 + y_scan_dist + step_size/2;
+  //Define bin paramaters for scan. (m)
+  /*---------------------------------------------------------------------------------*/
+  float step_size = 0.005;
+  float xstart = 0.42;
+  float ystart = 0.45;
+  float x_scan_dist = 0.12;
+  float y_scan_dist = 0.105;
   float scnsize = step_size/2.0;//half of the x/y square you want to look over
   
-  //Initialize 2d histogram for mean pulse height and pulse counts
-  TH2F *h_mean = new TH2F("mean pulse height distribution","Mean Pulse Height",num_bins_x,x_low,x_high,num_bins_y,y_low,y_high);
-  TH2F *h_counts = new TH2F("h3","Number of Pulses",num_bins_x,x_low,x_high,num_bins_y,y_low,y_high);
+  int num_bins_x = static_cast<int>(x_scan_dist/step_size)+1 ;
+  int num_bins_y = static_cast<int>(y_scan_dist/step_size)+1 ;
+  float x_low = xstart - step_size/2;
+  float x_high = xstart + x_scan_dist + step_size/2;
+  float y_low = ystart - step_size/2;;
+  float y_high = ystart + y_scan_dist + step_size/2;
 
-  //Initialize histogram for x/y scan points
-  TH1F *xpos = new TH1F("xpos","xpos",5000,0.35,0.6);
-  TH1F *ypos = new TH1F("ypos","ypos",5000,0.35,0.65);
+  std::cout << "There are approx" << num_bins_x * num_bins_y << "scan points" << std::endl;
+  std::cout << "We expect" << 3500 * num_bins_x * num_bins_y << "events in total" << std::endl;
+  
+  /*----------------------------------------------------------------------------------*/
+  //Initialize
+  /* --------------------------------------------------------------------------------- */
+  //2D Histograms; 
+  TH2F *h_mph = new TH2F("mean pulse height distribution","Mean Pulse Height",num_bins_x,x_low,x_high,num_bins_y,y_low,y_high);
+  TH2F *h_p = new TH2F("Number of Pulses","Number of Pulses",num_bins_x,x_low,x_high,num_bins_y,y_low,y_high);
+  TH2F *h_RMS = new TH2F("RMS", "Standard dev. dist.",num_bins_x,x_low,x_high,num_bins_y,y_low,y_high);
+  TH2F *h_scan_pt = new TH2F("scan point","scan point",num_bins_x,x_low,x_high,num_bins_y,y_low,y_high);
+  TH2F *h_events = new TH2F("Events","Number of events",num_bins_x,x_low,x_high,num_bins_y,y_low,y_high);
+  TH2F *h_eff = new TH2F("Efficiency","pulses/events",num_bins_x,x_low,x_high,num_bins_y,y_low,y_high);
+  
+  //2D array bins for constructing the 2D histograms;
+  TH1F *h[num_bins_x][num_bins_y];
+  Double_t events_bin[num_bins_x][num_bins_y];
+  for (int x=0;x<num_bins_x;x++) {
+    for (int y=0;y<num_bins_y;y++){
+      char name1[100];
+      sprintf(name1,"h bin %i %i",x,y);
+      h[x][y] = new TH1F(name1,"pulse heights",200,0,200*0.48828125);
+      events_bin[x][y]=0;
+    }
+  }
+  /* --------------------------------------------------------------------------------- */
 
-
-  //Initialize bin for waveform pulse heights histogram
-  TH1F *h1 = new TH1F("pulse_height","Pulse Height",200,0,200*0.48828125);
-  int last_x = -1;
-  int last_y = -1;
-
+  
   std::cout << "Analyzing " << tt0->GetEntries() << " waveforms" << std::endl;
   for(int i = 0; i < tt0->GetEntries()-1 ; i++)
     {//START WAVEFORM LOOP
       
       tt0->GetEvent(i);
       //std::cout << "Number of pulses found: " << wf0->numPulses << std::endl;
-	for(int k = 0; k < wf0->numPulses; k++ )
-	  {//START PULSE LOOP
 
-	    if(wf0->pulseTimes[k] > 2200 and wf0->pulseTimes[k] < 2400 and wf0->pulseCharges[k]*1000.0 > 4.5)
-	      {//FILTER PULSE TIME
+      for(int ypoint = 0; ypoint < num_bins_y ; ypoint++)
+	{//START YLOOP
 
-		xpos->Fill(wf0->x);
-		ypos->Fill(wf0->y);
-				
-		for(int xpoint = 0; xpoint < num_bins_x ; xpoint++)
-		  {//START XLOOP
+	  float ycenter = step_size*ypoint + ystart;
+          float y_l = ycenter - scnsize;
+          float y_r = ycenter + scnsize;
 
-		    float xcenter = step_size*xpoint + 0.375;
-		    float x_bin_edge_l = xcenter - scnsize;
-		    float x_bin_edge_r = xcenter + scnsize;
+	  for(int xpoint = 0; xpoint < num_bins_x ; xpoint++)
+	    {//START XLOOP
+	      float xcenter = step_size*xpoint + xstart;
+	      float x_l = xcenter - scnsize;
+	      float x_r = xcenter + scnsize;
+
+	      if((wf0->x>x_l && wf0->x < x_r) and (wf0->y >y_l && wf0->y < y_r))
+		{//FILTER XY COORDS
+
+		  events_bin[xpoint][ypoint] += 1;
+
+		  for(int k = 0; k < wf0->numPulses; k++ )
+		    {//START PULSE LOOP
+
+		      if(wf0->pulseTimes[k] > 2200 and wf0->pulseTimes[k] < 2400 and wf0->pulseCharges[k]*1000.0 > 2.0)
+			{//FILTER PULSE TIME
+		      
+			  h[xpoint][ypoint]->Fill(wf0->pulseCharges[k]*1000.0);
+			  h_scan_pt->SetBinContent(xpoint+1,ypoint+1,wf0->scanpt);
+			  			 
+			}//DONE FILTER PULSE TIME
+
+		    }//DONE PULSE LOOP
+		  
+	      	}//DONE FILTER XY COORDS
+		 
+	    }//DONE XLOOP
 		    
-		    for(int ypoint = 0; ypoint < num_bins_y ; ypoint++)
-		      {//START YLOOP
-
-			float ycenter = step_size*ypoint + 0.375;
-			float y_bin_edge_l = ycenter - scnsize;
-			float y_bin_edge_r = ycenter + scnsize;
-						
-			if((wf0->x>x_bin_edge_l && wf0->x < x_bin_edge_r) && (wf0->y >y_bin_edge_l && wf0->y < y_bin_edge_r))
-			  {//FILTER XY COORDS
-			    
-			    if(xpoint == last_x and ypoint == last_y)
-			      {h1->Fill(wf0->pulseCharges[k]*1000.0);}
-			    else
-			      {
-				std::cout << "SCAN POINT " << wf0->scanpt << " : " << std::endl;
-				std::cout << "X = " << x_bin_edge_l << " - " << x_bin_edge_r << std::endl;
-				std::cout << "Y = " << y_bin_edge_l << " - " << y_bin_edge_r << std::endl;
-				int Num_Entries = h1->GetEntries();
-				float Mean_Entries = h1->GetMean();
-				std::cout << "Num Entries " << Num_Entries << "|  Mean " << Mean_Entries << std::endl;
-        			                                                          
-				h_mean->SetBinContent(last_x+1,last_y+1,Mean_Entries);
-				h_counts->SetBinContent(last_x+1,last_y+1,Num_Entries); 
-		      	       	h1->Reset();
-			      }
-		        
-			    last_x = xpoint;
-			    last_y = ypoint;
-	        
-
-			  }//DONE FILTER XY COORDS
-
-		      }//DONE YLOOP
-		    
-		  }//DONE XLOOP
-
-	      }//DONE FILTER PULSE TIME
-
-	  }//DONE PULSE LOOP
+	}//DONE YLOOP
 
     }//DONE WAVEFORM LOOP
+  
+ 	  
+  //Constructing 2D histograms from h (array of histograms)
+   /* --------------------------------------------------------------------------------- */
+
+  for(int x = 0; x < num_bins_x ; x++){
+      for(int y = 0; y < num_bins_y ; y++){
+       	  h_p->SetBinContent(x+1,y+1,h[x][y]->GetEntries());
+	  h_mph->SetBinContent(x+1,y+1,h[x][y]->GetMean());
+	  h_RMS->SetBinContent(x+1,y+1,h[x][y]->GetRMS());
+	  h_events->SetBinContent(x+1,y+1,events_bin[x][y]);
+      }} 
+  /* --------------------------------------------------------------------------------- */
 
   
-  //Style
+  //Plotting
+  /* --------------------------------------------------------------------------------- */
+  //Style;
   gStyle->SetPalette(1);
   gStyle->SetOptTitle(1); gStyle->SetOptStat(0);
   gStyle->SetOptFit(1111); gStyle->SetStatBorderSize(0);
   gStyle->SetStatX(.89); gStyle->SetStatY(.89);
 
-  //Mean histogram
+  //Draw circle to outline PMT around maximum h_p value;
+  h_eff = (TH2F*)h_p->Clone();
+  h_eff->Divide(h_events);
+  h_eff->Scale(100.0);
+  Int_t MaxBin = h_eff->GetMaximumBin();
+  Int_t x,y,z;
+  h_eff->GetBinXYZ(MaxBin,x,y,z);
+  std::cout << "MAXBIN  = (" << x << "," << y << "," << z << ")" << std::endl;
+  double x_max = (static_cast<float>(x)-1.0)*step_size+xstart;
+  double y_max = (static_cast<float>(y)-1.0)*step_size+ystart;
+  std::cout << "MAXcoords  = (" << x_max << "," << y_max << ")" << std::endl;
+  TEllipse *pmt = new TEllipse(0.474,0.493, 0.04,0.04);
+  pmt->SetLineColor(1);
+  pmt->SetFillStyle(0);
+  
+  /* --------------------------------------------------------------------------------- */
+
+  //h_scan_pt histogram;
+  TCanvas *c0 = new TCanvas("C0","",2000,1000);
+  c0->SetRightMargin(0.2);
+  c0->SetLeftMargin(0.15);
+  c0->SetBottomMargin(0.10);
+  h_scan_pt->Draw("TEXT");
+  h_scan_pt->GetXaxis()->SetTitle("X (m)");
+  h_scan_pt->GetYaxis()->SetTitle("Y (m)");
+  h_scan_pt->GetZaxis()->SetTitle("Scan point");
+  h_scan_pt->SetTitleSize(50,"t");
+  c0->SaveAs("scan_points.png");
+  
+
+  //h_p histogram;
   TCanvas *c1 = new TCanvas("C1","",1200,500);
   c1->SetRightMargin(0.2);
   c1->SetLeftMargin(0.15);
   c1->SetBottomMargin(0.10);
-
-  h_mean->Draw("COLZ");
-  h_mean->GetXaxis()->SetTitle("X (m)");
-  h_mean->GetYaxis()->SetTitle("Y (m)");
-  h_mean->GetZaxis()->SetTitle("Pulse height (mV)");
-  h_mean->SetTitleSize(50,"t");
-  
-  
-  //Initialize circle for outlining pmt
-  TEllipse *el_mean = new TEllipse(h_mean->GetMean(1), h_mean->GetMean(2), 0.04,0.04);
-  el_mean->SetLineColor(4);
-  el_mean->SetFillStyle(0);
-  el_mean->Draw();
- 
+  h_p->Draw("COLZ");
+  h_p->GetXaxis()->SetTitle("X (m)");
+  h_p->GetYaxis()->SetTitle("Y (m)");
+  h_p->GetZaxis()->SetTitle("Pulse counts");
+  h_p->SetTitleSize(50,"t");   
+  pmt->Draw();
   c1->SetRealAspectRatio();
   c1->Modified();
   c1->Update();
-  c1->SaveAs("mpmt_mean_colz_2d.png");
-  
-  std::cout << "mean counts histogram  mean x  = " << h_mean->GetMean(1) << std::endl;
-  std::cout << "mean counts histogram  mean y  = " << h_mean->GetMean(2) << std::endl;
+  c1->SaveAs("2Dhist_p.png");
+  std::cout << "p histogram  mean X  = " << h_p->GetMean(1) << std::endl;
+  std::cout << "p histogram  mean Y  = " << h_p->GetMean(2) << std::endl;
 
-  //Counts histogram
+  
+  //h_mph histogram
   TCanvas *c2 = new TCanvas("C2","");
   c2->SetRightMargin(0.2);
   c2->SetLeftMargin(0.15);
-  c2->SetBottomMargin(0.10);
-  
-  h_counts->Draw("COLZ");
-  h_counts->GetXaxis()->SetTitle("X (m)");
-  h_counts->GetYaxis()->SetTitle("Y (m)");
-  h_counts->GetZaxis()->SetTitle("counts");
-  
-  el_mean->Draw();
+  c2->SetBottomMargin(0.10); 
+  h_mph->Draw("COLZ");
+  h_mph->GetXaxis()->SetTitle("X (m)");
+  h_mph->GetYaxis()->SetTitle("Y (m)");
+  h_mph->GetZaxis()->SetTitle("Mean Pulse height (mV)");
+  pmt->Draw();
   c2->SetRealAspectRatio();
   c2->Modified();
   c2->Update();
-  c2->SaveAs("mpmt_entries_colz_2d.png");
+  c2->SaveAs("2Dhist_mph.png"); 
+  std::cout << "mph histogram mean X = " << h_mph->GetMean(1) << std::endl;
+  std::cout << "mph histogram mean Y = " << h_mph->GetMean(2) << std::endl;
 
-  
-  std::cout << "counts histogram mean x = " << h_counts->GetMean(1) << std::endl;
-  std::cout << "counts histogram mean y = " << h_counts->GetMean(2) << std::endl;
-
-  //Look at how we divide the bins
-
-  Double_t x_bin_edge_l[num_bins_x],x_bin_edge_r[num_bins_x],x_border[num_bins_x],x_bins[num_bins_x];
-  Double_t y_bin_edge_l[num_bins_y],y_bin_edge_r[num_bins_y],y_border[num_bins_y],y_bins[num_bins_y];
-
-  
-  for(Int_t xpoint = 0; xpoint < num_bins_x ; xpoint++)
-    {//START XLOOP
-      float xcenter = step_size*xpoint + 0.375;
-      x_bins[xpoint] = xcenter;
-      x_bin_edge_l[xpoint] = xcenter - scnsize;
-      x_bin_edge_r[xpoint] = xcenter + scnsize;
-      x_border[xpoint]=35000;
-    }//END XLOOP
-  TGraph *grx_l = new TGraph (num_bins_x, x_bin_edge_l, x_border);
-  TGraph *grx_r = new TGraph (num_bins_x, x_bin_edge_r, x_border);
-  TGraph *grx = new TGraph (num_bins_x, x_bins, x_border);
-  
-  for(Int_t ypoint = 0; ypoint < num_bins_y ; ypoint++)
-    {//START YLOOP
-      float ycenter = step_size*ypoint + 0.375;
-      y_bins[ypoint] = ycenter;
-      y_bin_edge_l[ypoint] = ycenter - scnsize;
-      y_bin_edge_r[ypoint] = ycenter + scnsize;
-      y_border[ypoint]= 80000;
-    }//END YLOOP
-  TGraph *gry_l = new TGraph (num_bins_y, y_bin_edge_l, y_border);
-  TGraph *gry_r = new TGraph (num_bins_y, y_bin_edge_r, y_border);
-  TGraph *gry = new TGraph (num_bins_y, y_bins, y_border);
-
-  //X position histogram
+ 
+  //h_RMS histogram;
   TCanvas *c3 = new TCanvas("C3","",1200,500);
-  xpos->SetLineColor(2);
-  xpos->SetLineWidth(1);
-  xpos->Draw();
-  gStyle->SetBarWidth(0.02);
-  grx_l->SetFillColor(3);
-  grx_l->Draw("B");
-  grx_r->SetFillColor(3);
-  grx_r->Draw("B");
-  grx->SetFillColorAlpha(6,0.1);
-  grx->Draw("B");
-  c3->SaveAs("mts_xpos.png");
+  c3->SetRightMargin(0.2);
+  c3->SetLeftMargin(0.15);
+  c3->SetBottomMargin(0.10);
+  h_RMS->Draw("COLZ");
+  h_RMS->GetXaxis()->SetTitle("X (m)");
+  h_RMS->GetYaxis()->SetTitle("Y (m)");
+  h_RMS->GetZaxis()->SetTitle("RMS (mV)");
+  h_RMS->SetTitleSize(50,"t"); 
+  pmt->Draw();
+  c3->SetRealAspectRatio();
+  c3->Modified();
+  c3->Update();
+  c3->SaveAs("2Dhist_RMS.png");
 
-  //Y position histogram
+  //h_eff histogram;
   TCanvas *c4 = new TCanvas("C4","",1200,500);
-  ypos->SetLineColor(2);
-  ypos->SetLineWidth(1);
-  ypos->Draw();
-  gStyle->SetBarWidth(0.02);
-  gry_l->SetFillColor(3);
-  gry_l->Draw("B");
-  gry_r->SetFillColor(3);
-  gry_r->Draw("B");
-  gry->SetFillColorAlpha(6,0.1);
-  gry->Draw("B");
-  c4->SaveAs("mts_ypos.png");
+  c4->SetRightMargin(0.2);
+  c4->SetLeftMargin(0.15);
+  c4->SetBottomMargin(0.10);
+  h_eff->GetXaxis()->SetTitle("X (m)");
+  h_eff->GetYaxis()->SetTitle("Y (m)");
+  h_eff->GetZaxis()->SetTitle("efficiency (%)");
+  h_eff->SetTitle("Efficiency");
+  h_eff->Draw("COLZ");
+  h_eff->SetTitleSize(50,"t"); 
+  pmt->Draw();
+  c4->SetRealAspectRatio();
+  c4->Modified();
+  c4->Update();
+  c4->SaveAs("2D_Efficiency.png");
+
+  //h_events histogram;
+  TCanvas *c5 = new TCanvas("C5","",1200,500);
+  c5->SetRightMargin(0.2);
+  c5->SetLeftMargin(0.15);
+  c5->SetBottomMargin(0.10);
+  h_events->GetXaxis()->SetTitle("X (m)");
+  h_events->GetYaxis()->SetTitle("Y (m)");
+  h_events->GetZaxis()->SetTitle("number of events");
+  h_events->SetTitle("Events");
+  h_events->Draw("COLZ");
+  h_events->SetTitleSize(50,"t"); 
+  pmt->Draw();
+  c5->SetRealAspectRatio();
+  c5->Modified();
+  c5->Update();
+  c5->SaveAs("2D_Events.png");
+  
   
   return 0;
 
