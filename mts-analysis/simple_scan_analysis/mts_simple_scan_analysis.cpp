@@ -29,6 +29,18 @@
 #include <math.h> 
 //using namespace std;
 
+
+//Functions for drawing PMTs and plotting;
+/*---------------------------------------------------------------------------------*/
+
+void drawPMT(Double_t x, Double_t y){
+  TEllipse pmt(x,y,0.04,0.04);
+  pmt.SetLineColor(1);
+  pmt.SetFillStyle(0);
+  pmt.DrawClone();
+  
+  }
+
 void plot2D( TCanvas *c,bool plotting_on,TH2F *hist,char *title,const char *zt,char *name){
 
   if(plotting_on == true){
@@ -40,11 +52,12 @@ void plot2D( TCanvas *c,bool plotting_on,TH2F *hist,char *title,const char *zt,c
     hist->GetZaxis()->SetTitle(zt);
     hist->SetTitle(title);
     hist->Draw("COLZ");
-    hist->SetTitleSize(50,"t"); 
-    //pmt->Draw();
+    hist->SetTitleSize(50,"t");
     c->SetRealAspectRatio();
     c->Modified();
     c->Update();
+    drawPMT(0.362,0.387);
+    drawPMT(0.475,0.39);
     c->SaveAs(name);}
   
 }
@@ -56,21 +69,14 @@ void plot1D( TCanvas *c,bool plotting_on,TH1F *hist,char *title,char *name){
     hist->GetXaxis()->SetTitle("Pulse height (mV)");
     hist->GetYaxis()->SetTitle("Number of events");
     hist->SetTitle(title);
-    //hist->SetTitleSize(50,"t");
     gStyle->SetOptFit(11);
     c->SaveAs(name);}
   
 }
 
-Double_t gausfit(Double_t *x, Double_t *p){
-  Double_t r1 = Double_t((x[0]-p[1])/p[2]);
-  Double_t r2 = Double_t((x[1]-p[3])/p[4]);
-  return p[0]*exp(-0.5*(r1*r1+r2*r2));}
 
 int main( int argc, char* argv[] )
-{//START MAIN
-
- 
+{//START MAIN 
 
    //Specify desired plots
   /*---------------------------------------------------------------------------------*/
@@ -84,13 +90,13 @@ int main( int argc, char* argv[] )
   bool plot_Pw = true;
   bool plot_h = true;
  
-  //Define bin paramaters for scan. (m)
+  //Define paramaters for scan. (m)
   /*---------------------------------------------------------------------------------*/
   float step_size = 0.01;
-  float xstart = 0.25;
-  float ystart = 0.33;
-  float x_scan_dist = 0.32;
-  float y_scan_dist = 0.19;
+  float xstart = 0.33;
+  float ystart = 0.35;
+  float x_scan_dist = 0.18;
+  float y_scan_dist = 0.08;
   float dwelltime = 4000;
   int num_ch = 2; //number of active channels
   int f_ch = 2; //first channel
@@ -102,35 +108,42 @@ int main( int argc, char* argv[] )
   float y_low = ystart - step_size/2;;
   float y_high = ystart + y_scan_dist + step_size/2;
 
-  float POI_y = 0.385;
-  float POI_x = 0.37;
-  int BOI_x = static_cast<int>((POI_x-xstart)/step_size);
-  int BOI_y = static_cast<int>((POI_y-ystart)/step_size);
-
   std::cout << "There are approx" << num_bins_x * num_bins_y << "scan points" << std::endl;
   std::cout << "We expect" << dwelltime * num_bins_x * num_bins_y << "events in total" << std::endl;
 
+  //Specify the coordinate you want to look at for the 1D histogram;
+  /*---------------------------------------------------------------------------------*/
+  float POI_y = 0.385; //scan point of interest y
+  float POI_x = 0.37; //scan point of interest x
+  int BOI_x = static_cast<int>((POI_x-xstart)/step_size);
+  int BOI_y = static_cast<int>((POI_y-ystart)/step_size);
+
+  //Initialize histograms and bins of combined channels
+  /*---------------------------------------------------------------------------------*/
+  TH2F *h_eff_sum = new TH2F("Total Efficiency","LED pulses/waveform",num_bins_x,x_low,x_high,num_bins_y,y_low,y_high);
+  TH2F *h_pP_sum = new TH2F(" LED pulses / Raw Pulse Count","",num_bins_x,x_low,x_high,num_bins_y,y_low,y_high);
+  TH2F *h_Pw_sum = new TH2F("Pulse / waveforms","",num_bins_x,x_low,x_high,num_bins_y,y_low,y_high) ;
+  TH2F *h_p_sum = new TH2F("pulses","",num_bins_x,x_low,x_high,num_bins_y,y_low,y_high) ;
+  TH2F *h_mph_sum = new TH2F("mean pulse height","",num_bins_x,x_low,x_high,num_bins_y,y_low,y_high) ;
+  TH2F *h_eff_bin[num_ch];
+  TH2F *h_pP_bin[num_ch];
+  TH2F *h_Pw_bin[num_ch];
+  TH2F *h_p_bin[num_ch];
+  TH2F *h_mph_bin[num_ch];
+
+  
+  //Read ROOT file;
   if ( argc != 2 ){
     std::cerr<<"Usage: ptf_ttree_analysis.app ptf_analysis.root\n";
     exit(0); }
   TFile * fin = new TFile( argv[1], "read" );
   TTree * tt0;    
   WaveformFitResult * wf0;
+ 
 
-  TH2F *h_eff_sum = new TH2F("Total Efficiency","LED pulses/waveform",num_bins_x,x_low,x_high,num_bins_y,y_low,y_high);
-  TH2F *h_pP_sum = new TH2F("laser pulse / Raw Pulse Count","",num_bins_x,x_low,x_high,num_bins_y,y_low,y_high);
-  TH2F *h_Pw_sum = new TH2F("Pulse / waveforms","",num_bins_x,x_low,x_high,num_bins_y,y_low,y_high) ;
-  TH2F *h_eff_bin[num_ch];
-  TH2F *h_pP_bin[num_ch];
-  TH2F *h_Pw_bin[num_ch];
-  for (int i=0;i<num_ch;i++) {
-    char efficiency[100];
-    sprintf(efficiency,"h eff bin %i",i);
-    h_eff_bin[i] = new TH2F("Sum Efficiency","LED pulse/waveform",num_bins_x,x_low,x_high,num_bins_y,y_low,y_high);
-    h_pP_bin[i] = new TH2F("Sum LED pulse/ all pulses","LED pulses/pulses",num_bins_x,x_low,x_high,num_bins_y,y_low,y_high);
-    h_Pw_bin[i] = new TH2F("Sum pulses/waveforms","pulses/waveforms",num_bins_x,x_low,x_high,num_bins_y,y_low,y_high);
-    }
-
+ //Start the loops
+  /*---------------------------------------------------------------------------------*/
+  
   for (int ch=0;ch<num_ch;ch++)
     {//START CHANNEL LOOP
       int ch_name = ch + f_ch;
@@ -149,7 +162,7 @@ int main( int argc, char* argv[] )
       /*----------------------------------------------------------------------------------*/
       //Initialize
       /* --------------------------------------------------------------------------------- */
-      //2D Histograms; 
+      //2D Histograms for separate channels; 
       TH2F *h_mph = new TH2F("mean pulse height distribution","Mean Pulse Height",num_bins_x,x_low,x_high,num_bins_y,y_low,y_high);
       TH2F *h_p = new TH2F("Number of Pulses","Number of Pulses",num_bins_x,x_low,x_high,num_bins_y,y_low,y_high);
       TH2F *h_RMS = new TH2F("RMS", "Standard dev. dist.",num_bins_x,x_low,x_high,num_bins_y,y_low,y_high);
@@ -166,6 +179,7 @@ int main( int argc, char* argv[] )
       TH1F *h[num_bins_x][num_bins_y];
       Double_t events_bin[num_bins_x][num_bins_y];
       Double_t pulse_bin[num_bins_x][num_bins_y];
+      
       for (int x=0;x<num_bins_x;x++) {
 	for (int y=0;y<num_bins_y;y++){
 	  char name1[100];
@@ -208,7 +222,7 @@ int main( int argc, char* argv[] )
 		      for(int k = 0; k < wf0->numPulses; k++ )
 			{//START PULSE LOOP
 
-			  if(wf0->pulseTimes[k] > 2254 and wf0->pulseTimes[k] < 2347 and wf0->pulseCharges[k]*1000.0 > 2.0)
+			  if(wf0->pulseTimes[k] > 2300 and wf0->pulseTimes[k] < 2420 and wf0->pulseCharges[k]*1000.0 > 2.0)
 			    {//FILTER PULSE TIME
 		      
 			      h[xpoint][ypoint]->Fill(wf0->pulseCharges[k]*1000.0);
@@ -239,6 +253,12 @@ int main( int argc, char* argv[] )
 	  h_P->SetBinContent(x+1,y+1,pulse_bin[x][y]);
 	}}
 
+      h_p_bin[ch] = h_p;
+      h_p_sum->Add(h_p_bin[ch]);
+
+      h_mph_bin[ch] = h_mph;
+      h_mph_sum->Add(h_mph_bin[ch]);
+      
       h_eff = (TH2F*)h_p->Clone();
       h_eff->Divide(h_events);
       h_eff->Scale(100.0);
@@ -331,6 +351,16 @@ int main( int argc, char* argv[] )
   char *title11 = Form("Pulses / waveforms (sum over %d channels)",num_ch);
   char *name11 = Form("2D_SUM_Pw_%d.png",num_ch);
   plot2D(c11,true,h_Pw_sum,title11,"%",name11);
+
+  TCanvas *c12 = new TCanvas("C12","",1200,500);
+  char *title12 = Form("number of pulses (sum over %d channels)",num_ch);
+  char *name12 = Form("2D_SUM_p_%d.png",num_ch);
+  plot2D(c12,true,h_p_sum,title12,"%",name12);
+
+  TCanvas *c13 = new TCanvas("C13","",1200,500);
+  char *title13 = Form("mean pulse height (sum over %d channels)",num_ch);
+  char *name13 = Form("2D_SUM_mph_%d.png",num_ch);
+  plot2D(c13,true,h_mph_sum,title13,"%",name13);
   	 
   return 0;
 
