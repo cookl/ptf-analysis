@@ -375,61 +375,7 @@ int main( int argc, char* argv[] )
       char *name8 = Form("2D_Pulse.waveform_%d.png",ch_name);
       plot2D(c8,plot_Pw,h_Pw,title8,"%", name8);		
 
-      TCanvas *c14 = new TCanvas("C14","",1200,500);
-      char *title14 = Form("Pulses / waveforms channel %d",ch_name);
-      char *name14 = Form("2D_Pulse.waveform_%d.png",ch_name);
-      plot2D(c14,plot_Pw,h_Pw,title14,"%", name14);
 
-      TCanvas *c15 = new TCanvas("C15","",1200,500);
-      char *title15 = Form("Pulses / waveforms channel %d",ch_name);
-      char *name15 = Form("2D_Pulse.waveform_%d.png",ch_name);
-      plot2D(c15,plot_Pw,h_Pw,title15,"%", name15);
-
-      TCanvas *c16 = new TCanvas("C16","",1200,500);
-      char *title16 = Form("Pulses / waveforms channel %d",ch_name);
-      char *name16 = Form("2D_Pulse.waveform_%d.png",ch_name);
-      plot2D(c16,plot_Pw,h_Pw,title16,"%", name16);
-
-      TCanvas *c17 = new TCanvas("C17","",1200,500);
-      char *title17 = Form("Pulses / waveforms channel %d",ch_name);
-      char *name17 = Form("2D_Pulse.waveform_%d.png",ch_name);
-      plot2D(c17,plot_Pw,h_Pw,title17,"%", name17);
-
-      TCanvas *c18 = new TCanvas("C18","",1200,500);
-      char *title18 = Form("Pulses / waveforms channel %d",ch_name);
-      char *name18 = Form("2D_Pulse.waveform_%d.png",ch_name);
-      plot2D(c18,plot_Pw,h_Pw,title18,"%", name18);
-
-      TCanvas *c19 = new TCanvas("C19","",1200,500);
-      char *title19 = Form("Pulses / waveforms channel %d",ch_name);
-      char *name19 = Form("2D_Pulse.waveform_%d.png",ch_name);
-      plot2D(c19,plot_Pw,h_Pw,title19,"%", name19);
-
-      TCanvas *c20 = new TCanvas("C20","",1200,500);
-      char *title20 = Form("Pulses / waveforms channel %d",ch_name);
-      char *name20 = Form("2D_Pulse.waveform_%d.png",ch_name);
-      plot2D(c20,plot_Pw,h_Pw,title20,"%", name20);
-
-      TCanvas *c21 = new TCanvas("C21","",1200,500);
-      char *title21 = Form("Pulses / waveforms channel %d",ch_name);
-      char *name21 = Form("2D_Pulse.waveform_%d.png",ch_name);
-      plot2D(c21,plot_Pw,h_Pw,title21,"%", name21);
-
-      TCanvas *c22 = new TCanvas("C22","",1200,500);
-      char *title22 = Form("Pulses / waveforms channel %d",ch_name);
-      char *name22 = Form("2D_Pulse.waveform_%d.png",ch_name);
-      plot2D(c22,plot_Pw,h_Pw,title22,"%", name22);
-
-      TCanvas *c23 = new TCanvas("C23","",1200,500);
-      char *title23 = Form("Pulses / waveforms channel %d",ch_name);
-      char *name23 = Form("2D_Pulse.waveform_%d.png",ch_name);
-      plot2D(c23,plot_Pw,h_Pw,title23,"%", name23);
-
-      TCanvas *c24 = new TCanvas("C24","",1200,500);
-      char *title24 = Form("Pulses / waveforms channel %d",ch_name);
-      char *name24 = Form("2D_Pulse.waveform_%d.png",ch_name);
-      plot2D(c24,plot_Pw,h_Pw,title24,"%", name24);
-      
     }//END CHANNEL LOOP
 
   /*Plotting over sum of all channels*/
