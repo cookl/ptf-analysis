@@ -44,6 +44,8 @@ void simple_threshold_technique(TH1D *hwaveform, WaveformFitResult *fitresult, P
 
   double min_bin = 9999, min_value = 9999; // Find the minimum bin and value for each pulse.
   bool in_pulse = false; // are we currently in a pulse?
+  int start_bin;
+  int end_bin;
   for(int ib = 1; ib < nsamples+1; ib++){
     double sample = hwaveform->GetBinContent(ib);
 
@@ -54,17 +56,39 @@ void simple_threshold_technique(TH1D *hwaveform, WaveformFitResult *fitresult, P
     
     if(sample < threshold && !in_pulse){ // found a pulse
       in_pulse = true;
+      start_bin = ib;
     }
     
-    if(sample >= threshold && in_pulse){ /// finished this pulse
+    if(sample >= threshold && in_pulse){ // finished this pulse
       in_pulse = false;
+      end_bin = ib;
+      double left_bin;
+      double right_bin;
+      double left_value;
+      double right_value;
       if(fitresult->numPulses < MAX_PULSES){
+	double mid_value = baseline - (baseline - min_value) / 2;
+	for(int bin = start_bin; bin < end_bin; bin++){
+	  double left_check = hwaveform->GetBinContent(bin);
+	  double right_check = hwaveform->GetBinContent(bin+1);
+	  if((left_check >= mid_value) && (right_check <= mid_value)){
+	    left_bin = bin;
+	    right_bin = bin+1;
+	    left_value = left_check;
+	    right_value = right_check;
+	    break;
+	  }
+	}
+	double slope = (right_value - left_value) / (right_bin - left_bin);
+        double y_int = left_value - slope*left_bin;
+        double mid_bin = (mid_value - y_int) / slope;
+	fitresult->pulseTimesCFD[fitresult->numPulses] = mid_bin * 8.0;
         fitresult->pulseTimes[fitresult->numPulses] = min_bin * 8.0;
         fitresult->pulseCharges[fitresult->numPulses] = baseline - min_value;
 
-        //if(0)std::cout << "Pulse found : " << fitresult->numPulses << " " << min_bin
-        //          << " " << min_value << " " << std::endl;
-        fitresult->numPulses++;
+          //if(0)std::cout << "Pulse found : " << fitresult->numPulses << " " << min_bin
+          //          << " " << min_value << " " << std::endl;
+          fitresult->numPulses++;
       }
       min_bin = 9999, min_value = 9999;
     }

@@ -49,6 +49,7 @@ public:
   float qsum;       //< charge sum
   int numPulses; //< number of pulses found in waveform
   float pulseTimes[MAX_PULSES]; // Pulse times
+  float pulseTimesCFD[MAX_PULSES]; // Pulse times using CFD calculation
   float pulseTimeErr[MAX_PULSES]; // Pulse time errors
   float pulseCharges[MAX_PULSES]; // Pulse charges
   float pulseChargeErr[MAX_PULSES]; // Pulse charge errors
