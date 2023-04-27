@@ -1,6 +1,6 @@
 // Hassan Elshabasy Immersion mPMT Analysis
 // helshabasy@triumf.ca
-// 02/03/23
+// 04/26/23
 
 
 #include "WaveformFitResult.hpp"
@@ -78,8 +78,8 @@ int main( int argc, char* argv[] ) {
 	TH1F *h8 = new TH1F("coincidence_charges_max_4", "Max Coincidence Charges 4 Channels",100,0,200*0.48828125);
 	TH1F *h9 = new TH1F("coincidence_charges_sum_2", "Sum Coincidence Charges 2 Channels",100,0,30*0.48828125);
 	TH1F *h10 = new TH1F("coincidence_charges_sum_4", "Sum Coincidence Charges 4 Channels",100,0,200*0.48828125);
-	TH1F *h11 = new TH1F("coincidence_time_difference_2", "Coincidence Time Differences 2 Channels",200,0,200*0.48828125);
-	TH1F *h12 = new TH1F("coincidence_time_difference_4", "Coincidence Time Differences 4 Channels",200,0,200*0.48828125);
+	TH1F *h11 = new TH1F("coincidence_time_difference_2", "Coincidence Time Differences 2 Channels",200,0,100*0.48828125);
+	TH1F *h12 = new TH1F("coincidence_time_difference_4", "Coincidence Time Differences 4 Channels",200,0,100*0.48828125);
 	TH1F *h13 = new TH1F("coincident_times_2", "Coincident Times 2 Channels",100,0,17000*0.48828125);
 	TH1F *h14 = new TH1F("coincident_times_4", "Coincident Times 4 Channels",100,0,17000*0.48828125);
 	TH1F *h15 = new TH1F("coincident_channels_2", "Coincident Channels 2",200,0,20);
@@ -88,12 +88,14 @@ int main( int argc, char* argv[] ) {
 	TH1F *h18 = new TH1F("coincidence_charges_ratio_4", "Ratio Coincidence Charges 4 Channels",100,0,2*0.48828125);
 	
 	TH2F *h19 = new TH2F("coincident_charges_sumvratio_2", "Sum vs Ratio Coincident Charges 2 Channels",
-	200,0,30*0.48828125,200,0,2*0.48828125);
+	50,0,30*0.48828125,50,0,2*0.48828125);
 	TH2F *h20 = new TH2F("coincident_charges_sumvratio_4", "Sum vs Ratio Coincident Charges 4 Channels",
-	200,0,200*0.48828125,200,0,2*0.48828125);
+	50,0,200*0.48828125,50,0,2*0.48828125);
 	
-	int twoNum = 0;
-	int fourNum = 0;
+	int twoNum = 0; // number of 2-fold events
+	int fourNum = 0; // number of 4-fold events
+	
+	int time_diff = 100;
 	
     for(int j = 0; j < 20; j++){ // To initialize TTree and branches
 	
@@ -114,7 +116,6 @@ int main( int argc, char* argv[] ) {
 		liveTime += 8192*pow(10,-9); // in seconds
 		
 		std::vector<Pulse> myPulses = {};
-		std::vector<double> pulse_times ={};
 		std::vector<Pulse> coincident_pulses = {};
 		std::vector<int> coincident_channels = {};
 		std::vector<Pulse> coincident_pulses_2 = {};
@@ -140,7 +141,60 @@ int main( int argc, char* argv[] ) {
 				h2[j]->Fill(pulse_charge);
 				
 				// pulse time
-				double pulse_time = wf[j]->pulseTimes[k];
+				double pulse_time = wf[j]->pulseTimesCFD[k];
+				
+				// Time Calibration (not yet completed)
+				/*
+				switch(j){
+				case 0:
+					pulse_time -= -1.4766;
+					break;
+				case 1:
+					pulse_time -= 0.0;
+					break;
+				case 2:
+					pulse_time -= -0.245132;
+					break;
+				case 3:
+					pulse_time -= -0.1279973;
+					break;
+				case 4:
+					pulse_time -= 1.57659;
+					break;
+				case 5:
+					pulse_time -= -0.83196;
+					break;
+				case 6:
+					pulse_time -= -0.994029;
+					break;
+				case 7:
+					pulse_time -= 1.46915;
+					break;
+				case 10:
+					pulse_time -= 15.5602;
+					break;
+				case 11:
+					pulse_time -= 9.65071;
+					break;
+				case 12:
+					pulse_time -= 8.23973;
+					break;
+				case 13:
+					pulse_time -= 3.2517;
+					break;
+				case 14:
+					pulse_time -= 11.2103;
+					break;
+				case 15:
+					pulse_time -= 5.525648;
+					break;
+				case 16:
+					pulse_time -= 8.21802;
+					break;
+				case 17:
+					pulse_time -= -2.47894;
+					break;
+				}*/
 				
 				Pulse pulse(i, j, pulse_height, pulse_charge, pulse_time);
 				myPulses.push_back(pulse);
@@ -152,23 +206,15 @@ int main( int argc, char* argv[] ) {
 			continue;
 		}
 		
-		// TIME CUT
 		for(Pulse pulse_check : myPulses){
 			for(Pulse pulse : myPulses){
-				if((abs(pulse_check.time - pulse.time) < 100) && (notSame(pulse_check, pulse))){
+				if((abs(pulse_check.time - pulse.time) < time_diff) && (notSame(pulse_check, pulse))){
 					coincident_pulses.push_back(pulse_check);
 					std::cout << "Channel: " << pulse_check.channel << " Time: " << pulse_check.time << std::endl;
 					break;
 				}
 			}
 		}
-		
-		
-		// NO TIME CUT
-		/*
-		for(Pulse pulse : myPulses){
-			coincident_pulses.push_back(pulse);
-		}*/
 			
 		for(Pulse pulse : coincident_pulses){ // find how many channels involved
 			coincident_channels.push_back(pulse.channel);
@@ -201,16 +247,9 @@ int main( int argc, char* argv[] ) {
 		h19->Fill(sum_2,ratio_2);
 		
 		std::sort(coincident_times_2.begin(), coincident_times_2.end());
-		// NO TIME CUT/
-		/*
+
 		while(coincident_times_2.size() >= 2){
-			h11->Fill(coincident_times_2[1] - coincident_times_2[0]);
-			coincident_times_2.erase(coincident_times_2.begin()+1);
-		}*/
-		// TIME CUT
-		
-		while(coincident_times_2.size() >= 2){
-			if(coincident_times_2[1] - coincident_times_2[0] <= 100){
+			if(coincident_times_2[1] - coincident_times_2[0] <= time_diff){
 				h11->Fill(coincident_times_2[1] - coincident_times_2[0]);
 				coincident_times_2.erase(coincident_times_2.begin()+1);
 			} else {
@@ -247,16 +286,10 @@ int main( int argc, char* argv[] ) {
 		h20->Fill(sum_4,ratio_4);
 		
 		std::sort(coincident_times_4.begin(), coincident_times_4.end());
-		// NO TIME CUT
-		/*
-		while(coincident_times_4.size() >= 2){
-			h12->Fill(coincident_times_4[1] - coincident_times_4[0]);
-			coincident_times_2.erase(coincident_times_2.begin()+1);
-		}*/
+
 		// TIME CUT
-		
 		while(coincident_times_4.size() >= 2){
-			if(coincident_times_4[1] - coincident_times_4[0] <= 100){
+			if(coincident_times_4[1] - coincident_times_4[0] <= time_diff){
 				h12->Fill(coincident_times_4[1] - coincident_times_4[0]);
 				coincident_times_4.erase(coincident_times_4.begin()+1);
 			} else {
@@ -305,7 +338,7 @@ int main( int argc, char* argv[] ) {
 		char png_name[100];
 		sprintf(png_name,"mpmt_pulse_charge_%i.png",j);
 		c2->SaveAs(png_name);
-	}
+	}*/
 	
 	// Print Hit Coincident Histograms
 	TCanvas *c3 = new TCanvas("C3");
@@ -344,7 +377,7 @@ int main( int argc, char* argv[] ) {
 	// Print Max Coincident Charge Histogram
 	TCanvas *c7 = new TCanvas("C7");
 	h7->Draw();
-	h7->GetXaxis()->SetTitle("Pulse Charge (photoelectrons)");
+	h7->GetXaxis()->SetTitle("Pulse Charge (PE)");
 	h7->GetYaxis()->SetTitle("Number of Hits");
 	h7->Fit("gaus","","",0.5,3);
 	gStyle->SetOptFit(11);
@@ -352,7 +385,7 @@ int main( int argc, char* argv[] ) {
 	
 	TCanvas *c8 = new TCanvas("C8");
 	h8->Draw();
-	h8->GetXaxis()->SetTitle("Pulse Charge (photoelectrons)");
+	h8->GetXaxis()->SetTitle("Pulse Charge (PE)");
 	h8->GetYaxis()->SetTitle("Number of Hits");
 	//h8->Fit("gaus","","",0.5,3);
 	gStyle->SetOptFit(11);
@@ -361,7 +394,7 @@ int main( int argc, char* argv[] ) {
 	// Print Sum Coincident Charge Histogram
 	TCanvas *c9 = new TCanvas("C9");
 	h9->Draw();
-	h9->GetXaxis()->SetTitle("Pulse Charge (photoelectrons)");
+	h9->GetXaxis()->SetTitle("Pulse Charge (PE)");
 	h9->GetYaxis()->SetTitle("Number of Hits");
 	h9->Fit("gaus","","",1,6);
 	gStyle->SetOptFit(11);
@@ -369,7 +402,7 @@ int main( int argc, char* argv[] ) {
 	
 	TCanvas *c10 = new TCanvas("C10");
 	h10->Draw();
-	h10->GetXaxis()->SetTitle("Pulse Charge (photoelectrons)");
+	h10->GetXaxis()->SetTitle("Pulse Charge (PE)");
 	h10->GetYaxis()->SetTitle("Number of Hits");
 	//h10->Fit("gaus","","",0.5,3);
 	gStyle->SetOptFit(11);
@@ -426,7 +459,7 @@ int main( int argc, char* argv[] ) {
 	
 	TCanvas *c17 = new TCanvas("C17");
 	h17->Draw();
-	h17->GetXaxis()->SetTitle("Ratio");
+	h17->GetXaxis()->SetTitle("Max/Sum");
 	h17->GetYaxis()->SetTitle("Number of Occurance");
 	//h17->Fit("gaus","","",1,6);
 	gStyle->SetOptFit(11);
@@ -434,7 +467,7 @@ int main( int argc, char* argv[] ) {
 	
 	TCanvas *c18 = new TCanvas("C18");
 	h18->Draw();
-	h18->GetXaxis()->SetTitle("Ratio");
+	h18->GetXaxis()->SetTitle("Max/Sum");
 	h18->GetYaxis()->SetTitle("Number of Occurance");
 	//h18->Fit("gaus","","",0.5,3);
 	gStyle->SetOptFit(11);
@@ -462,112 +495,6 @@ int main( int argc, char* argv[] ) {
 	gStyle->SetOptFit(11);
 	gStyle->SetPalette(kRainBow);
 	c20->SaveAs("coincidence_charges_SUMVRATIO_4.png");
-	
-	
-	/*
-	std::unique_ptr<TFile> myFile_969( TFile::Open("run_969_timecut.root", "RECREATE") );
-	myFile_969->WriteObject(h3, "h3_969");
-	myFile_969->WriteObject(h4, "h4_969");
-	myFile_969->WriteObject(h5, "h5_969");
-	myFile_969->WriteObject(h6, "h6_969");
-	myFile_969->WriteObject(h7, "h7_969");
-	myFile_969->WriteObject(h8, "h8_969");
-	myFile_969->WriteObject(h9, "h9_969");
-	myFile_969->WriteObject(h10, "h10_969");
-	myFile_969->WriteObject(h11, "h11_969");
-	myFile_969->WriteObject(h12, "h12_969");
-	myFile_969->WriteObject(h13, "h13_969");
-	myFile_969->WriteObject(h14, "h14_969");
-	myFile_969->WriteObject(h15, "h15_969");
-	myFile_969->WriteObject(h16, "h16_969");
-	myFile_969->WriteObject(h17, "h17_969");
-	myFile_969->WriteObject(h18, "h18_969");
-	myFile_969->WriteObject(h19, "h19_969");
-	myFile_969->WriteObject(h20, "h20_969");
-	std::cout << "File run_969_timecut.root is saved" << std::endl;*/
-	
-	/*
-	std::unique_ptr<TFile> myFile_972( TFile::Open("run_972_timecut.root", "RECREATE") );
-	myFile_972->WriteObject(h3, "h3_972");
-	myFile_972->WriteObject(h4, "h4_972");
-	myFile_972->WriteObject(h5, "h5_972");
-	myFile_972->WriteObject(h6, "h6_972");
-	myFile_972->WriteObject(h7, "h7_972");
-	myFile_972->WriteObject(h8, "h8_972");
-	myFile_972->WriteObject(h9, "h9_972");
-	myFile_972->WriteObject(h10, "h10_972");
-	myFile_972->WriteObject(h11, "h11_972");
-	myFile_972->WriteObject(h12, "h12_972");
-	myFile_972->WriteObject(h13, "h13_972");
-	myFile_972->WriteObject(h14, "h14_972");
-	myFile_972->WriteObject(h15, "h15_972");
-	myFile_972->WriteObject(h16, "h16_972");
-	myFile_972->WriteObject(h17, "h17_972");
-	myFile_972->WriteObject(h18, "h18_972");
-	myFile_972->WriteObject(h19, "h19_972");
-	myFile_972->WriteObject(h20, "h20_972");
-	std::cout << "File run_972_timecut.root is saved" << std::endl;*/
-	
-	
-	TFile *f_969 = new TFile("run_969_timecut.root");
-	TFile *f_972 = new TFile("run_972_timecut.root");
-	TH1F* h_969[100];
-	TH1F* h_972[100];
-	for(int i = 3; i <= 18; i++){
-		char hist_969[100];
-		sprintf(hist_969,"h%d_969",i);
-		h_969[i] = (TH1F*)f_969->Get(hist_969);
-		
-		char hist_972[100];
-		sprintf(hist_972,"h%d_972",i);
-		h_972[i] = (TH1F*)f_972->Get(hist_972);
-		
-		TCanvas *c21 = new TCanvas("C21","C21");
-		gStyle->SetOptStat(kFALSE);
-		h_969[i]->Draw();
-		h_972[i]->Draw("SAME");
-		h_972[i]->SetLineColor(kRed);
-		TLegend *leg21 = new TLegend(0.7,0.7,0.9,0.9);
-		leg21->AddEntry(h_969[i],"Extra Water Run","l");
-		leg21->AddEntry(h_972[i],"Removed Water Run","l");
-		leg21->Draw();
-		gStyle->SetOptFit(11);
-		
-		switch(i){
-		case 3:
-			c21->SaveAs("hit_coincidences_2_COMBINED.png");
-		case 4:
-			c21->SaveAs("hit_coincidences_4_COMBINED.png");
-		case 5:
-			c21->SaveAs("coincident_heights_2_COMBINED.png");
-		case 6:
-			c21->SaveAs("coincident_heights_4_COMBINED.png");
-		case 7:
-			c21->SaveAs("coincident_charges_MAX_2_COMBINED.png");
-		case 8:
-			c21->SaveAs("coincident_charges_MAX_4_COMBINED.png");
-		case 9:
-			c21->SaveAs("coincident_charges_SUM_2_COMBINED.png");
-		case 10:
-			c21->SaveAs("coincident_charges_SUM_4_COMBINED.png");
-		case 11:
-			c21->SaveAs("coincident_time_differences_2_LOG_COMBINED.png");
-		case 12:
-			c21->SaveAs("coincident_time_differences_4_LOG_COMBINED.png");
-		case 13:
-			c21->SaveAs("coincident_times_2_COMBINED.png");
-		case 14:
-			c21->SaveAs("coincident_times_4_COMBINED.png");
-		case 15:
-			c21->SaveAs("coincident_channels_2_COMBINED.png");
-		case 16:
-			c21->SaveAs("coincident_channels_4_COMBINED.png");
-		case 17:
-			c21->SaveAs("coincident_charges_RATIO_2_COMBINED.png");
-		case 18:
-			c21->SaveAs("coincident_charges_RATIO_4_COMBINED.png");
-		}
-	}
 	
 	
 	std::cout << "Number of Events: " << tt[0]->GetEntries() << std::endl;
