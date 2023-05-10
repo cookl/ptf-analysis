@@ -338,7 +338,7 @@ int main( int argc, char* argv[] ) {
 		char png_name[100];
 		sprintf(png_name,"mpmt_pulse_charge_%i.png",j);
 		c2->SaveAs(png_name);
-	}*/
+	}
 	
 	// Print Hit Coincident Histograms
 	TCanvas *c3 = new TCanvas("C3");
