@@ -13,20 +13,29 @@ VPATH = $(SRCDIR)
 CFLAGS=-c -g -Wall `root-config --cflags` -I${INCDIR}
 LDFLAGS=`root-config --glibs` -lHistPainter -lMinuit -L${ROOTSYS}/lib 
 
-all: mpmt_immersion_analysis.exe mpmt_time_calibration.exe
+all: mpmt_immersion_analysis.exe mpmt_time_calibration.exe mpmt_fitted_time_calibration.exe
 
 mpmt_immersion_analysis.exe:  mpmt_immersion_analysis.o WaveformFitResult.o
 	CPATH=/usr/local/include $(CXX) $^ -o $@ $(LDFLAGS)
 
 mpmt_immersion_analysis.o: mpmt_immersion_analysis.cpp
 	$(CXX) $(CFLAGS) $< -o $@
-	
+
+
 mpmt_time_calibration.exe:  mpmt_time_calibration.o WaveformFitResult.o
+	CPATH=/usr/local/include $(CXX) $^ -o $@ $(LDFLAGS)
+
+
+
+mpmt_fitted_time_calibration.exe:  mpmt_fitted_time_calibration.o WaveformFitResult.o
 	CPATH=/usr/local/include $(CXX) $^ -o $@ $(LDFLAGS)
 
 mpmt_time_calibration.o: mpmt_time_calibration.cpp
 	$(CXX) $(CFLAGS) $< -o $@
 
+
+mpmt_fitted_time_calibration.o: mpmt_fitted_time_calibration.cpp
+	$(CXX) $(CFLAGS) $< -o $@
 
 WaveformFitResult.o: ${SRCDIR}/WaveformFitResult.cpp
 	$(CXX) $(CFLAGS) $< -o $@
