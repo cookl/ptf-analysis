@@ -32,7 +32,7 @@ int main( int argc, char* argv[] ) {
         exit(0);
     }
 
-    TH1F *h1 = new TH1F("pulse_height","Pulse Height",200,0,200*0.48828125);
+    TH1F *h1 = new TH1F("pulse_height","Pulse Height",50,0,200*0.48828125);
 
     TFile * fin = new TFile( argv[1], "read" );
     TTree * tt0;    
@@ -50,14 +50,14 @@ int main( int argc, char* argv[] ) {
     for(int i = 0; i < tt0->GetEntries()-1; i++){
         tt0->GetEvent(i);
 
-	std::cout << "Number of pulses found: " << wf0->numPulses << std::endl;
+	//	std::cout << "Number of pulses found: " << wf0->numPulses << std::endl;
         // Loop over each pulse:
         for(int k = 0; k < wf0->numPulses; k++){
 
 	  std::cout << "Pulse " << k << " has pulse height " << wf0->pulseCharges[k]*1000.0 
 		    << "mV " << wf0->pulseTimes[k] << "ns" 
 		    << std::endl;
-	  if(wf0->pulseTimes[k] > 2100 and wf0->pulseTimes[k] < 2400 and wf0->pulseCharges[k]*1000.0 > 4.5)
+	  if( wf0->pulseTimes[k] < 2400 and wf0->pulseCharges[k]*1000.0 > 10)
 	    h1->Fill(wf0->pulseCharges[k]*1000.0);
         }
     }
@@ -68,9 +68,17 @@ int main( int argc, char* argv[] ) {
     h1->Draw();
     h1->GetXaxis()->SetTitle("Pulse height (mV)");
     h1->GetYaxis()->SetTitle("Number of events");
-    h1->Fit("gaus","","",8,22);
+    h1->Fit("gaus","","",22,60);
     gStyle->SetOptFit(11);
     c3->SaveAs("mpmt_pulse_height.png");
+
+    // Get CIN number for this PMT
+    TTree * some_tree = (TTree*)fin->Get("settings_tree");
+    std::string * some_str_pt = new std::string(); 
+    some_tree->SetBranchAddress("CIN0", &some_str_pt);
+    some_tree->GetEntry(0);
+
+    std::cout << "PMT " << some_str_pt->c_str() << " has " << h1->GetEntries() << " pulses above 10mV with a fitted mean of " << h1->GetFunction("gaus")->GetParameter(1) << "mV" << std::endl;
 
     
     fin->Close();
